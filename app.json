@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "FitTrack",
+    "slug": "fittrack",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "backgroundColor": "#4CAF50",
+      "resizeMode": "contain"
+    },
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fittrack.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Barkod taramak ve yemek fotoğrafı çekmek için kamera izni gereklidir."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#4CAF50"
+      },
+      "package": "com.fittrack.app",
+      "permissions": ["CAMERA", "VIBRATE", "NOTIFICATIONS"]
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-notifications",
+      "expo-secure-store",
+      "expo-sqlite"
+    ]
+  }
+}

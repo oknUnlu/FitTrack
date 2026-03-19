@@ -1,0 +1,324 @@
+[
+  {
+    "id": "ppl_split",
+    "name": "Push/Pull/Legs",
+    "description": "Altı günlük Push/Pull/Legs programı. Her kas grubu haftada iki kez çalışır. Orta seviye sporcular için idealdir.",
+    "estimatedDuration": 60,
+    "difficulty": "intermediate",
+    "targetMuscleGroups": ["chest", "back", "legs", "shoulders", "arms"],
+    "days": [
+      {
+        "day": 1,
+        "name": "Push A",
+        "exercises": [
+          {"exerciseId": "bench_press", "sets": 4, "reps": "8-10"},
+          {"exerciseId": "incline_bench_press", "sets": 3, "reps": "8-12"},
+          {"exerciseId": "overhead_press", "sets": 4, "reps": "8-10"},
+          {"exerciseId": "lateral_raise", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "tricep_pushdown", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "skull_crusher", "sets": 3, "reps": "10-12"}
+        ]
+      },
+      {
+        "day": 2,
+        "name": "Pull A",
+        "exercises": [
+          {"exerciseId": "deadlift", "sets": 4, "reps": "5-6"},
+          {"exerciseId": "barbell_row", "sets": 4, "reps": "8-10"},
+          {"exerciseId": "lat_pulldown", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "face_pull", "sets": 3, "reps": "15-20"},
+          {"exerciseId": "barbell_curl", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "hammer_curl", "sets": 3, "reps": "10-12"}
+        ]
+      },
+      {
+        "day": 3,
+        "name": "Legs A",
+        "exercises": [
+          {"exerciseId": "squat", "sets": 4, "reps": "6-8"},
+          {"exerciseId": "leg_press", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "romanian_deadlift", "sets": 3, "reps": "8-10"},
+          {"exerciseId": "leg_extension", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "leg_curl", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "calf_raise", "sets": 4, "reps": "12-15"}
+        ]
+      },
+      {
+        "day": 4,
+        "name": "Push B",
+        "exercises": [
+          {"exerciseId": "overhead_press", "sets": 4, "reps": "6-8"},
+          {"exerciseId": "dumbbell_fly", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "cable_crossover", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "arnold_press", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "lateral_raise", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "dip", "sets": 3, "reps": "8-12"}
+        ]
+      },
+      {
+        "day": 5,
+        "name": "Pull B",
+        "exercises": [
+          {"exerciseId": "pull_up", "sets": 4, "reps": "6-10"},
+          {"exerciseId": "seated_cable_row", "sets": 4, "reps": "10-12"},
+          {"exerciseId": "dumbbell_row", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "face_pull", "sets": 3, "reps": "15-20"},
+          {"exerciseId": "dumbbell_curl", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "shrug", "sets": 3, "reps": "12-15"}
+        ]
+      },
+      {
+        "day": 6,
+        "name": "Legs B",
+        "exercises": [
+          {"exerciseId": "leg_press", "sets": 4, "reps": "8-10"},
+          {"exerciseId": "lunge", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "hip_thrust", "sets": 4, "reps": "8-12"},
+          {"exerciseId": "leg_curl", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "leg_extension", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "calf_raise", "sets": 4, "reps": "15-20"}
+        ]
+      }
+    ],
+    "isBuiltIn": true
+  },
+  {
+    "id": "upper_lower",
+    "name": "Upper/Lower Split",
+    "description": "Dört günlük üst/alt vücut programı. Dengeli kas gelişimi sağlar. Orta seviye için uygundur.",
+    "estimatedDuration": 55,
+    "difficulty": "intermediate",
+    "targetMuscleGroups": ["chest", "back", "legs", "shoulders", "arms"],
+    "days": [
+      {
+        "day": 1,
+        "name": "Upper A",
+        "exercises": [
+          {"exerciseId": "bench_press", "sets": 4, "reps": "6-8"},
+          {"exerciseId": "barbell_row", "sets": 4, "reps": "6-8"},
+          {"exerciseId": "overhead_press", "sets": 3, "reps": "8-10"},
+          {"exerciseId": "lat_pulldown", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "barbell_curl", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "tricep_pushdown", "sets": 3, "reps": "10-12"}
+        ]
+      },
+      {
+        "day": 2,
+        "name": "Lower A",
+        "exercises": [
+          {"exerciseId": "squat", "sets": 4, "reps": "6-8"},
+          {"exerciseId": "romanian_deadlift", "sets": 3, "reps": "8-10"},
+          {"exerciseId": "leg_press", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "leg_curl", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "calf_raise", "sets": 4, "reps": "12-15"},
+          {"exerciseId": "plank", "sets": 3, "reps": "45-60s"}
+        ]
+      },
+      {
+        "day": 3,
+        "name": "Upper B",
+        "exercises": [
+          {"exerciseId": "incline_bench_press", "sets": 4, "reps": "8-10"},
+          {"exerciseId": "pull_up", "sets": 4, "reps": "6-10"},
+          {"exerciseId": "dumbbell_fly", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "seated_cable_row", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "lateral_raise", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "hammer_curl", "sets": 3, "reps": "10-12"}
+        ]
+      },
+      {
+        "day": 4,
+        "name": "Lower B",
+        "exercises": [
+          {"exerciseId": "deadlift", "sets": 4, "reps": "5-6"},
+          {"exerciseId": "lunge", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "leg_extension", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "hip_thrust", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "calf_raise", "sets": 4, "reps": "15-20"},
+          {"exerciseId": "russian_twist", "sets": 3, "reps": "20"}
+        ]
+      }
+    ],
+    "isBuiltIn": true
+  },
+  {
+    "id": "full_body",
+    "name": "Full Body",
+    "description": "Üç günlük tam vücut programı. Her antrenmanda tüm kas grupları çalışır. Başlangıç ve orta seviye için uygundur.",
+    "estimatedDuration": 50,
+    "difficulty": "beginner",
+    "targetMuscleGroups": ["chest", "back", "legs", "shoulders", "core"],
+    "days": [
+      {
+        "day": 1,
+        "name": "Full Body A",
+        "exercises": [
+          {"exerciseId": "squat", "sets": 3, "reps": "8-10"},
+          {"exerciseId": "bench_press", "sets": 3, "reps": "8-10"},
+          {"exerciseId": "barbell_row", "sets": 3, "reps": "8-10"},
+          {"exerciseId": "overhead_press", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "barbell_curl", "sets": 2, "reps": "10-12"},
+          {"exerciseId": "plank", "sets": 3, "reps": "30-45s"}
+        ]
+      },
+      {
+        "day": 2,
+        "name": "Full Body B",
+        "exercises": [
+          {"exerciseId": "deadlift", "sets": 3, "reps": "6-8"},
+          {"exerciseId": "incline_bench_press", "sets": 3, "reps": "8-10"},
+          {"exerciseId": "lat_pulldown", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "leg_press", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "lateral_raise", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "crunch", "sets": 3, "reps": "15-20"}
+        ]
+      },
+      {
+        "day": 3,
+        "name": "Full Body C",
+        "exercises": [
+          {"exerciseId": "leg_press", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "dumbbell_fly", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "seated_cable_row", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "lunge", "sets": 3, "reps": "10-12"},
+          {"exerciseId": "tricep_pushdown", "sets": 2, "reps": "10-12"},
+          {"exerciseId": "leg_raise", "sets": 3, "reps": "12-15"}
+        ]
+      }
+    ],
+    "isBuiltIn": true
+  },
+  {
+    "id": "strength_5x5",
+    "name": "Strength 5x5",
+    "description": "Üç günlük 5x5 kuvvet programı. Temel bileşik hareketlere odaklanır. Kuvvet kazanımı için idealdir.",
+    "estimatedDuration": 45,
+    "difficulty": "beginner",
+    "targetMuscleGroups": ["chest", "back", "legs", "shoulders"],
+    "days": [
+      {
+        "day": 1,
+        "name": "Workout A",
+        "exercises": [
+          {"exerciseId": "squat", "sets": 5, "reps": "5"},
+          {"exerciseId": "bench_press", "sets": 5, "reps": "5"},
+          {"exerciseId": "barbell_row", "sets": 5, "reps": "5"},
+          {"exerciseId": "barbell_curl", "sets": 2, "reps": "8-10"},
+          {"exerciseId": "plank", "sets": 3, "reps": "45-60s"}
+        ]
+      },
+      {
+        "day": 2,
+        "name": "Workout B",
+        "exercises": [
+          {"exerciseId": "squat", "sets": 5, "reps": "5"},
+          {"exerciseId": "overhead_press", "sets": 5, "reps": "5"},
+          {"exerciseId": "deadlift", "sets": 1, "reps": "5"},
+          {"exerciseId": "tricep_pushdown", "sets": 2, "reps": "8-10"},
+          {"exerciseId": "crunch", "sets": 3, "reps": "15-20"}
+        ]
+      },
+      {
+        "day": 3,
+        "name": "Workout A",
+        "exercises": [
+          {"exerciseId": "squat", "sets": 5, "reps": "5"},
+          {"exerciseId": "bench_press", "sets": 5, "reps": "5"},
+          {"exerciseId": "barbell_row", "sets": 5, "reps": "5"},
+          {"exerciseId": "hammer_curl", "sets": 2, "reps": "8-10"},
+          {"exerciseId": "leg_raise", "sets": 3, "reps": "12-15"}
+        ]
+      }
+    ],
+    "isBuiltIn": true
+  },
+  {
+    "id": "bodyweight",
+    "name": "Bodyweight Program",
+    "description": "Üç günlük vücut ağırlığı programı. Ekipman gerektirmez. Evde veya dışarıda yapılabilir. Her seviyeye uygundur.",
+    "estimatedDuration": 40,
+    "difficulty": "beginner",
+    "targetMuscleGroups": ["chest", "back", "legs", "core", "cardio"],
+    "days": [
+      {
+        "day": 1,
+        "name": "Upper Body",
+        "exercises": [
+          {"exerciseId": "push_up", "sets": 4, "reps": "10-20"},
+          {"exerciseId": "pull_up", "sets": 4, "reps": "5-10"},
+          {"exerciseId": "dip", "sets": 3, "reps": "8-12"},
+          {"exerciseId": "plank", "sets": 3, "reps": "30-60s"},
+          {"exerciseId": "mountain_climber", "sets": 3, "reps": "20"}
+        ]
+      },
+      {
+        "day": 2,
+        "name": "Lower Body",
+        "exercises": [
+          {"exerciseId": "lunge", "sets": 4, "reps": "12-15"},
+          {"exerciseId": "hip_thrust", "sets": 4, "reps": "12-15"},
+          {"exerciseId": "calf_raise", "sets": 4, "reps": "15-20"},
+          {"exerciseId": "leg_raise", "sets": 3, "reps": "12-15"},
+          {"exerciseId": "russian_twist", "sets": 3, "reps": "20"}
+        ]
+      },
+      {
+        "day": 3,
+        "name": "Full Body HIIT",
+        "exercises": [
+          {"exerciseId": "burpee", "sets": 4, "reps": "10"},
+          {"exerciseId": "push_up", "sets": 3, "reps": "15"},
+          {"exerciseId": "mountain_climber", "sets": 3, "reps": "30"},
+          {"exerciseId": "jump_rope", "sets": 3, "reps": "60s"},
+          {"exerciseId": "plank", "sets": 3, "reps": "45-60s"},
+          {"exerciseId": "crunch", "sets": 3, "reps": "20"}
+        ]
+      }
+    ],
+    "isBuiltIn": true
+  },
+  {
+    "id": "cardio_core",
+    "name": "Cardio & Core",
+    "description": "Üç günlük kardiyo ve core programı. Yağ yakımı ve karın kası gelişimi için tasarlanmıştır. Her seviyeye uygundur.",
+    "estimatedDuration": 35,
+    "difficulty": "beginner",
+    "targetMuscleGroups": ["cardio", "core"],
+    "days": [
+      {
+        "day": 1,
+        "name": "Cardio Endurance",
+        "exercises": [
+          {"exerciseId": "treadmill_run", "sets": 1, "reps": "20-30 dk"},
+          {"exerciseId": "cycling", "sets": 1, "reps": "15 dk"},
+          {"exerciseId": "plank", "sets": 3, "reps": "30-45s"},
+          {"exerciseId": "crunch", "sets": 3, "reps": "20"},
+          {"exerciseId": "russian_twist", "sets": 3, "reps": "20"}
+        ]
+      },
+      {
+        "day": 2,
+        "name": "HIIT & Core",
+        "exercises": [
+          {"exerciseId": "jump_rope", "sets": 5, "reps": "60s"},
+          {"exerciseId": "burpee", "sets": 4, "reps": "10"},
+          {"exerciseId": "mountain_climber", "sets": 4, "reps": "30"},
+          {"exerciseId": "leg_raise", "sets": 3, "reps": "15"},
+          {"exerciseId": "plank", "sets": 3, "reps": "45-60s"}
+        ]
+      },
+      {
+        "day": 3,
+        "name": "Low Impact Cardio",
+        "exercises": [
+          {"exerciseId": "elliptical", "sets": 1, "reps": "20 dk"},
+          {"exerciseId": "rowing_machine", "sets": 1, "reps": "15 dk"},
+          {"exerciseId": "crunch", "sets": 3, "reps": "20"},
+          {"exerciseId": "russian_twist", "sets": 3, "reps": "20"},
+          {"exerciseId": "leg_raise", "sets": 3, "reps": "15"}
+        ]
+      }
+    ],
+    "isBuiltIn": true
+  }
+]
