@@ -38,7 +38,7 @@ function getPeriodDays(period: string): number {
 export function ProgressScreen() {
   const userId = useUserStore((s) => s.userId);
   const theme = useTheme();
-  const [period, setPeriod] = React.useState('30');
+  const [period, setPeriod] = useState('30');
 
   const [weightData, setWeightData] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
   const [calorieData, setCalorieData] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
