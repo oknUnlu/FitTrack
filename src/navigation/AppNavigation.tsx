@@ -12,6 +12,7 @@ import { ProgressScreen } from '../screens/Progress/ProgressScreen';
 import { ProfileScreen } from '../screens/Profile/ProfileScreen';
 import { AICoachScreen } from '../screens/AICoach/AICoachScreen';
 import { ToolsScreen } from '../screens/Tools/ToolsScreen';
+import { ActiveWorkoutScreen } from '../screens/Workout/ActiveWorkoutScreen';
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -101,6 +102,11 @@ export function AppNavigation() {
           name="Tools"
           component={ToolsScreen}
           options={{ headerShown: true, title: 'Araçlar', animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="ActiveWorkout"
+          component={ActiveWorkoutScreen}
+          options={{ headerShown: false, animation: 'slide_from_bottom' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
