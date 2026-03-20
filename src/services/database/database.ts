@@ -61,4 +61,22 @@ export async function seedDatabase(): Promise<void> {
       [t.id, t.name, t.description, t.estimatedDuration, t.difficulty, JSON.stringify(t.targetMuscleGroups), JSON.stringify(t.days), Date.now()]
     );
   }
+
+  // Seed default user if not exists
+  const userResult = await database.getFirstAsync(
+    'SELECT COUNT(*) as count FROM users WHERE id = ?',
+    ['default_user']
+  );
+  if (!userResult || (userResult as any).count === 0) {
+    const { calculateBMR, calculateTDEE, calculateMacroTargets, calculateWaterNeeds } = require('../../utils/calculations');
+    const bmr = calculateBMR(70, 170, 30, 'male');
+    const tdee = calculateTDEE(bmr, 'moderate');
+    const macros = calculateMacroTargets(tdee, 'maintain');
+    const water = calculateWaterNeeds(70, 'moderate');
+    await database.runAsync(
+      `INSERT OR IGNORE INTO users (id, name, email, height, weight, age, gender, activity_level, goal, tdee, protein_target_g, carbs_target_g, fat_target_g, water_target_ml, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['default_user', 'Kullanıcı', 'user@fittrack.app', 170, 70, 30, 'male', 'moderate', 'maintain', tdee, macros.protein, macros.carbs, macros.fat, water, Date.now()]
+    );
+  }
 }

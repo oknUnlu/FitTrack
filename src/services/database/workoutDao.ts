@@ -177,3 +177,12 @@ export async function getBuiltInTemplates(): Promise<WorkoutTemplate[]> {
   const rows = await db.getAllAsync('SELECT * FROM workout_templates WHERE is_built_in = 1 ORDER BY name ASC');
   return rows.map(rowToTemplate);
 }
+
+export async function getSessionsByDateRange(userId: string, startDate: string, endDate: string): Promise<WorkoutSession[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync(
+    'SELECT * FROM workout_sessions WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date ASC',
+    [userId, startDate, endDate]
+  );
+  return rows.map(rowToSession);
+}

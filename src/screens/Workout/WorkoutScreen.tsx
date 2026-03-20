@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, FlatList, Platform } from 'react-native';
 import { Text, Card, Button, Chip, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useUserStore } from '../../store/userStore';
 import { getRecentSessions, getBuiltInTemplates, WorkoutSession, WorkoutTemplate } from '../../services/database/workoutDao';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 
 export function WorkoutScreen() {
   const userId = useUserStore((s) => s.userId);
+  const navigation = useNavigation<any>();
   const theme = useTheme();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
@@ -40,7 +42,7 @@ export function WorkoutScreen() {
         mode="contained"
         icon="play"
         style={{ backgroundColor: colors.primary, marginBottom: spacing.lg, borderRadius: borderRadius.md }}
-        onPress={() => {}}
+        onPress={() => navigation.navigate('ActiveWorkout')}
       >
         Boş Antrenman Başlat
       </Button>

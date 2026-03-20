@@ -4,6 +4,11 @@ import { Text, TextInput, IconButton, Chip, useTheme } from 'react-native-paper'
 import { useUserStore } from '../../store/userStore';
 import { sendMessage, getChatHistory, getTodayRequestCount, getMaxDailyRequests } from '../../services/ai';
 import { ConversationMessage } from '../../services/ai/types';
+import { getUserById } from '../../services/database/userDao';
+import { getMealLogsByDate } from '../../services/database/mealDao';
+import { getRecentSessions } from '../../services/database/workoutDao';
+import { buildContextString } from '../../services/ai/promptBuilder';
+import { todayString } from '../../utils/helpers';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 
 const QUICK_PROMPTS = [
@@ -49,7 +54,38 @@ export function AICoachScreen() {
     setLoading(true);
 
     try {
-      const response = await sendMessage(userId, msg, '');
+      let context = '';
+      if (Platform.OS !== 'web') {
+        try {
+          const [user, todayMeals, recentSessions] = await Promise.all([
+            getUserById(userId),
+            getMealLogsByDate(userId, todayString()),
+            getRecentSessions(userId, 7),
+          ]);
+          if (user) {
+            const todayCalories = todayMeals.reduce((s, m) => s + m.caloriesConsumed, 0);
+            const completedWorkouts = recentSessions.filter((s) => s.completedAt !== null);
+            const workoutSummary = completedWorkouts.length > 0
+              ? `${completedWorkouts.length} antrenman tamamlandı`
+              : 'Son 7 günde antrenman yok';
+            context = buildContextString({
+              userName: user.name,
+              age: user.age,
+              gender: user.gender,
+              height: user.height,
+              weight: user.weight,
+              goal: user.goal,
+              activityLevel: user.activityLevel,
+              tdee: user.tdee,
+              todayCalories,
+              recentWorkoutSummary: workoutSummary,
+            });
+          }
+        } catch (ctxErr) {
+          console.warn('Context build failed:', ctxErr);
+        }
+      }
+      const response = await sendMessage(userId, msg, context);
       const aiMsg: ConversationMessage = {
         id: (Date.now() + 1).toString(), role: 'assistant', content: response.message,
         source: response.source, timestamp: Date.now(),
