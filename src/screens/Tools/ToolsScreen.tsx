@@ -7,9 +7,11 @@ import {
   calculateBMR, calculateTDEE, calculateCalorieTarget, calculateMacroTargets,
   calculate1RM, calculateBMI, calculateWaterNeeds, calculateIdealWeightHamwi, calculateIdealWeightDevine,
 } from '../../utils/calculations';
+import { useLanguage } from '../../i18n';
 
 export function ToolsScreen() {
   const theme = useTheme();
+  const { t } = useLanguage();
   const [activeTool, setActiveTool] = useState('tdee');
 
   return (
@@ -19,20 +21,20 @@ export function ToolsScreen() {
     >
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing.md }}>
         {[
-          { key: 'tdee', label: 'TDEE', icon: 'fire' },
-          { key: '1rm', label: '1RM', icon: 'weight-lifter' },
-          { key: 'bmi', label: 'BMI', icon: 'scale-bathroom' },
-          { key: 'water', label: 'Su', icon: 'water' },
-          { key: 'ideal', label: 'İdeal Kilo', icon: 'human' },
-        ].map((t) => (
+          { key: 'tdee', label: t.tools.tdee, icon: 'fire' },
+          { key: '1rm', label: t.tools.oneRm, icon: 'weight-lifter' },
+          { key: 'bmi', label: t.tools.bmi, icon: 'scale-bathroom' },
+          { key: 'water', label: t.tools.water, icon: 'water' },
+          { key: 'ideal', label: t.tools.idealWeight, icon: 'human' },
+        ].map((tool) => (
           <Button
-            key={t.key}
-            mode={activeTool === t.key ? 'contained' : 'outlined'}
-            onPress={() => setActiveTool(t.key)}
+            key={tool.key}
+            mode={activeTool === tool.key ? 'contained' : 'outlined'}
+            onPress={() => setActiveTool(tool.key)}
             compact
-            icon={t.icon}
+            icon={tool.icon}
           >
-            {t.label}
+            {tool.label}
           </Button>
         ))}
       </View>
@@ -47,6 +49,7 @@ export function ToolsScreen() {
 }
 
 function TDEECalculator() {
+  const { t } = useLanguage();
   const [weight, setWeight] = useState('80');
   const [height, setHeight] = useState('180');
   const [age, setAge] = useState('25');
@@ -59,27 +62,27 @@ function TDEECalculator() {
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>TDEE Hesaplayıcı</Text>
-        <TextInput label="Kilo (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} />
-        <TextInput label="Boy (cm)" value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} />
-        <TextInput label="Yaş" value={age} onChangeText={setAge} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.tdeeCalc}</Text>
+        <TextInput label={t.tools.weight} value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <TextInput label={t.tools.height} value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <TextInput label={t.tools.age} value={age} onChangeText={setAge} keyboardType="numeric" mode="outlined" style={styles.input} />
 
         <SegmentedButtons value={gender} onValueChange={setGender}
-          buttons={[{ value: 'male', label: 'Erkek' }, { value: 'female', label: 'Kadın' }]}
+          buttons={[{ value: 'male', label: t.tools.male }, { value: 'female', label: t.tools.female }]}
           style={styles.input} />
 
         <SegmentedButtons value={activity} onValueChange={setActivity}
           buttons={[
-            { value: 'sedentary', label: 'Hareketsiz' }, { value: 'light', label: 'Hafif' },
-            { value: 'moderate', label: 'Orta' }, { value: 'active', label: 'Aktif' },
+            { value: 'sedentary', label: t.tools.sedentary }, { value: 'light', label: t.tools.light },
+            { value: 'moderate', label: t.tools.moderate }, { value: 'active', label: t.tools.activeLevel },
           ]}
           style={styles.input} />
 
         <View style={styles.resultBox}>
           <Text style={styles.resultLabel}>BMR</Text>
-          <Text style={styles.resultValue}>{Math.round(bmr)} kcal</Text>
+          <Text style={styles.resultValue}>{Math.round(bmr)} {t.common.kcal}</Text>
           <Text style={[styles.resultLabel, { marginTop: 8 }]}>TDEE</Text>
-          <Text style={[styles.resultValue, { color: colors.primary }]}>{tdee} kcal</Text>
+          <Text style={[styles.resultValue, { color: colors.primary }]}>{tdee} {t.common.kcal}</Text>
         </View>
       </Card.Content>
     </Card>
@@ -87,6 +90,7 @@ function TDEECalculator() {
 }
 
 function OneRMCalculator() {
+  const { t } = useLanguage();
   const [weight, setWeight] = useState('100');
   const [reps, setReps] = useState('5');
   const result = calculate1RM(+weight, +reps);
@@ -94,14 +98,14 @@ function OneRMCalculator() {
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>1RM Hesaplayıcı</Text>
-        <TextInput label="Ağırlık (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} />
-        <TextInput label="Tekrar Sayısı" value={reps} onChangeText={setReps} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.oneRmCalc}</Text>
+        <TextInput label={t.tools.weight} value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <TextInput label={t.tools.repCount} value={reps} onChangeText={setReps} keyboardType="numeric" mode="outlined" style={styles.input} />
         <View style={styles.resultBox}>
-          <Text style={styles.resultLabel}>Epley: {result.epley.toFixed(1)} kg</Text>
-          <Text style={styles.resultLabel}>Brzycki: {result.brzycki.toFixed(1)} kg</Text>
+          <Text style={styles.resultLabel}>Epley: {result.epley.toFixed(1)} {t.common.kg}</Text>
+          <Text style={styles.resultLabel}>Brzycki: {result.brzycki.toFixed(1)} {t.common.kg}</Text>
           <Text style={[styles.resultValue, { color: colors.primary, marginTop: 4 }]}>
-            Ortalama: {result.average.toFixed(1)} kg
+            {t.tools.average}: {result.average.toFixed(1)} {t.common.kg}
           </Text>
         </View>
       </Card.Content>
@@ -110,17 +114,18 @@ function OneRMCalculator() {
 }
 
 function BMICalculator() {
+  const { t } = useLanguage();
   const [weight, setWeight] = useState('80');
   const [height, setHeight] = useState('180');
   const bmi = calculateBMI(+weight, +height);
-  const category = bmi < 18.5 ? 'Zayıf' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Fazla Kilolu' : 'Obez';
+  const category = bmi < 18.5 ? t.tools.underweight : bmi < 25 ? t.tools.normal : bmi < 30 ? t.tools.overweight : t.tools.obese;
 
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>BMI Hesaplayıcı</Text>
-        <TextInput label="Kilo (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} />
-        <TextInput label="Boy (cm)" value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.bmiCalc}</Text>
+        <TextInput label={t.tools.weight} value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <TextInput label={t.tools.height} value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} />
         <View style={styles.resultBox}>
           <Text style={[styles.resultValue, { color: colors.primary }]}>{bmi.toFixed(1)}</Text>
           <Text style={styles.resultLabel}>{category}</Text>
@@ -131,6 +136,7 @@ function BMICalculator() {
 }
 
 function WaterCalculator() {
+  const { t } = useLanguage();
   const [weight, setWeight] = useState('70');
   const [activity, setActivity] = useState('moderate');
   const water = calculateWaterNeeds(+weight, activity);
@@ -138,14 +144,14 @@ function WaterCalculator() {
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>Su İhtiyacı</Text>
-        <TextInput label="Kilo (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.waterNeeds}</Text>
+        <TextInput label={t.tools.weight} value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} />
         <SegmentedButtons value={activity} onValueChange={setActivity}
-          buttons={[{ value: 'sedentary', label: 'Hareketsiz' }, { value: 'active', label: 'Aktif' }]}
+          buttons={[{ value: 'sedentary', label: t.tools.sedentary }, { value: 'active', label: t.tools.activeLevel }]}
           style={styles.input} />
         <View style={styles.resultBox}>
-          <Text style={[styles.resultValue, { color: colors.water }]}>{water} ml</Text>
-          <Text style={styles.resultLabel}>{Math.round(water / 250)} bardak / gün</Text>
+          <Text style={[styles.resultValue, { color: colors.water }]}>{water} {t.common.ml}</Text>
+          <Text style={styles.resultLabel}>{t.tools.glassesPerDay}</Text>
         </View>
       </Card.Content>
     </Card>
@@ -153,6 +159,7 @@ function WaterCalculator() {
 }
 
 function IdealWeightCalculator() {
+  const { t } = useLanguage();
   const [height, setHeight] = useState('175');
   const [gender, setGender] = useState('male');
   const hamwi = calculateIdealWeightHamwi(+height, gender);
@@ -161,16 +168,16 @@ function IdealWeightCalculator() {
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>İdeal Kilo</Text>
-        <TextInput label="Boy (cm)" value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} />
+        <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.idealWeight}</Text>
+        <TextInput label={t.tools.height} value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} />
         <SegmentedButtons value={gender} onValueChange={setGender}
-          buttons={[{ value: 'male', label: 'Erkek' }, { value: 'female', label: 'Kadın' }]}
+          buttons={[{ value: 'male', label: t.tools.male }, { value: 'female', label: t.tools.female }]}
           style={styles.input} />
         <View style={styles.resultBox}>
-          <Text style={styles.resultLabel}>Hamwi: {hamwi.toFixed(1)} kg</Text>
-          <Text style={styles.resultLabel}>Devine: {devine.toFixed(1)} kg</Text>
+          <Text style={styles.resultLabel}>Hamwi: {hamwi.toFixed(1)} {t.common.kg}</Text>
+          <Text style={styles.resultLabel}>Devine: {devine.toFixed(1)} {t.common.kg}</Text>
           <Text style={[styles.resultValue, { color: colors.primary, marginTop: 4 }]}>
-            Ortalama: {((hamwi + devine) / 2).toFixed(1)} kg
+            {t.tools.average}: {((hamwi + devine) / 2).toFixed(1)} {t.common.kg}
           </Text>
         </View>
       </Card.Content>

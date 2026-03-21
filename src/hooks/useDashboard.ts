@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { format, subDays } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '../utils/helpers';
 import { useUserStore } from '../store/userStore';
+import { useMealStore } from '../store/mealStore';
 import { getUserById } from '../services/database/userDao';
 import { getMealLogsByDate, getMealLogsByDateRange } from '../services/database/mealDao';
 import { getSessionsByDate, getTotalCaloriesBurnedByDate, getSessionsByDateRange } from '../services/database/workoutDao';
@@ -40,6 +42,7 @@ const defaultSummary: DailySummary = {
 
 export function useDashboard() {
   const userId = useUserStore((s) => s.userId);
+  const webMeals = useMealStore((s) => s.meals);
   const [summary, setSummary] = useState<DailySummary>(defaultSummary);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +52,19 @@ export function useDashboard() {
       setLoading(true);
 
       if (Platform.OS === 'web') {
-        // SQLite not available on web — use defaults
-        setSummary(defaultSummary);
+        const today = todayString();
+        const todayMeals = webMeals.filter((m) => m.date === today);
+        const caloriesConsumed = todayMeals.reduce((s, m) => s + m.caloriesConsumed, 0);
+        const proteinConsumed = todayMeals.reduce((s, m) => s + m.proteinConsumed, 0);
+        const carbsConsumed = todayMeals.reduce((s, m) => s + m.carbsConsumed, 0);
+        const fatConsumed = todayMeals.reduce((s, m) => s + m.fatConsumed, 0);
+        setSummary({
+          ...defaultSummary,
+          caloriesConsumed,
+          proteinConsumed,
+          carbsConsumed,
+          fatConsumed,
+        });
         setError(null);
         return;
       }
@@ -108,9 +122,18 @@ export function useDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, webMeals]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Refresh data when the screen regains focus (e.g. switching back from Calorie tab)
+  const navigation = useNavigation();
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadData();
+    });
+    return unsubscribe;
+  }, [navigation, loadData]);
 
   const addWater = useCallback(async (amountMl: number) => {
     if (Platform.OS !== 'web') {
@@ -125,7 +148,7 @@ export function useDashboard() {
         await upsertWaterLog(updated);
       } else {
         await upsertWaterLog({
-          id: uuidv4(), userId, date: today, totalMl: amountMl,
+          id: generateId(), userId, date: today, totalMl: amountMl,
           entries: [{ time: Date.now(), amount: amountMl }],
         });
       }

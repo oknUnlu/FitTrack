@@ -12,7 +12,9 @@
       "resizeMode": "contain"
     },
     "newArchEnabled": true,
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fittrack.app",
@@ -26,13 +28,19 @@
         "backgroundColor": "#4CAF50"
       },
       "package": "com.fittrack.app",
-      "permissions": ["CAMERA", "VIBRATE", "NOTIFICATIONS"]
+      "permissions": [
+        "CAMERA",
+        "VIBRATE",
+        "NOTIFICATIONS"
+      ]
     },
     "plugins": [
       "expo-camera",
       "expo-notifications",
       "expo-secure-store",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-asset",
+      "expo-font"
     ]
   }
 }

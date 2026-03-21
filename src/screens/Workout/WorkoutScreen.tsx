@@ -6,11 +6,13 @@ import { useNavigation } from '@react-navigation/native';
 import { useUserStore } from '../../store/userStore';
 import { getRecentSessions, getBuiltInTemplates, WorkoutSession, WorkoutTemplate } from '../../services/database/workoutDao';
 import { colors, spacing, borderRadius } from '../../theme/theme';
+import { useLanguage } from '../../i18n';
 
 export function WorkoutScreen() {
   const userId = useUserStore((s) => s.userId);
   const navigation = useNavigation<any>();
   const theme = useTheme();
+  const { t } = useLanguage();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
 
@@ -18,12 +20,12 @@ export function WorkoutScreen() {
     if (Platform.OS === 'web') return;
     (async () => {
       try {
-        const [s, t] = await Promise.all([
+        const [sessionsData, templatesData] = await Promise.all([
           getRecentSessions(userId),
           getBuiltInTemplates(),
         ]);
-        setSessions(s);
-        setTemplates(t);
+        setSessions(sessionsData);
+        setTemplates(templatesData);
       } catch (e) {
         console.warn('WorkoutScreen load failed:', e);
       }
@@ -35,7 +37,7 @@ export function WorkoutScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
     >
-      <Text variant="headlineSmall" style={styles.title}>Antrenman</Text>
+      <Text variant="headlineSmall" style={styles.title}>{t.workout.title}</Text>
 
       {/* Start empty workout */}
       <Button
@@ -44,15 +46,15 @@ export function WorkoutScreen() {
         style={{ backgroundColor: colors.primary, marginBottom: spacing.lg, borderRadius: borderRadius.md }}
         onPress={() => navigation.navigate('ActiveWorkout')}
       >
-        Boş Antrenman Başlat
+        {t.workout.startEmpty}
       </Button>
 
       {/* Templates */}
-      <Text variant="titleMedium" style={styles.sectionTitle}>Hazır Programlar</Text>
+      <Text variant="titleMedium" style={styles.sectionTitle}>{t.workout.builtInPrograms}</Text>
       <FlatList
         horizontal
         data={templates}
-        keyExtractor={(t) => t.id}
+        keyExtractor={(tmpl) => tmpl.id}
         showsHorizontalScrollIndicator={false}
         renderItem={({ item }) => (
           <Card style={styles.templateCard} mode="elevated">
@@ -61,8 +63,8 @@ export function WorkoutScreen() {
               <Text style={{ color: '#999', fontSize: 11, marginTop: 4 }}>{item.description}</Text>
               <View style={{ flexDirection: 'row', marginTop: 8, gap: 4, flexWrap: 'wrap' }}>
                 <Chip compact textStyle={{ fontSize: 10 }}>{item.difficulty}</Chip>
-                <Chip compact textStyle={{ fontSize: 10 }}>{item.days.length} gün</Chip>
-                <Chip compact textStyle={{ fontSize: 10 }}>{item.estimatedDuration} dk</Chip>
+                <Chip compact textStyle={{ fontSize: 10 }}>{item.days.length} {t.common.days}</Chip>
+                <Chip compact textStyle={{ fontSize: 10 }}>{item.estimatedDuration} {t.common.min}</Chip>
               </View>
             </Card.Content>
           </Card>
@@ -71,12 +73,12 @@ export function WorkoutScreen() {
       />
 
       {/* Recent Sessions */}
-      <Text variant="titleMedium" style={styles.sectionTitle}>Son Antrenmanlar</Text>
+      <Text variant="titleMedium" style={styles.sectionTitle}>{t.workout.recentWorkouts}</Text>
       {sessions.length === 0 ? (
         <Card style={styles.emptyCard} mode="elevated">
           <Card.Content style={{ alignItems: 'center', padding: spacing.lg }}>
             <MaterialCommunityIcons name="dumbbell" size={48} color="#ccc" />
-            <Text style={{ color: '#999', marginTop: 8 }}>Henüz antrenman kaydı yok</Text>
+            <Text style={{ color: '#999', marginTop: 8 }}>{t.workout.noRecords}</Text>
           </Card.Content>
         </Card>
       ) : (
@@ -88,8 +90,8 @@ export function WorkoutScreen() {
                 <Text style={{ color: '#999', fontSize: 12 }}>{s.date}</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontWeight: '600' }}>{s.durationMinutes} dk</Text>
-                <Text style={{ color: colors.orange, fontSize: 12 }}>{s.caloriesBurned} kcal</Text>
+                <Text style={{ fontWeight: '600' }}>{s.durationMinutes} {t.common.min}</Text>
+                <Text style={{ color: colors.orange, fontSize: 12 }}>{s.caloriesBurned} {t.common.kcal}</Text>
               </View>
             </Card.Content>
           </Card>

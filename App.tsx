@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Platform, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppNavigation } from './src/navigation/AppNavigation';
+import { LanguageProvider } from './src/i18n';
 import { useThemeStore } from './src/store/themeStore';
 import { lightTheme, darkTheme } from './src/theme/theme';
 import { initDatabase, seedDatabase } from './src/services/database/database';
@@ -41,8 +42,10 @@ export default function App() {
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-          <AppNavigation />
+          <LanguageProvider>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+            <AppNavigation />
+          </LanguageProvider>
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

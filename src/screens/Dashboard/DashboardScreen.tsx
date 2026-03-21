@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Text, Card, Button, FAB, Portal, useTheme, IconButton } from 'react-native-paper';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Pressable, Animated, Dimensions } from 'react-native';
+import { Text, Card, Button, FAB, useTheme, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ProgressRing } from '../../components/ProgressRing';
 import { ShimmerEffect } from '../../components/ShimmerEffect';
 import { useDashboard, DailySummary } from '../../hooks/useDashboard';
 import { colors, spacing, borderRadius } from '../../theme/theme';
-import { DAYS_TR, getProgressColor } from '../../utils/helpers';
+import { getProgressColor } from '../../utils/helpers';
+import { useLanguage } from '../../i18n';
 
 export function DashboardScreen() {
   const { summary, loading, error, addWater } = useDashboard();
   const navigation = useNavigation<any>();
   const theme = useTheme();
+  const { t } = useLanguage();
   const [fabOpen, setFabOpen] = useState(false);
 
   if (loading) return <LoadingState />;
@@ -23,7 +25,7 @@ export function DashboardScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <Text variant="headlineSmall" style={styles.header}>
-          Merhaba! 👋
+          {t.dashboard.greeting} 👋
         </Text>
 
         {/* Calorie Ring Card */}
@@ -52,22 +54,31 @@ export function DashboardScreen() {
         <AICoachCard onPress={() => navigation.navigate('AICoach')} />
       </ScrollView>
 
-      {/* FAB */}
-      <Portal>
-        <FAB.Group
-          open={fabOpen}
-          visible
-          icon={fabOpen ? 'close' : 'plus'}
-          actions={[
-            { icon: 'silverware-fork-knife', label: 'Öğün Ekle', onPress: () => navigation.navigate('Calories'), color: colors.orange },
-            { icon: 'dumbbell', label: 'Antrenman', onPress: () => navigation.navigate('Workout'), color: colors.secondary },
-            { icon: 'water', label: 'Su Ekle (+250ml)', onPress: () => addWater(250), color: colors.water },
-          ]}
-          onStateChange={({ open }) => setFabOpen(open)}
-          fabStyle={{ backgroundColor: colors.primary }}
-          color="#fff"
-        />
-      </Portal>
+      {/* FAB Menu */}
+      {fabOpen && (
+        <Pressable style={styles.fabOverlay} onPress={() => setFabOpen(false)}>
+          <View style={styles.fabActions}>
+            {[
+              { icon: 'water' as const, label: t.dashboard.addWater, onPress: () => { addWater(250); setFabOpen(false); }, color: colors.water },
+              { icon: 'dumbbell' as const, label: t.tabs.workout, onPress: () => { navigation.navigate('Workout'); setFabOpen(false); }, color: colors.secondary },
+              { icon: 'silverware-fork-knife' as const, label: t.dashboard.addMeal, onPress: () => { navigation.navigate('Calories'); setFabOpen(false); }, color: colors.orange },
+            ].map((action, i) => (
+              <TouchableOpacity key={i} style={styles.fabActionRow} onPress={action.onPress} activeOpacity={0.7}>
+                <Text style={styles.fabActionLabel}>{action.label}</Text>
+                <View style={[styles.fabActionIcon, { backgroundColor: action.color }]}>
+                  <MaterialCommunityIcons name={action.icon} size={20} color="#fff" />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      )}
+      <FAB
+        icon={fabOpen ? 'close' : 'plus'}
+        onPress={() => setFabOpen(!fabOpen)}
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        color="#fff"
+      />
     </View>
   );
 }
@@ -76,6 +87,7 @@ export function DashboardScreen() {
 // CALORIE RING CARD
 // ═════════════════════════════════════════
 function CalorieRingCard({ summary }: { summary: DailySummary }) {
+  const { t } = useLanguage();
   const net = summary.caloriesConsumed - summary.caloriesBurned;
   const remaining = Math.max(summary.calorieTarget - net, 0);
   const progress = summary.calorieTarget > 0 ? net / summary.calorieTarget : 0;
@@ -84,7 +96,7 @@ function CalorieRingCard({ summary }: { summary: DailySummary }) {
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content style={{ alignItems: 'center' }}>
-        <Text variant="titleMedium" style={styles.cardTitle}>Günlük Kalori</Text>
+        <Text variant="titleMedium" style={styles.cardTitle}>{t.dashboard.dailyCalories}</Text>
 
         <View style={{ marginVertical: spacing.md }}>
           <ProgressRing
@@ -94,14 +106,14 @@ function CalorieRingCard({ summary }: { summary: DailySummary }) {
             color={ringColor}
             bgColor="#E8E8E8"
             centerLabel={`${Math.round(remaining)}`}
-            centerSubLabel="kalan kcal"
+            centerSubLabel={t.dashboard.remainingKcal}
           />
         </View>
 
         <View style={styles.calorieStatsRow}>
-          <CalorieStat label="Alınan" value={Math.round(summary.caloriesConsumed)} color={colors.calorieGreen} />
-          <CalorieStat label="Yakılan" value={summary.caloriesBurned} color={colors.orange} />
-          <CalorieStat label="Hedef" value={summary.calorieTarget} color={colors.secondary} />
+          <CalorieStat label={t.dashboard.consumed} value={Math.round(summary.caloriesConsumed)} color={colors.calorieGreen} />
+          <CalorieStat label={t.dashboard.burned} value={summary.caloriesBurned} color={colors.orange} />
+          <CalorieStat label={t.dashboard.goal} value={summary.calorieTarget} color={colors.secondary} />
         </View>
       </Card.Content>
     </Card>
@@ -121,13 +133,14 @@ function CalorieStat({ label, value, color }: { label: string; value: number; co
 // MACRO CARD
 // ═════════════════════════════════════════
 function MacroCard({ summary }: { summary: DailySummary }) {
+  const { t } = useLanguage();
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content>
-        <Text variant="titleMedium" style={styles.cardTitle}>Makro Besinler</Text>
-        <MacroBar label="Protein" current={summary.proteinConsumed} target={summary.proteinTarget} color={colors.protein} />
-        <MacroBar label="Karbonhidrat" current={summary.carbsConsumed} target={summary.carbsTarget} color={colors.carbs} />
-        <MacroBar label="Yağ" current={summary.fatConsumed} target={summary.fatTarget} color={colors.fat} />
+        <Text variant="titleMedium" style={styles.cardTitle}>{t.dashboard.macronutrients}</Text>
+        <MacroBar label={t.dashboard.protein} current={summary.proteinConsumed} target={summary.proteinTarget} color={colors.protein} />
+        <MacroBar label={t.dashboard.carbs} current={summary.carbsConsumed} target={summary.carbsTarget} color={colors.carbs} />
+        <MacroBar label={t.dashboard.fat} current={summary.fatConsumed} target={summary.fatTarget} color={colors.fat} />
       </Card.Content>
     </Card>
   );
@@ -152,6 +165,7 @@ function MacroBar({ label, current, target, color }: { label: string; current: n
 // WATER CARD
 // ═════════════════════════════════════════
 function WaterCard({ consumed, target, onAdd }: { consumed: number; target: number; onAdd: (ml: number) => void }) {
+  const { t } = useLanguage();
   const progress = target > 0 ? consumed / target : 0;
   const glasses = Math.floor(consumed / 250);
 
@@ -161,9 +175,9 @@ function WaterCard({ consumed, target, onAdd }: { consumed: number; target: numb
         <View style={styles.rowBetween}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <MaterialCommunityIcons name="water" size={24} color={colors.water} />
-            <Text variant="titleMedium" style={[styles.cardTitle, { marginLeft: 8, marginBottom: 0 }]}>Su Takibi</Text>
+            <Text variant="titleMedium" style={[styles.cardTitle, { marginLeft: 8, marginBottom: 0 }]}>{t.dashboard.waterTracking}</Text>
           </View>
-          <Text style={{ color: '#999', fontSize: 12 }}>{glasses} bardak</Text>
+          <Text style={{ color: '#999', fontSize: 12 }}>{glasses} {t.common.glasses}</Text>
         </View>
 
         <View style={{ alignItems: 'center', marginVertical: spacing.md }}>
@@ -194,13 +208,14 @@ function WaterCard({ consumed, target, onAdd }: { consumed: number; target: numb
 // WORKOUT CARD
 // ═════════════════════════════════════════
 function WorkoutCard({ summary, onStart }: { summary: DailySummary; onStart: () => void }) {
+  const { t } = useLanguage();
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
           <MaterialCommunityIcons name="dumbbell" size={24} color={colors.primary} />
           <Text variant="titleMedium" style={[styles.cardTitle, { marginLeft: 8, marginBottom: 0 }]}>
-            Bugünkü Antrenman
+            {t.dashboard.todayWorkout}
           </Text>
         </View>
 
@@ -208,16 +223,16 @@ function WorkoutCard({ summary, onStart }: { summary: DailySummary; onStart: () 
           <View style={styles.rowBetween}>
             <View>
               <Text style={{ fontWeight: '600' }}>{summary.workoutName}</Text>
-              <Text style={{ color: '#999', fontSize: 12 }}>{summary.workoutDuration} dk</Text>
+              <Text style={{ color: '#999', fontSize: 12 }}>{summary.workoutDuration} {t.common.min}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontWeight: '600', color: colors.orange }}>{summary.workoutCalories} kcal</Text>
-              <Text style={{ color: '#999', fontSize: 12 }}>yakıldı</Text>
+              <Text style={{ fontWeight: '600', color: colors.orange }}>{summary.workoutCalories} {t.common.kcal}</Text>
+              <Text style={{ color: '#999', fontSize: 12 }}>{t.dashboard.burnedLabel}</Text>
             </View>
           </View>
         ) : (
           <Button mode="contained" onPress={onStart} style={{ backgroundColor: colors.primary }} icon="play">
-            Bugün antrenman günün!
+            {t.dashboard.workoutDay}
           </Button>
         )}
       </Card.Content>
@@ -229,14 +244,16 @@ function WorkoutCard({ summary, onStart }: { summary: DailySummary; onStart: () 
 // STREAK CARD
 // ═════════════════════════════════════════
 function StreakCard({ streak, weeklyActive }: { streak: number; weeklyActive: boolean[] }) {
+  const { t } = useLanguage();
+  const daysArray = [t.daysShort.mon, t.daysShort.tue, t.daysShort.wed, t.daysShort.thu, t.daysShort.fri, t.daysShort.sat, t.daysShort.sun];
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content style={styles.rowBetween}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ fontSize: 28 }}>🔥</Text>
           <View style={{ marginLeft: spacing.sm }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{streak} gün seri</Text>
-            <Text style={{ color: '#999', fontSize: 12 }}>Devam et!</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{streak} {t.dashboard.dayStreak}</Text>
+            <Text style={{ color: '#999', fontSize: 12 }}>{t.dashboard.keepGoing}</Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 4 }}>
@@ -246,7 +263,7 @@ function StreakCard({ streak, weeklyActive }: { streak: number; weeklyActive: bo
               style={[styles.dayDot, { backgroundColor: active ? colors.primary : '#E0E0E0' }]}
             >
               <Text style={{ fontSize: 8, color: active ? '#fff' : '#999', fontWeight: 'bold' }}>
-                {DAYS_TR[i]}
+                {daysArray[i]}
               </Text>
             </View>
           ))}
@@ -260,14 +277,15 @@ function StreakCard({ streak, weeklyActive }: { streak: number; weeklyActive: bo
 // AI COACH MINI CARD
 // ═════════════════════════════════════════
 function AICoachCard({ onPress }: { onPress: () => void }) {
+  const { t } = useLanguage();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
       <Card style={[styles.card, { backgroundColor: '#E8F5E9' }]} mode="elevated">
         <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons name="robot" size={32} color={colors.primary} />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <Text style={{ fontWeight: 'bold' }}>AI Fitness Koçu</Text>
-            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>AI koçuna sor →</Text>
+            <Text style={{ fontWeight: 'bold' }}>{t.dashboard.aiCoach}</Text>
+            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>{t.dashboard.askAiCoach}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
         </Card.Content>
@@ -314,4 +332,10 @@ const styles = StyleSheet.create({
   waterButtons: { flexDirection: 'row', justifyContent: 'space-evenly' },
   waterBtn: { flex: 0.45 },
   dayDot: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  fab: { position: 'absolute', right: 16, bottom: 84, borderRadius: 16 },
+  fabOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 10 },
+  fabActions: { position: 'absolute', right: 24, bottom: 152, gap: 12 },
+  fabActionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
+  fabActionLabel: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, fontSize: 13, fontWeight: '500', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2 },
+  fabActionIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
 });

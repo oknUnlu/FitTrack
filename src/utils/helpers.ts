@@ -1,6 +1,10 @@
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
+export function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+}
+
 export function todayString(): string {
   return format(new Date(), 'yyyy-MM-dd');
 }

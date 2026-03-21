@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DashboardScreen } from '../screens/Dashboard/DashboardScreen';
 import { CalorieScreen } from '../screens/Calorie/CalorieScreen';
@@ -13,6 +14,7 @@ import { ProfileScreen } from '../screens/Profile/ProfileScreen';
 import { AICoachScreen } from '../screens/AICoach/AICoachScreen';
 import { ToolsScreen } from '../screens/Tools/ToolsScreen';
 import { ActiveWorkoutScreen } from '../screens/Workout/ActiveWorkoutScreen';
+import { useLanguage } from '../i18n';
 
 export type RootStackParamList = {
   MainTabs: undefined;
@@ -34,22 +36,24 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 type TabIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-const tabConfig: {
-  name: keyof TabParamList;
-  label: string;
-  icon: TabIconName;
-  iconFocused: TabIconName;
-  component: React.ComponentType<any>;
-}[] = [
-  { name: 'Dashboard', label: 'Ana Sayfa', icon: 'home-outline', iconFocused: 'home', component: DashboardScreen },
-  { name: 'Calories', label: 'Kalori', icon: 'silverware-fork-knife', iconFocused: 'silverware-fork-knife', component: CalorieScreen },
-  { name: 'Workout', label: 'Antrenman', icon: 'dumbbell', iconFocused: 'dumbbell', component: WorkoutScreen },
-  { name: 'Progress', label: 'İlerleme', icon: 'trending-up', iconFocused: 'trending-up', component: ProgressScreen },
-  { name: 'Profile', label: 'Profil', icon: 'account-outline', iconFocused: 'account', component: ProfileScreen },
-];
-
 function MainTabs() {
   const theme = useTheme();
+  const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
+
+  const tabConfig: {
+    name: keyof TabParamList;
+    label: string;
+    icon: TabIconName;
+    iconFocused: TabIconName;
+    component: React.ComponentType<any>;
+  }[] = [
+    { name: 'Dashboard', label: t.tabs.home, icon: 'home-outline', iconFocused: 'home', component: DashboardScreen },
+    { name: 'Calories', label: t.tabs.calories, icon: 'silverware-fork-knife', iconFocused: 'silverware-fork-knife', component: CalorieScreen },
+    { name: 'Workout', label: t.tabs.workout, icon: 'dumbbell', iconFocused: 'dumbbell', component: WorkoutScreen },
+    { name: 'Progress', label: t.tabs.progress, icon: 'trending-up', iconFocused: 'trending-up', component: ProgressScreen },
+    { name: 'Profile', label: t.tabs.profile, icon: 'account-outline', iconFocused: 'account', component: ProfileScreen },
+  ];
 
   return (
     <Tab.Navigator
@@ -60,8 +64,8 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.surfaceVariant,
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom + 4,
           paddingTop: 4,
         },
         tabBarLabelStyle: { fontSize: 11 },
@@ -88,27 +92,35 @@ function MainTabs() {
   );
 }
 
+function AppStack() {
+  const { t } = useLanguage();
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen
+        name="AICoach"
+        component={AICoachScreen}
+        options={{ headerShown: true, title: t.aiCoach.title, animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Tools"
+        component={ToolsScreen}
+        options={{ headerShown: true, title: t.tools.title, animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="ActiveWorkout"
+        component={ActiveWorkoutScreen}
+        options={{ headerShown: false, animation: 'slide_from_bottom' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export function AppNavigation() {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen
-          name="AICoach"
-          component={AICoachScreen}
-          options={{ headerShown: true, title: 'AI Fitness Koçu', animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="Tools"
-          component={ToolsScreen}
-          options={{ headerShown: true, title: 'Araçlar', animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="ActiveWorkout"
-          component={ActiveWorkoutScreen}
-          options={{ headerShown: false, animation: 'slide_from_bottom' }}
-        />
-      </Stack.Navigator>
+      <AppStack />
     </NavigationContainer>
   );
 }

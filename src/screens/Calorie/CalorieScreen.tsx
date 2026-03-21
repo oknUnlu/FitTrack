@@ -1,17 +1,44 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, ScrollView, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
 import { Text, Card, FAB, Searchbar, Chip, useTheme, IconButton, Button, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserStore } from '../../store/userStore';
+import { useMealStore } from '../../store/mealStore';
 import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../services/database/mealDao';
 import { searchFoodItems, FoodItem } from '../../services/database/foodDao';
 import { colors, spacing, borderRadius } from '../../theme/theme';
-import { todayString, MEAL_TYPES, formatCalories } from '../../utils/helpers';
-import { v4 as uuidv4 } from 'uuid';
+import { todayString, MEAL_TYPES, formatCalories, generateId } from '../../utils/helpers';
+import { useLanguage } from '../../i18n';
+
+// Web fallback: load foods JSON directly for search
+const foodsJsonData: any[] = require('../../assets/data/foods_tr.json');
+
+function searchFoodsLocal(query: string, limit = 20): FoodItem[] {
+  const q = query.toLowerCase();
+  return foodsJsonData
+    .filter((f: any) => f.name.toLowerCase().includes(q) || f.nameTr.toLowerCase().includes(q))
+    .slice(0, limit)
+    .map((f: any) => ({
+      id: f.id, name: f.name, nameTr: f.nameTr,
+      calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat,
+      fiber: f.fiber, sugar: f.sugar, barcode: null,
+      servingSize: f.servingSize, servingUnit: f.servingUnit,
+      isCustom: false, isFavorite: false, source: 'local',
+    }));
+}
+
+const MEAL_TYPE_KEYS: Record<string, 'breakfast' | 'lunch' | 'dinner' | 'snack'> = {
+  breakfast: 'breakfast',
+  lunch: 'lunch',
+  dinner: 'dinner',
+  snack: 'snack',
+};
 
 export function CalorieScreen() {
   const userId = useUserStore((s) => s.userId);
+  const { meals: webMeals, addMeal: addWebMeal, removeMeal: removeWebMeal } = useMealStore();
   const theme = useTheme();
+  const { t } = useLanguage();
   const [date, setDate] = useState(todayString());
   const [meals, setMeals] = useState<MealLog[]>([]);
   const [searchVisible, setSearchVisible] = useState(false);
@@ -20,24 +47,30 @@ export function CalorieScreen() {
   const [activeMealType, setActiveMealType] = useState<string>('breakfast');
 
   const loadMeals = useCallback(async () => {
-    if (Platform.OS === 'web') return;
+    if (Platform.OS === 'web') {
+      setMeals(webMeals.filter((m) => m.date === date));
+      return;
+    }
     try {
       const data = await getMealLogsByDate(userId, date);
       setMeals(data);
     } catch (e) {
       console.warn('loadMeals failed:', e);
     }
-  }, [userId, date]);
+  }, [userId, date, webMeals]);
 
   useEffect(() => { loadMeals(); }, [loadMeals]);
 
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
-    if (Platform.OS === 'web') return;
     if (query.length >= 2) {
       try {
-        const results = await searchFoodItems(query);
-        setSearchResults(results);
+        if (Platform.OS === 'web') {
+          setSearchResults(searchFoodsLocal(query));
+        } else {
+          const results = await searchFoodItems(query);
+          setSearchResults(results);
+        }
       } catch (e) {
         console.warn('searchFoodItems failed:', e);
       }
@@ -47,37 +80,49 @@ export function CalorieScreen() {
   }, []);
 
   const handleAddFood = useCallback(async (food: FoodItem) => {
-    if (Platform.OS === 'web') return;
     try {
       const meal: MealLog = {
-        id: uuidv4(), userId, date, mealType: activeMealType as any,
-        foodItemId: food.id, servingAmount: food.servingSize, servingUnit: food.servingUnit,
+        id: generateId(), userId, date, mealType: activeMealType as any,
+        foodItemId: food.nameTr || food.name, servingAmount: food.servingSize, servingUnit: food.servingUnit,
         caloriesConsumed: food.calories * food.servingSize / 100,
         proteinConsumed: food.protein * food.servingSize / 100,
         carbsConsumed: food.carbs * food.servingSize / 100,
         fatConsumed: food.fat * food.servingSize / 100,
         createdAt: Date.now(),
       };
-      await insertMealLog(meal);
+      if (Platform.OS === 'web') {
+        addWebMeal(meal);
+      } else {
+        await insertMealLog(meal);
+        loadMeals();
+      }
       setSearchVisible(false);
       setSearchQuery('');
-      loadMeals();
+      setSearchResults([]);
     } catch (e) {
       console.warn('handleAddFood failed:', e);
     }
   }, [userId, date, activeMealType, loadMeals]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (Platform.OS === 'web') return;
     try {
-      await deleteMealLog(id);
-      loadMeals();
+      if (Platform.OS === 'web') {
+        removeWebMeal(id);
+      } else {
+        await deleteMealLog(id);
+        loadMeals();
+      }
     } catch (e) {
       console.warn('handleDelete failed:', e);
     }
   }, [loadMeals]);
 
   const totalCalories = meals.reduce((s, m) => s + m.caloriesConsumed, 0);
+
+  const getMealLabel = (key: string): string => {
+    const labelKey = MEAL_TYPE_KEYS[key];
+    return labelKey ? t.calorie[labelKey] : key;
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -97,7 +142,7 @@ export function CalorieScreen() {
       </View>
 
       {/* Total */}
-      <Text style={styles.totalText}>Toplam: {formatCalories(totalCalories)}</Text>
+      <Text style={styles.totalText}>{t.calorie.total}: {formatCalories(totalCalories)}</Text>
 
       {/* Meal sections */}
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -111,9 +156,9 @@ export function CalorieScreen() {
                 <View style={styles.rowBetween}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <MaterialCommunityIcons name={mt.icon as any} size={20} color={colors.primary} />
-                    <Text variant="titleSmall" style={{ fontWeight: 'bold', marginLeft: 8 }}>{mt.label}</Text>
+                    <Text variant="titleSmall" style={{ fontWeight: 'bold', marginLeft: 8 }}>{getMealLabel(mt.key)}</Text>
                   </View>
-                  <Text style={{ color: '#999', fontSize: 12 }}>{Math.round(sectionCal)} kcal</Text>
+                  <Text style={{ color: '#999', fontSize: 12 }}>{Math.round(sectionCal)} {t.common.kcal}</Text>
                 </View>
 
                 {sectionMeals.map((m) => (
@@ -121,7 +166,7 @@ export function CalorieScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 14 }}>{m.foodItemId}</Text>
                       <Text style={{ color: '#999', fontSize: 11 }}>
-                        {Math.round(m.caloriesConsumed)} kcal · P:{Math.round(m.proteinConsumed)}g · K:{Math.round(m.carbsConsumed)}g · Y:{Math.round(m.fatConsumed)}g
+                        {Math.round(m.caloriesConsumed)} {t.common.kcal} · P:{Math.round(m.proteinConsumed)}g · K:{Math.round(m.carbsConsumed)}g · Y:{Math.round(m.fatConsumed)}g
                       </Text>
                     </View>
                     <IconButton icon="delete-outline" size={18} onPress={() => handleDelete(m.id)} />
@@ -134,7 +179,7 @@ export function CalorieScreen() {
                   onPress={() => { setActiveMealType(mt.key); setSearchVisible(true); }}
                   compact
                 >
-                  Besin ekle
+                  {t.calorie.addFood}
                 </Button>
               </Card.Content>
             </Card>
@@ -147,11 +192,11 @@ export function CalorieScreen() {
         <View style={styles.searchOverlay}>
           <View style={styles.searchContainer}>
             <View style={styles.rowBetween}>
-              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>Besin Ara</Text>
+              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{t.calorie.searchFood}</Text>
               <IconButton icon="close" onPress={() => setSearchVisible(false)} />
             </View>
             <Searchbar
-              placeholder="Yemek ara..."
+              placeholder={t.calorie.searchPlaceholder}
               value={searchQuery}
               onChangeText={handleSearch}
               style={{ marginBottom: spacing.sm }}
@@ -164,14 +209,14 @@ export function CalorieScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontWeight: '600' }}>{item.nameTr || item.name}</Text>
                     <Text style={{ color: '#999', fontSize: 11 }}>
-                      {item.calories} kcal/100g · P:{item.protein}g · K:{item.carbs}g · Y:{item.fat}g
+                      {item.calories} {t.common.kcal}/100g · P:{item.protein}g · K:{item.carbs}g · Y:{item.fat}g
                     </Text>
                   </View>
                   <MaterialCommunityIcons name="plus-circle" size={24} color={colors.primary} />
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
-                searchQuery.length >= 2 ? <Text style={{ textAlign: 'center', color: '#999' }}>Sonuç bulunamadı</Text> : null
+                searchQuery.length >= 2 ? <Text style={{ textAlign: 'center', color: '#999' }}>{t.calorie.noResults}</Text> : null
               }
             />
           </View>

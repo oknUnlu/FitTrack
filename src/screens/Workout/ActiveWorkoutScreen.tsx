@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Text, Button, Card, IconButton, TextInput, Portal, Modal, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '../../utils/helpers';
 import { useUserStore } from '../../store/userStore';
 import {
   insertSession,
@@ -14,6 +14,7 @@ import {
 } from '../../services/database/workoutDao';
 import { todayString } from '../../utils/helpers';
 import { colors, spacing, borderRadius } from '../../theme/theme';
+import { useLanguage } from '../../i18n';
 
 interface SetEntry {
   id: string;
@@ -28,6 +29,7 @@ export function ActiveWorkoutScreen() {
   const userId = useUserStore((s) => s.userId);
   const navigation = useNavigation();
   const theme = useTheme();
+  const { t } = useLanguage();
 
   const [elapsed, setElapsed] = useState(0);
   const [sets, setSets] = useState<SetEntry[]>([]);
@@ -40,7 +42,7 @@ export function ActiveWorkoutScreen() {
   const [saving, setSaving] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sessionId = useRef(uuidv4());
+  const sessionId = useRef(generateId());
 
   useEffect(() => {
     timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
@@ -75,13 +77,13 @@ export function ActiveWorkoutScreen() {
     const r = parseInt(reps) || 0;
     if (r === 0) return;
     const w = parseFloat(weight) || 0;
-    const exerciseId = selectedExercise?.id ?? uuidv4();
+    const exerciseId = selectedExercise?.id ?? generateId();
     const existingCount = sets.filter(
       (s) => s.exerciseId === exerciseId || s.exerciseName === exerciseName
     ).length;
     setSets((prev) => [
       ...prev,
-      { id: uuidv4(), exerciseName, exerciseId, weightKg: w, reps: r, setNumber: existingCount + 1 },
+      { id: generateId(), exerciseName, exerciseId, weightKg: w, reps: r, setNumber: existingCount + 1 },
     ]);
     setReps('');
     setWeight('');
@@ -110,7 +112,7 @@ export function ActiveWorkoutScreen() {
         userId,
         date: todayString(),
         templateId: null,
-        name: 'Boş Antrenman',
+        name: t.workout.emptyWorkout,
         durationMinutes,
         caloriesBurned,
         notes: null,
@@ -136,27 +138,27 @@ export function ActiveWorkoutScreen() {
       setSaving(false);
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
-      Alert.alert('Hata', 'Antrenman kaydedilemedi. Tekrar dene.');
+      Alert.alert(t.common.error, t.workout.saveError);
     }
   };
 
   const confirmFinish = () =>
     Alert.alert(
-      'Antrenmanı Bitir',
-      `${formatTime(elapsed)} süren antrenmanı kaydet ve çık?`,
+      t.workout.finishWorkout,
+      `${formatTime(elapsed)} ${t.workout.finishConfirm}`,
       [
-        { text: 'Devam Et', style: 'cancel' },
-        { text: 'Kaydet & Çık', onPress: finishWorkout },
+        { text: t.workout.continueWorkout, style: 'cancel' },
+        { text: t.workout.saveAndExit, onPress: finishWorkout },
       ]
     );
 
   const confirmDiscard = () =>
     Alert.alert(
-      'Antrenmanı İptal Et',
-      'Kaydetmeden çıkmak istiyor musun?',
+      t.workout.cancelWorkout,
+      t.workout.cancelConfirm,
       [
-        { text: 'Hayır', style: 'cancel' },
-        { text: 'Evet, Çık', style: 'destructive', onPress: () => navigation.goBack() },
+        { text: t.common.no, style: 'cancel' },
+        { text: t.workout.yesExit, style: 'destructive', onPress: () => navigation.goBack() },
       ]
     );
 
@@ -174,7 +176,7 @@ export function ActiveWorkoutScreen() {
         <IconButton icon="close" iconColor="#fff" size={22} onPress={confirmDiscard} />
         <View style={{ alignItems: 'center' }}>
           <Text style={styles.timerText}>{formatTime(elapsed)}</Text>
-          <Text style={styles.timerLabel}>Süre</Text>
+          <Text style={styles.timerLabel}>{t.workout.duration}</Text>
         </View>
         <View style={{ width: 46 }} />
       </View>
@@ -186,9 +188,9 @@ export function ActiveWorkoutScreen() {
               <Text style={styles.exerciseName}>{name}</Text>
               {groupSets.map((s) => (
                 <View key={s.id} style={styles.setRow}>
-                  <Text style={styles.setNum}>Set {s.setNumber}</Text>
-                  <Text style={styles.setValue}>{s.weightKg > 0 ? `${s.weightKg} kg` : 'Yüksüz'}</Text>
-                  <Text style={styles.setValue}>{s.reps} tekrar</Text>
+                  <Text style={styles.setNum}>{t.workout.set} {s.setNumber}</Text>
+                  <Text style={styles.setValue}>{s.weightKg > 0 ? `${s.weightKg} kg` : t.workout.unweighted}</Text>
+                  <Text style={styles.setValue}>{s.reps} {t.common.reps}</Text>
                   <IconButton icon="close-circle" iconColor="#ccc" size={18} onPress={() => handleRemoveSet(s.id)} />
                 </View>
               ))}
@@ -199,7 +201,7 @@ export function ActiveWorkoutScreen() {
         {sets.length === 0 && (
           <Card style={styles.emptyCard} mode="elevated">
             <Card.Content style={{ alignItems: 'center', padding: spacing.xl }}>
-              <Text style={{ color: '#999' }}>Egzersiz eklemek için aşağıdaki butonu kullan</Text>
+              <Text style={{ color: '#999' }}>{t.workout.addExerciseHint}</Text>
             </Card.Content>
           </Card>
         )}
@@ -213,7 +215,7 @@ export function ActiveWorkoutScreen() {
           onPress={() => setModalVisible(true)}
           style={styles.addBtn}
         >
-          Egzersiz Ekle
+          {t.workout.addExercise}
         </Button>
         <Button
           mode="contained"
@@ -222,7 +224,7 @@ export function ActiveWorkoutScreen() {
           loading={saving}
           disabled={saving}
         >
-          Bitir
+          {t.workout.finish}
         </Button>
       </View>
 
@@ -233,10 +235,10 @@ export function ActiveWorkoutScreen() {
           onDismiss={handleCloseModal}
           contentContainerStyle={[styles.modal, { backgroundColor: theme.colors.surface }]}
         >
-          <Text variant="titleMedium" style={styles.modalTitle}>Egzersiz Ekle</Text>
+          <Text variant="titleMedium" style={styles.modalTitle}>{t.workout.addExercise}</Text>
 
           <TextInput
-            label="Egzersiz ara..."
+            label={t.workout.searchExercise}
             value={exerciseQuery}
             onChangeText={handleExerciseSearch}
             mode="outlined"
@@ -263,7 +265,7 @@ export function ActiveWorkoutScreen() {
 
           <View style={styles.inputRow}>
             <TextInput
-              label="Ağırlık (kg)"
+              label={t.workout.weight}
               value={weight}
               onChangeText={setWeight}
               keyboardType="decimal-pad"
@@ -272,7 +274,7 @@ export function ActiveWorkoutScreen() {
               style={styles.halfInput}
             />
             <TextInput
-              label="Tekrar"
+              label={t.workout.reps}
               value={reps}
               onChangeText={setReps}
               keyboardType="number-pad"
@@ -284,7 +286,7 @@ export function ActiveWorkoutScreen() {
 
           <View style={styles.modalActions}>
             <Button mode="outlined" onPress={handleCloseModal} style={{ flex: 1 }}>
-              İptal
+              {t.common.cancel}
             </Button>
             <Button
               mode="contained"
@@ -292,7 +294,7 @@ export function ActiveWorkoutScreen() {
               style={[{ flex: 1 }, { backgroundColor: colors.primary }]}
               disabled={(!selectedExercise && !exerciseQuery.trim()) || !reps || parseInt(reps) === 0}
             >
-              Ekle
+              {t.workout.add}
             </Button>
           </View>
         </Modal>

@@ -10,6 +10,7 @@ import { getAllMetrics } from '../../services/database/progressDao';
 import { getMealLogsByDateRange } from '../../services/database/mealDao';
 import { getSessionsByDateRange } from '../../services/database/workoutDao';
 import { colors, spacing, borderRadius } from '../../theme/theme';
+import { useLanguage } from '../../i18n';
 
 const screenWidth = Dimensions.get('window').width - spacing.md * 2;
 
@@ -38,6 +39,7 @@ function getPeriodDays(period: string): number {
 export function ProgressScreen() {
   const userId = useUserStore((s) => s.userId);
   const theme = useTheme();
+  const { t } = useLanguage();
   const [period, setPeriod] = useState('30');
 
   const [weightData, setWeightData] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
@@ -130,32 +132,32 @@ export function ProgressScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}
     >
-      <Text variant="headlineSmall" style={styles.title}>İlerleme & Analiz</Text>
+      <Text variant="headlineSmall" style={styles.title}>{t.progress.title}</Text>
 
       <SegmentedButtons
         value={period}
         onValueChange={(v) => setPeriod(v)}
         buttons={[
-          { value: '7', label: '7 Gün' },
-          { value: '30', label: '30 Gün' },
-          { value: '90', label: '90 Gün' },
-          { value: 'all', label: 'Tümü' },
+          { value: '7', label: t.progress.days7 },
+          { value: '30', label: t.progress.days30 },
+          { value: '90', label: t.progress.days90 },
+          { value: 'all', label: t.progress.all },
         ]}
         style={{ marginBottom: spacing.md }}
       />
 
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
-        <StatCard icon="dumbbell" label="Toplam Antrenman" value={`${stats.totalWorkouts}`} color={colors.primary} />
-        <StatCard icon="fire" label="Yakılan Kalori" value={`${stats.totalBurned}`} color={colors.orange} />
-        <StatCard icon="trending-up" label="En Uzun Seri" value={`${stats.longestStreak} gün`} color={colors.secondary} />
-        <StatCard icon="scale-bathroom" label="Kilo Değişimi" value={`${weightSign}${stats.weightChange} kg`} color={colors.purple} />
+        <StatCard icon="dumbbell" label={t.progress.totalWorkouts} value={`${stats.totalWorkouts}`} color={colors.primary} />
+        <StatCard icon="fire" label={t.progress.burnedCalories} value={`${stats.totalBurned}`} color={colors.orange} />
+        <StatCard icon="trending-up" label={t.progress.longestStreak} value={`${stats.longestStreak} ${t.common.days}`} color={colors.secondary} />
+        <StatCard icon="scale-bathroom" label={t.progress.weightChange} value={`${weightSign}${stats.weightChange} ${t.common.kg}`} color={colors.purple} />
       </View>
 
       {/* Weight Chart */}
       <Card style={styles.chartCard} mode="elevated">
         <Card.Content>
-          <Text style={styles.chartTitle}>Kilo Trendi</Text>
+          <Text style={styles.chartTitle}>{t.progress.weightTrend}</Text>
           {weightData.values.length >= 2 ? (
             <LineChart
               data={{ labels: weightData.labels, datasets: [{ data: weightData.values }] }}
@@ -164,11 +166,11 @@ export function ProgressScreen() {
               chartConfig={chartConfig}
               bezier
               style={{ borderRadius: borderRadius.md }}
-              yAxisSuffix=" kg"
+              yAxisSuffix={` ${t.common.kg}`}
               withInnerLines={false}
             />
           ) : (
-            <EmptyChart icon="chart-line" message="Kilo verisi için profil ekranından ölçüm ekle" />
+            <EmptyChart icon="chart-line" message={t.progress.weightHint} />
           )}
         </Card.Content>
       </Card>
@@ -176,7 +178,7 @@ export function ProgressScreen() {
       {/* Calorie Chart */}
       <Card style={styles.chartCard} mode="elevated">
         <Card.Content>
-          <Text style={styles.chartTitle}>Günlük Kalori</Text>
+          <Text style={styles.chartTitle}>{t.progress.dailyCalories}</Text>
           {calorieData.values.length >= 2 ? (
             <BarChart
               data={{ labels: calorieData.labels, datasets: [{ data: calorieData.values }] }}
@@ -190,7 +192,7 @@ export function ProgressScreen() {
               showValuesOnTopOfBars={false}
             />
           ) : (
-            <EmptyChart icon="chart-bar" message="Kalori grafiği için öğün kaydet" />
+            <EmptyChart icon="chart-bar" message={t.progress.calorieHint} />
           )}
         </Card.Content>
       </Card>

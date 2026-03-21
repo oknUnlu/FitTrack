@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
-import { Text, Card, List, Switch, Button, Divider, useTheme, Dialog, Portal, TextInput } from 'react-native-paper';
+import { Text, Card, List, Switch, Button, Divider, useTheme, Dialog, Portal, TextInput, RadioButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeStore } from '../../store/themeStore';
@@ -8,20 +8,16 @@ import { useUserStore } from '../../store/userStore';
 import { getUserById, User } from '../../services/database/userDao';
 import { initializeGemini } from '../../services/ai';
 import { colors, spacing, borderRadius } from '../../theme/theme';
+import { useLanguage, LANGUAGES } from '../../i18n';
+import type { Language } from '../../i18n';
 
 const NOTIF_MEAL_KEY = 'pref_meal_reminder';
 const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
 const GEMINI_KEY_STORAGE = 'gemini_api_key_plain';
 
-const GOAL_LABELS: Record<string, string> = {
-  lose: 'Kilo vermek', gain: 'Kilo almak', muscle: 'Kas geliştirmek', maintain: 'Kiloyu korumak',
-};
-const ACTIVITY_LABELS: Record<string, string> = {
-  sedentary: 'Hareketsiz', light: 'Hafif aktif', moderate: 'Orta aktif', active: 'Aktif', veryActive: 'Çok aktif',
-};
-
 export function ProfileScreen() {
   const theme = useTheme();
+  const { t, language, setLanguage } = useLanguage();
   const isDark = useThemeStore((s) => s.isDarkMode);
   const toggleDark = useThemeStore((s) => s.toggleDarkMode);
   const userId = useUserStore((s) => s.userId);
@@ -32,6 +28,14 @@ export function ProfileScreen() {
   const [apiKeyDialogVisible, setApiKeyDialogVisible] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [apiKeySet, setApiKeySet] = useState(false);
+  const [langDialogVisible, setLangDialogVisible] = useState(false);
+
+  const GOAL_LABELS: Record<string, string> = {
+    lose: t.profile.loseWeight, gain: t.profile.gainWeight, muscle: t.profile.buildMuscle, maintain: t.profile.maintainWeight,
+  };
+  const ACTIVITY_LABELS: Record<string, string> = {
+    sedentary: t.profile.sedentary, light: t.profile.lightlyActive, moderate: t.profile.moderatelyActive, active: t.profile.active, veryActive: t.profile.veryActive,
+  };
 
   const loadData = useCallback(async () => {
     if (Platform.OS === 'web') return;
@@ -75,17 +79,17 @@ export function ProfileScreen() {
       setApiKeySet(true);
       setApiKeyDialogVisible(false);
       setApiKeyInput('');
-      Alert.alert('Başarılı', 'Gemini API anahtarı kaydedildi.');
+      Alert.alert(t.common.success, t.profile.apiKeySaved);
     } catch (e) {
-      Alert.alert('Hata', 'API anahtarı kaydedilemedi.');
+      Alert.alert(t.common.error, t.profile.apiKeySaveError);
     }
   };
 
   const removeApiKey = async () => {
-    Alert.alert('API Anahtarını Sil', 'Gemini API anahtarını silmek istiyor musun?', [
-      { text: 'İptal', style: 'cancel' },
+    Alert.alert(t.profile.deleteApiKey, t.profile.deleteApiKeyConfirm, [
+      { text: t.common.cancel, style: 'cancel' },
       {
-        text: 'Sil', style: 'destructive', onPress: async () => {
+        text: t.common.delete, style: 'destructive', onPress: async () => {
           await AsyncStorage.removeItem(GEMINI_KEY_STORAGE);
           setApiKeySet(false);
         },
@@ -93,12 +97,14 @@ export function ProfileScreen() {
     ]);
   };
 
+  const currentLangName = LANGUAGES.find((l) => l.code === language)?.nativeName ?? language;
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}
     >
-      <Text variant="headlineSmall" style={styles.title}>Profil & Ayarlar</Text>
+      <Text variant="headlineSmall" style={styles.title}>{t.profile.title}</Text>
 
       {/* User Card */}
       <Card style={styles.card} mode="elevated">
@@ -107,11 +113,11 @@ export function ProfileScreen() {
             <MaterialCommunityIcons name="account" size={48} color="#fff" />
           </View>
           <Text variant="titleMedium" style={{ fontWeight: 'bold', marginTop: spacing.sm }}>
-            {user?.name ?? 'Kullanıcı'}
+            {user?.name ?? t.profile.user}
           </Text>
           {user && (
             <Text style={{ color: '#999', marginTop: 4 }}>
-              {user.age} yaş • {user.height} cm • {user.weight} kg
+              {user.age} {t.profile.age} • {user.height} {t.common.cm} • {user.weight} {t.common.kg}
             </Text>
           )}
         </Card.Content>
@@ -121,7 +127,7 @@ export function ProfileScreen() {
             <View style={styles.infoRow}>
               <InfoChip icon="bullseye-arrow" label={GOAL_LABELS[user.goal] ?? user.goal} />
               <InfoChip icon="run-fast" label={ACTIVITY_LABELS[user.activityLevel] ?? user.activityLevel} />
-              <InfoChip icon="fire" label={`${user.tdee} kcal TDEE`} />
+              <InfoChip icon="fire" label={`${user.tdee} ${t.common.kcal} TDEE`} />
             </View>
           </Card.Content>
         )}
@@ -131,12 +137,12 @@ export function ProfileScreen() {
       {user && (
         <Card style={styles.card} mode="elevated">
           <Card.Content>
-            <Text style={styles.sectionLabel}>Günlük Hedefler</Text>
+            <Text style={styles.sectionLabel}>{t.profile.dailyGoals}</Text>
             <View style={styles.macroRow}>
-              <MacroItem label="Protein" value={`${user.proteinTargetG}g`} color={colors.protein} />
-              <MacroItem label="Karbonhidrat" value={`${user.carbsTargetG}g`} color={colors.carbs} />
-              <MacroItem label="Yağ" value={`${user.fatTargetG}g`} color={colors.fat} />
-              <MacroItem label="Su" value={`${(user.waterTargetMl / 1000).toFixed(1)}L`} color={colors.water} />
+              <MacroItem label={t.dashboard.protein} value={`${user.proteinTargetG}g`} color={colors.protein} />
+              <MacroItem label={t.dashboard.carbs} value={`${user.carbsTargetG}g`} color={colors.carbs} />
+              <MacroItem label={t.dashboard.fat} value={`${user.fatTargetG}g`} color={colors.fat} />
+              <MacroItem label={t.profile.water} value={`${(user.waterTargetMl / 1000).toFixed(1)}L`} color={colors.water} />
             </View>
           </Card.Content>
         </Card>
@@ -145,31 +151,38 @@ export function ProfileScreen() {
       {/* Settings */}
       <Card style={styles.card} mode="elevated">
         <List.Section>
-          <List.Subheader>Görünüm</List.Subheader>
+          <List.Subheader>{t.profile.appearance}</List.Subheader>
           <List.Item
-            title="Karanlık Tema"
+            title={t.profile.darkTheme}
             left={(props) => <List.Icon {...props} icon="theme-light-dark" />}
             right={() => <Switch value={isDark} onValueChange={toggleDark} />}
           />
-          <Divider />
-          <List.Subheader>Bildirimler</List.Subheader>
           <List.Item
-            title="Öğün Hatırlatıcısı"
-            description={mealReminder ? 'Açık' : 'Kapalı'}
+            title={t.profile.language}
+            description={currentLangName}
+            left={(props) => <List.Icon {...props} icon="translate" />}
+            onPress={() => setLangDialogVisible(true)}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          />
+          <Divider />
+          <List.Subheader>{t.profile.notifications}</List.Subheader>
+          <List.Item
+            title={t.profile.mealReminder}
+            description={mealReminder ? t.profile.on : t.profile.off}
             left={(props) => <List.Icon {...props} icon="bell" />}
             right={() => <Switch value={mealReminder} onValueChange={toggleMealReminder} />}
           />
           <List.Item
-            title="Antrenman Hatırlatıcısı"
-            description={workoutReminder ? 'Açık' : 'Kapalı'}
+            title={t.profile.workoutReminder}
+            description={workoutReminder ? t.profile.on : t.profile.off}
             left={(props) => <List.Icon {...props} icon="bell-ring" />}
             right={() => <Switch value={workoutReminder} onValueChange={toggleWorkoutReminder} />}
           />
           <Divider />
-          <List.Subheader>AI Koç</List.Subheader>
+          <List.Subheader>{t.profile.aiCoachSection}</List.Subheader>
           <List.Item
-            title="Gemini API Anahtarı"
-            description={apiKeySet ? 'Ayarlandı ✓' : 'Henüz eklenmedi'}
+            title={t.profile.geminiApiKey}
+            description={apiKeySet ? t.profile.configured : t.profile.notConfigured}
             left={(props) => <List.Icon {...props} icon="key" />}
             right={() => (
               <Button
@@ -177,7 +190,7 @@ export function ProfileScreen() {
                 mode="outlined"
                 onPress={() => apiKeySet ? removeApiKey() : setApiKeyDialogVisible(true)}
               >
-                {apiKeySet ? 'Sil' : 'Ekle'}
+                {apiKeySet ? t.common.delete : t.common.add}
               </Button>
             )}
           />
@@ -185,19 +198,19 @@ export function ProfileScreen() {
       </Card>
 
       <Text style={{ textAlign: 'center', color: '#999', marginTop: spacing.md, fontSize: 12 }}>
-        FitTrack v1.0.0
+        {t.profile.version}
       </Text>
 
       {/* API Key Dialog */}
       <Portal>
         <Dialog visible={apiKeyDialogVisible} onDismiss={() => setApiKeyDialogVisible(false)}>
-          <Dialog.Title>Gemini API Anahtarı</Dialog.Title>
+          <Dialog.Title>{t.profile.geminiApiKey}</Dialog.Title>
           <Dialog.Content>
             <Text style={{ color: '#666', marginBottom: spacing.sm, fontSize: 13 }}>
-              Google AI Studio'dan aldığın API anahtarını gir.
+              {t.profile.apiKeyInstruction}
             </Text>
             <TextInput
-              label="API Anahtarı"
+              label={t.profile.geminiApiKey}
               value={apiKeyInput}
               onChangeText={setApiKeyInput}
               mode="outlined"
@@ -206,8 +219,28 @@ export function ProfileScreen() {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setApiKeyDialogVisible(false)}>İptal</Button>
-            <Button onPress={saveApiKey} disabled={!apiKeyInput.trim()}>Kaydet</Button>
+            <Button onPress={() => setApiKeyDialogVisible(false)}>{t.common.cancel}</Button>
+            <Button onPress={saveApiKey} disabled={!apiKeyInput.trim()}>{t.common.save}</Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        {/* Language Selection Dialog */}
+        <Dialog visible={langDialogVisible} onDismiss={() => setLangDialogVisible(false)}>
+          <Dialog.Title>{t.profile.selectLanguage}</Dialog.Title>
+          <Dialog.Content>
+            <RadioButton.Group onValueChange={(val) => { setLanguage(val as Language); setLangDialogVisible(false); }} value={language}>
+              {LANGUAGES.map((lang) => (
+                <RadioButton.Item
+                  key={lang.code}
+                  label={lang.nativeName}
+                  value={lang.code}
+                  style={{ paddingVertical: 2 }}
+                />
+              ))}
+            </RadioButton.Group>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setLangDialogVisible(false)}>{t.common.cancel}</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

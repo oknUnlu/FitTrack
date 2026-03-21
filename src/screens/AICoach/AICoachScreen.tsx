@@ -10,23 +10,25 @@ import { getRecentSessions } from '../../services/database/workoutDao';
 import { buildContextString } from '../../services/ai/promptBuilder';
 import { todayString } from '../../utils/helpers';
 import { colors, spacing, borderRadius } from '../../theme/theme';
-
-const QUICK_PROMPTS = [
-  'Bugün ne antrenman yapmalıyım?',
-  'Kalori hedefime ulaşamıyorum, ne önerirsin?',
-  'Beslenme planımı değerlendir',
-  'Dinlenme günü mü yoksa antrenman mü?',
-  'Bu hafta PR kırdım, ne yapmalıyım?',
-];
+import { useLanguage } from '../../i18n';
 
 export function AICoachScreen() {
   const userId = useUserStore((s) => s.userId);
   const theme = useTheme();
+  const { t } = useLanguage();
   const flatListRef = useRef<FlatList>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [requestCount, setRequestCount] = useState(0);
+
+  const quickPrompts = [
+    t.aiCoach.prompt1,
+    t.aiCoach.prompt2,
+    t.aiCoach.prompt3,
+    t.aiCoach.prompt4,
+    t.aiCoach.prompt5,
+  ];
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -94,7 +96,7 @@ export function AICoachScreen() {
       setRequestCount((c) => c + 1);
     } catch (e: any) {
       const errMsg: ConversationMessage = {
-        id: (Date.now() + 1).toString(), role: 'assistant', content: 'Bir hata oluştu. Lütfen tekrar dene.',
+        id: (Date.now() + 1).toString(), role: 'assistant', content: t.aiCoach.errorMessage,
         source: 'fallback', timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, errMsg]);
@@ -111,15 +113,15 @@ export function AICoachScreen() {
     >
       {/* Rate limit indicator */}
       <View style={styles.rateBar}>
-        <Text style={styles.rateText}>{requestCount}/{getMaxDailyRequests()} istek kullanıldı</Text>
+        <Text style={styles.rateText}>{requestCount}/{getMaxDailyRequests()} {t.aiCoach.requestsUsed}</Text>
       </View>
 
       {/* Quick prompts */}
       {messages.length === 0 && (
         <View style={styles.quickPrompts}>
-          <Text style={{ fontWeight: 'bold', marginBottom: spacing.sm }}>Hızlı Sorular:</Text>
+          <Text style={{ fontWeight: 'bold', marginBottom: spacing.sm }}>{t.aiCoach.quickQuestions}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {QUICK_PROMPTS.map((p) => (
+            {quickPrompts.map((p) => (
               <Chip key={p} onPress={() => handleSend(p)} compact textStyle={{ fontSize: 12 }}>
                 {p}
               </Chip>
@@ -142,7 +144,7 @@ export function AICoachScreen() {
             </Text>
             {item.role === 'assistant' && (
               <Text style={styles.sourceTag}>
-                {item.source === 'gemini_cloud' ? 'Gemini' : item.source === 'gemini_nano' ? 'On-Device' : 'Sistem'}
+                {item.source === 'gemini_cloud' ? 'Gemini' : item.source === 'gemini_nano' ? 'On-Device' : t.aiCoach.system}
               </Text>
             )}
           </View>
@@ -152,7 +154,7 @@ export function AICoachScreen() {
       {/* Loading indicator */}
       {loading && (
         <View style={[styles.bubble, styles.aiBubble, { marginHorizontal: spacing.md }]}>
-          <Text style={styles.bubbleText}>Yazıyor...</Text>
+          <Text style={styles.bubbleText}>{t.aiCoach.typing}</Text>
         </View>
       )}
 
@@ -161,7 +163,7 @@ export function AICoachScreen() {
         <TextInput
           value={input}
           onChangeText={setInput}
-          placeholder="Mesajını yaz..."
+          placeholder={t.aiCoach.placeholder}
           mode="outlined"
           style={styles.textInput}
           onSubmitEditing={() => handleSend()}

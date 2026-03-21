@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '../../utils/helpers';
 import { AIResponse, ConversationMessage } from './types';
 import { sendToGemini, initializeGemini } from './geminiCloud';
 import { getFallbackResponse } from './fallbackAI';
@@ -15,7 +15,7 @@ export async function sendMessage(
 ): Promise<AIResponse> {
   // Save user message
   await insertConversation({
-    id: uuidv4(),
+    id: generateId(),
     userId,
     role: 'user',
     content: prompt,
@@ -41,7 +41,7 @@ export async function sendMessage(
 
   // Save AI response
   await insertConversation({
-    id: uuidv4(),
+    id: generateId(),
     userId,
     role: 'assistant',
     content: response.message,
