@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput, IconButton, Chip, useTheme } from 'react-native-paper';
 import { useUserStore } from '../../store/userStore';
 import { sendMessage, getChatHistory, getTodayRequestCount, getMaxDailyRequests } from '../../services/ai';

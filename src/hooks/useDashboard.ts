@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Platform } from 'react-native';
-import { format, subDays, startOfWeek, addDays } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useUserStore } from '../store/userStore';
 import { getUserById } from '../services/database/userDao';
@@ -8,6 +8,7 @@ import { getMealLogsByDate, getMealLogsByDateRange } from '../services/database/
 import { getSessionsByDate, getTotalCaloriesBurnedByDate, getSessionsByDateRange } from '../services/database/workoutDao';
 import { getWaterLog, upsertWaterLog } from '../services/database/progressDao';
 import { todayString } from '../utils/helpers';
+import { calculateStreakDays, calculateWeeklyActiveDays } from '../utils/activityUtils';
 
 export interface DailySummary {
   caloriesConsumed: number;
@@ -79,25 +80,8 @@ export function useDashboard() {
       recentMeals.forEach((m) => activeDates.add(m.date));
       recentSessions.filter((s) => s.completedAt !== null).forEach((s) => activeDates.add(s.date));
 
-      // Weekly active days: Mon–Sun of current week
-      const weekMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
-      const weeklyActiveDays = Array(7).fill(false).map((_, i) => {
-        const d = format(addDays(weekMonday, i), 'yyyy-MM-dd');
-        return activeDates.has(d);
-      });
-
-      // Streak: consecutive days going backwards (skip today if not yet active)
-      let streakDays = 0;
-      for (let i = 0; i <= 59; i++) {
-        const d = format(subDays(new Date(), i), 'yyyy-MM-dd');
-        if (activeDates.has(d)) {
-          streakDays++;
-        } else if (i === 0) {
-          continue; // Today may not be done yet
-        } else {
-          break;
-        }
-      }
+      const streakDays = calculateStreakDays(activeDates);
+      const weeklyActiveDays = calculateWeeklyActiveDays(activeDates);
 
       setSummary({
         caloriesConsumed,
