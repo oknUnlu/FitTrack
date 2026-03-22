@@ -178,6 +178,52 @@ export async function getBuiltInTemplates(): Promise<WorkoutTemplate[]> {
   return rows.map(rowToTemplate);
 }
 
+// Progressive overload: get best set per exercise
+export async function getBestSetPerExercise(exerciseId: string): Promise<ExerciseSet | null> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync(
+    'SELECT * FROM exercise_sets WHERE exercise_id = ? AND weight_kg IS NOT NULL ORDER BY weight_kg DESC, reps DESC LIMIT 1',
+    [exerciseId]
+  );
+  if (!row) return null;
+  return {
+    id: (row as any).id, sessionId: (row as any).session_id, exerciseId: (row as any).exercise_id,
+    setNumber: (row as any).set_number, reps: (row as any).reps, weightKg: (row as any).weight_kg,
+    durationSeconds: (row as any).duration_seconds, isPersonalRecord: !!(row as any).is_personal_record,
+    isWarmup: !!(row as any).is_warmup,
+  };
+}
+
+// Get exercise history (last N sessions containing this exercise)
+export async function getExerciseHistory(exerciseId: string, limit = 5): Promise<{ date: string; maxWeight: number; maxReps: number }[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync(
+    `SELECT ws.date, MAX(es.weight_kg) as max_weight, MAX(es.reps) as max_reps
+     FROM exercise_sets es
+     JOIN workout_sessions ws ON ws.id = es.session_id
+     WHERE es.exercise_id = ? AND es.weight_kg IS NOT NULL
+     GROUP BY ws.id, ws.date
+     ORDER BY ws.date DESC
+     LIMIT ?`,
+    [exerciseId, limit]
+  );
+  return (rows as any[]).map((r) => ({
+    date: r.date,
+    maxWeight: r.max_weight || 0,
+    maxReps: r.max_reps || 0,
+  }));
+}
+
+// Get total completed workouts count
+export async function getTotalCompletedWorkouts(userId: string): Promise<number> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync(
+    'SELECT COUNT(*) as count FROM workout_sessions WHERE user_id = ? AND completed_at IS NOT NULL',
+    [userId]
+  );
+  return (row as any)?.count ?? 0;
+}
+
 export async function getSessionsByDateRange(userId: string, startDate: string, endDate: string): Promise<WorkoutSession[]> {
   const db = await getDatabase();
   const rows = await db.getAllAsync(

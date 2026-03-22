@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Pressable, Animated, Dimensions } from 'react-native';
-import { Text, Card, Button, FAB, useTheme, IconButton } from 'react-native-paper';
+import React from 'react';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Text, Card, Button, useTheme, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ProgressRing } from '../../components/ProgressRing';
 import { ShimmerEffect } from '../../components/ShimmerEffect';
@@ -9,20 +10,22 @@ import { useDashboard, DailySummary } from '../../hooks/useDashboard';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { getProgressColor } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
+import { getAchievements, getUnlockedCount, getTotalCount, Achievement } from '../../services/achievements/achievementService';
+import { getRemainingMacroSuggestion, MealSuggestion } from '../../services/mealPlanner/mealPlanService';
 
 export function DashboardScreen() {
   const { summary, loading, error, addWater } = useDashboard();
   const navigation = useNavigation<any>();
   const theme = useTheme();
   const { t } = useLanguage();
-  const [fabOpen, setFabOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <Text variant="headlineSmall" style={styles.header}>
           {t.dashboard.greeting} 👋
@@ -41,6 +44,9 @@ export function DashboardScreen() {
           onAdd={addWater}
         />
 
+        {/* Meal Suggestion Card */}
+        <MealSuggestionCard summary={summary} />
+
         {/* Workout Card */}
         <WorkoutCard
           summary={summary}
@@ -50,35 +56,53 @@ export function DashboardScreen() {
         {/* Streak Card */}
         <StreakCard streak={summary.streakDays} weeklyActive={summary.weeklyActiveDays} />
 
+        {/* Supplements Card */}
+        <QuickNavCard
+          title="Takviyeler"
+          subtitle="Günlük takviye takibi"
+          icon="pill"
+          iconColor="#00897B"
+          bgColor="#E0F2F1"
+          onPress={() => navigation.navigate('Supplements')}
+        />
+
+        {/* Wellness Card */}
+        <QuickNavCard
+          title="Wellness"
+          subtitle="Uyku, stres ve meditasyon"
+          icon="heart-pulse"
+          iconColor="#E91E63"
+          bgColor="#FCE4EC"
+          onPress={() => navigation.navigate('Wellness')}
+        />
+
+        {/* Health Hub Card */}
+        <QuickNavCard
+          title="Sağlık Merkezi"
+          subtitle="Adım, kalp atışı ve sağlık verileri"
+          icon="watch"
+          iconColor="#1976D2"
+          bgColor="#E3F2FD"
+          onPress={() => navigation.navigate('HealthHub')}
+        />
+
+        {/* Challenges Card */}
+        <QuickNavCard
+          title="Challenges"
+          subtitle="Kendine meydan oku!"
+          icon="trophy"
+          iconColor="#FF6F00"
+          bgColor="#FFF3E0"
+          onPress={() => navigation.navigate('Social')}
+        />
+
+        {/* Achievements Card */}
+        <AchievementsCard onPress={() => navigation.navigate('Achievements')} />
+
         {/* AI Coach Card */}
         <AICoachCard onPress={() => navigation.navigate('AICoach')} />
       </ScrollView>
 
-      {/* FAB Menu */}
-      {fabOpen && (
-        <Pressable style={styles.fabOverlay} onPress={() => setFabOpen(false)}>
-          <View style={styles.fabActions}>
-            {[
-              { icon: 'water' as const, label: t.dashboard.addWater, onPress: () => { addWater(250); setFabOpen(false); }, color: colors.water },
-              { icon: 'dumbbell' as const, label: t.tabs.workout, onPress: () => { navigation.navigate('Workout'); setFabOpen(false); }, color: colors.secondary },
-              { icon: 'silverware-fork-knife' as const, label: t.dashboard.addMeal, onPress: () => { navigation.navigate('Calories'); setFabOpen(false); }, color: colors.orange },
-            ].map((action, i) => (
-              <TouchableOpacity key={i} style={styles.fabActionRow} onPress={action.onPress} activeOpacity={0.7}>
-                <Text style={styles.fabActionLabel}>{action.label}</Text>
-                <View style={[styles.fabActionIcon, { backgroundColor: action.color }]}>
-                  <MaterialCommunityIcons name={action.icon} size={20} color="#fff" />
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Pressable>
-      )}
-      <FAB
-        icon={fabOpen ? 'close' : 'plus'}
-        onPress={() => setFabOpen(!fabOpen)}
-        style={[styles.fab, { backgroundColor: colors.primary }]}
-        color="#fff"
-      />
     </View>
   );
 }
@@ -274,6 +298,97 @@ function StreakCard({ streak, weeklyActive }: { streak: number; weeklyActive: bo
 }
 
 // ═════════════════════════════════════════
+// MEAL SUGGESTION CARD
+// ═════════════════════════════════════════
+function MealSuggestionCard({ summary }: { summary: DailySummary }) {
+  const { t } = useLanguage();
+  const remaining = Math.max(summary.calorieTarget - (summary.caloriesConsumed - summary.caloriesBurned), 0);
+  const remainingProtein = Math.max(summary.proteinTarget - summary.proteinConsumed, 0);
+
+  if (remaining < 50) return null; // No suggestion if target already met
+
+  // Determine which meal type to suggest based on time of day
+  const hour = new Date().getHours();
+  let mealType = 'snack';
+  if (hour < 10) mealType = 'breakfast';
+  else if (hour < 14) mealType = 'lunch';
+  else if (hour < 19) mealType = 'dinner';
+
+  const suggestions = getRemainingMacroSuggestion(remaining, remainingProtein, mealType);
+  if (suggestions.length === 0) return null;
+
+  const top = suggestions[0];
+
+  return (
+    <Card style={[styles.card, { backgroundColor: '#F3E5F5' }]} mode="elevated">
+      <Card.Content>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
+          <MaterialCommunityIcons name="lightbulb-on" size={20} color="#9C27B0" />
+          <Text style={{ fontWeight: 'bold', marginLeft: 8, color: '#6A1B9A' }}>
+            {'Öneri'}
+          </Text>
+          <Text style={{ color: '#999', fontSize: 11, marginLeft: 'auto' }}>{Math.round(remaining)} {t.common.kcal} {t.dashboard.remainingKcal}</Text>
+        </View>
+        <Text style={{ fontSize: 14 }}>{top.name}</Text>
+        <Text style={{ color: '#999', fontSize: 11, marginTop: 2 }}>
+          {top.calories} {t.common.kcal} · P:{top.protein}g · K:{top.carbs}g · Y:{top.fat}g
+        </Text>
+      </Card.Content>
+    </Card>
+  );
+}
+
+// ═════════════════════════════════════════
+// ACHIEVEMENTS MINI CARD
+// ═════════════════════════════════════════
+function AchievementsCard({ onPress }: { onPress: () => void }) {
+  const { t } = useLanguage();
+  const [unlocked, setUnlocked] = React.useState(0);
+  const total = getTotalCount();
+
+  React.useEffect(() => {
+    getAchievements().then((a) => setUnlocked(getUnlockedCount(a)));
+  }, []);
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+      <Card style={[styles.card, { backgroundColor: '#FFF3E0' }]} mode="elevated">
+        <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <MaterialCommunityIcons name="trophy" size={32} color="#FF9800" />
+          <View style={{ flex: 1, marginLeft: spacing.md }}>
+            <Text style={{ fontWeight: 'bold' }}>{t.achievements.title}</Text>
+            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>{unlocked}/{total} {t.achievements.unlocked}</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
+  );
+}
+
+// ═════════════════════════════════════════
+// QUICK NAV CARD (Generic)
+// ═════════════════════════════════════════
+function QuickNavCard({ title, subtitle, icon, iconColor, bgColor, onPress }: {
+  title: string; subtitle: string; icon: string; iconColor: string; bgColor: string; onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+      <Card style={[styles.card, { backgroundColor: bgColor }]} mode="elevated">
+        <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <MaterialCommunityIcons name={icon as any} size={32} color={iconColor} />
+          <View style={{ flex: 1, marginLeft: spacing.md }}>
+            <Text style={{ fontWeight: 'bold' }}>{title}</Text>
+            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>{subtitle}</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
+  );
+}
+
+// ═════════════════════════════════════════
 // AI COACH MINI CARD
 // ═════════════════════════════════════════
 function AICoachCard({ onPress }: { onPress: () => void }) {
@@ -332,10 +447,4 @@ const styles = StyleSheet.create({
   waterButtons: { flexDirection: 'row', justifyContent: 'space-evenly' },
   waterBtn: { flex: 0.45 },
   dayDot: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  fab: { position: 'absolute', right: 16, bottom: 84, borderRadius: 16 },
-  fabOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 10 },
-  fabActions: { position: 'absolute', right: 24, bottom: 152, gap: 12 },
-  fabActionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
-  fabActionLabel: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, fontSize: 13, fontWeight: '500', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2 },
-  fabActionIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 },
 });

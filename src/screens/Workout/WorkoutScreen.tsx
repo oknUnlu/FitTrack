@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, FlatList, Platform } from 'react-native';
 import { Text, Card, Button, Chip, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useUserStore } from '../../store/userStore';
-import { getRecentSessions, getBuiltInTemplates, WorkoutSession, WorkoutTemplate } from '../../services/database/workoutDao';
+import { getRecentSessions, getBuiltInTemplates, getTotalCompletedWorkouts, WorkoutSession, WorkoutTemplate } from '../../services/database/workoutDao';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 
@@ -15,29 +16,53 @@ export function WorkoutScreen() {
   const { t } = useLanguage();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
+  const [totalWorkouts, setTotalWorkouts] = useState(0);
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
     (async () => {
       try {
-        const [sessionsData, templatesData] = await Promise.all([
+        const [sessionsData, templatesData, totalCount] = await Promise.all([
           getRecentSessions(userId),
           getBuiltInTemplates(),
+          getTotalCompletedWorkouts(userId),
         ]);
         setSessions(sessionsData);
         setTemplates(templatesData);
+        setTotalWorkouts(totalCount);
       } catch (e) {
         console.warn('WorkoutScreen load failed:', e);
       }
     })();
   }, [userId]);
 
+  const insets = useSafeAreaInsets();
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
+      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 100 }}
     >
       <Text variant="headlineSmall" style={styles.title}>{t.workout.title}</Text>
+
+      {/* Workout stats summary */}
+      {totalWorkouts > 0 && (
+        <Card style={styles.statsCard} mode="elevated">
+          <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <MaterialCommunityIcons name="trophy" size={28} color="#FFC107" />
+            <View style={{ marginLeft: spacing.sm, flex: 1 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{totalWorkouts}</Text>
+              <Text style={{ color: '#999', fontSize: 12 }}>{t.progress.totalWorkouts}</Text>
+            </View>
+            {sessions.length > 0 && sessions[0].completedAt && (
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontWeight: '600', color: colors.primary }}>{sessions[0].caloriesBurned} {t.common.kcal}</Text>
+                <Text style={{ color: '#999', fontSize: 11 }}>{t.workout.recentWorkouts}</Text>
+              </View>
+            )}
+          </Card.Content>
+        </Card>
+      )}
 
       {/* Start empty workout */}
       <Button
@@ -108,4 +133,5 @@ const styles = StyleSheet.create({
   templateCard: { width: 200, borderRadius: borderRadius.md, marginRight: spacing.sm },
   sessionCard: { borderRadius: borderRadius.md, marginBottom: spacing.sm },
   emptyCard: { borderRadius: borderRadius.md },
+  statsCard: { borderRadius: borderRadius.md, marginBottom: spacing.md, backgroundColor: '#FFFDE7' },
 });

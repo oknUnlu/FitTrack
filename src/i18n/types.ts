@@ -138,6 +138,9 @@ export interface Translations {
     weightHint: string;
     dailyCalories: string;
     calorieHint: string;
+    report: string;
+    avgCalories: string;
+    activeDays: string;
   };
 
   // Profile Screen
@@ -155,6 +158,7 @@ export interface Translations {
     mealReminder: string;
     on: string;
     off: string;
+    waterReminder: string;
     workoutReminder: string;
     aiCoachSection: string;
     geminiApiKey: string;
@@ -221,6 +225,123 @@ export interface Translations {
     overweight: string;
     obese: string;
     glassesPerDay: string;
+  };
+
+  // Body Metrics
+  bodyMetrics: {
+    title: string;
+    latest: string;
+    waist: string;
+    hip: string;
+    chest: string;
+    bicep: string;
+    thigh: string;
+    photoCompare: string;
+    history: string;
+    noData: string;
+    addMeasurement: string;
+    takePhoto: string;
+    pickPhoto: string;
+    trackProgress: string;
+  };
+
+  // Achievements
+  achievements: {
+    title: string;
+    locked: string;
+    unlocked: string;
+    progress: string;
+    firstMeal: string;
+    firstMealDesc: string;
+    firstWorkout: string;
+    firstWorkoutDesc: string;
+    streak7: string;
+    streak7Desc: string;
+    streak30: string;
+    streak30Desc: string;
+    meals10: string;
+    meals10Desc: string;
+    meals50: string;
+    meals50Desc: string;
+    meals100: string;
+    meals100Desc: string;
+    workouts10: string;
+    workouts10Desc: string;
+    workouts50: string;
+    workouts50Desc: string;
+    water7: string;
+    water7Desc: string;
+    calorieGoal: string;
+    calorieGoalDesc: string;
+    proteinGoal: string;
+    proteinGoalDesc: string;
+  };
+
+  // Barcode Scanner
+  barcode: {
+    scanTitle: string;
+    cameraPermission: string;
+    grantPermission: string;
+    hint: string;
+    scanAgain: string;
+    searching: string;
+    notFound: string;
+    found: string;
+    scanBarcode: string;
+  };
+
+  // Onboarding
+  onboarding: {
+    welcome: string;
+    welcomeSubtitle: string;
+    letsStart: string;
+    stepPersonal: string;
+    stepBody: string;
+    stepActivity: string;
+    stepGoal: string;
+    stepResult: string;
+    yourName: string;
+    namePlaceholder: string;
+    yourAge: string;
+    agePlaceholder: string;
+    gender: string;
+    male: string;
+    female: string;
+    yourHeight: string;
+    heightPlaceholder: string;
+    yourWeight: string;
+    weightPlaceholder: string;
+    activityLevel: string;
+    sedentary: string;
+    sedentaryDesc: string;
+    light: string;
+    lightDesc: string;
+    moderate: string;
+    moderateDesc: string;
+    active: string;
+    activeDesc: string;
+    veryActive: string;
+    veryActiveDesc: string;
+    yourGoal: string;
+    lose: string;
+    loseDesc: string;
+    maintain: string;
+    maintainDesc: string;
+    gain: string;
+    gainDesc: string;
+    muscle: string;
+    muscleDesc: string;
+    yourPlan: string;
+    yourPlanSubtitle: string;
+    dailyCalories: string;
+    protein: string;
+    carbs: string;
+    fat: string;
+    water: string;
+    startApp: string;
+    fillAllFields: string;
+    back: string;
+    next: string;
   };
 
   // Days of week (abbreviated)

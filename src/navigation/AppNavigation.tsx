@@ -6,6 +6,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { OnboardingScreen } from '../screens/Onboarding/OnboardingScreen';
+import { useUserStore } from '../store/userStore';
 import { DashboardScreen } from '../screens/Dashboard/DashboardScreen';
 import { CalorieScreen } from '../screens/Calorie/CalorieScreen';
 import { WorkoutScreen } from '../screens/Workout/WorkoutScreen';
@@ -14,12 +16,25 @@ import { ProfileScreen } from '../screens/Profile/ProfileScreen';
 import { AICoachScreen } from '../screens/AICoach/AICoachScreen';
 import { ToolsScreen } from '../screens/Tools/ToolsScreen';
 import { ActiveWorkoutScreen } from '../screens/Workout/ActiveWorkoutScreen';
+import { AchievementsScreen } from '../screens/Achievements/AchievementsScreen';
+import { BodyMetricsScreen } from '../screens/BodyMetrics/BodyMetricsScreen';
+import { SupplementsScreen } from '../screens/Supplements/SupplementsScreen';
+import { WellnessScreen } from '../screens/Wellness/WellnessScreen';
+import { HealthHubScreen } from '../screens/HealthHub/HealthHubScreen';
+import { SocialScreen } from '../screens/Social/SocialScreen';
 import { useLanguage } from '../i18n';
 
 export type RootStackParamList = {
+  Onboarding: undefined;
   MainTabs: undefined;
   AICoach: undefined;
   Tools: undefined;
+  Achievements: undefined;
+  BodyMetrics: undefined;
+  Supplements: undefined;
+  Wellness: undefined;
+  HealthHub: undefined;
+  Social: undefined;
   ActiveWorkout: undefined;
 };
 
@@ -94,9 +109,13 @@ function MainTabs() {
 
 function AppStack() {
   const { t } = useLanguage();
+  const isOnboarded = useUserStore((s) => s.isOnboarded);
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!isOnboarded ? (
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animationTypeForReplace: 'push' }} />
+      ) : null}
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen
         name="AICoach"
@@ -107,6 +126,36 @@ function AppStack() {
         name="Tools"
         component={ToolsScreen}
         options={{ headerShown: true, title: t.tools.title, animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Achievements"
+        component={AchievementsScreen}
+        options={{ headerShown: true, title: t.achievements.title, animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="BodyMetrics"
+        component={BodyMetricsScreen}
+        options={{ headerShown: true, title: 'Vücut Ölçüleri', animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Supplements"
+        component={SupplementsScreen}
+        options={{ headerShown: true, title: 'Takviyeler', animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Wellness"
+        component={WellnessScreen}
+        options={{ headerShown: true, title: 'Wellness', animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="HealthHub"
+        component={HealthHubScreen}
+        options={{ headerShown: true, title: 'Sağlık Merkezi', animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Social"
+        component={SocialScreen}
+        options={{ headerShown: true, title: 'Challenges', animation: 'slide_from_right' }}
       />
       <Stack.Screen
         name="ActiveWorkout"

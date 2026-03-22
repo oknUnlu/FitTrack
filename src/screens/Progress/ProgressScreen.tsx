@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, Dimensions, Platform } from 'react-native';
 import { Text, Card, SegmentedButtons, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { format, subDays } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -45,6 +46,7 @@ export function ProgressScreen() {
   const [weightData, setWeightData] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
   const [calorieData, setCalorieData] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
   const [stats, setStats] = useState({ totalWorkouts: 0, totalBurned: 0, longestStreak: 0, weightChange: 0 });
+  const [macroAvg, setMacroAvg] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0, activeDays: 0 });
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
@@ -115,6 +117,21 @@ export function ProgressScreen() {
         weightChange = parseFloat((periodMetrics[periodMetrics.length - 1].weight - periodMetrics[0].weight).toFixed(1));
       }
 
+      // Macro averages
+      const uniqueMealDays = new Set(mealLogs.map((m) => m.date));
+      const mealDayCount = uniqueMealDays.size || 1;
+      const totalCal = mealLogs.reduce((s, m) => s + m.caloriesConsumed, 0);
+      const totalProt = mealLogs.reduce((s, m) => s + m.proteinConsumed, 0);
+      const totalCarbs = mealLogs.reduce((s, m) => s + m.carbsConsumed, 0);
+      const totalFat = mealLogs.reduce((s, m) => s + m.fatConsumed, 0);
+      setMacroAvg({
+        calories: Math.round(totalCal / mealDayCount),
+        protein: Math.round(totalProt / mealDayCount),
+        carbs: Math.round(totalCarbs / mealDayCount),
+        fat: Math.round(totalFat / mealDayCount),
+        activeDays: activeDates.size,
+      });
+
       setStats({ totalWorkouts, totalBurned, longestStreak, weightChange });
     } catch (e) {
       console.warn('ProgressScreen load error:', e);
@@ -127,10 +144,12 @@ export function ProgressScreen() {
 
   const weightSign = stats.weightChange > 0 ? '+' : '';
 
+  const insets = useSafeAreaInsets();
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 40 }}
     >
       <Text variant="headlineSmall" style={styles.title}>{t.progress.title}</Text>
 
@@ -153,6 +172,25 @@ export function ProgressScreen() {
         <StatCard icon="trending-up" label={t.progress.longestStreak} value={`${stats.longestStreak} ${t.common.days}`} color={colors.secondary} />
         <StatCard icon="scale-bathroom" label={t.progress.weightChange} value={`${weightSign}${stats.weightChange} ${t.common.kg}`} color={colors.purple} />
       </View>
+
+      {/* Macro Averages Report */}
+      <Card style={styles.chartCard} mode="elevated">
+        <Card.Content>
+          <Text style={styles.chartTitle}>{t.progress.report || 'Dönem Raporu'}</Text>
+          <View style={styles.reportGrid}>
+            <ReportItem icon="fire" label={t.progress.avgCalories || 'Ort. Kalori'} value={`${macroAvg.calories}`} unit={t.common.kcal} color={colors.orange} />
+            <ReportItem icon="food-steak" label={t.dashboard.protein} value={`${macroAvg.protein}g`} unit="" color={colors.protein} />
+            <ReportItem icon="barley" label={t.dashboard.carbs} value={`${macroAvg.carbs}g`} unit="" color={colors.carbs} />
+            <ReportItem icon="oil" label={t.dashboard.fat} value={`${macroAvg.fat}g`} unit="" color={colors.fat} />
+          </View>
+          <View style={styles.reportFooter}>
+            <MaterialCommunityIcons name="calendar-check" size={16} color={colors.primary} />
+            <Text style={styles.reportFooterText}>
+              {macroAvg.activeDays} {t.progress.activeDays || 'aktif gün'}
+            </Text>
+          </View>
+        </Card.Content>
+      </Card>
 
       {/* Weight Chart */}
       <Card style={styles.chartCard} mode="elevated">
@@ -212,6 +250,16 @@ function StatCard({ icon, label, value, color }: { icon: string; label: string; 
   );
 }
 
+function ReportItem({ icon, label, value, unit, color }: { icon: string; label: string; value: string; unit: string; color: string }) {
+  return (
+    <View style={styles.reportItem}>
+      <MaterialCommunityIcons name={icon as any} size={20} color={color} />
+      <Text style={{ fontWeight: 'bold', fontSize: 16, color, marginTop: 2 }}>{value}{unit ? ` ${unit}` : ''}</Text>
+      <Text style={{ color: '#999', fontSize: 11 }}>{label}</Text>
+    </View>
+  );
+}
+
 function EmptyChart({ icon, message }: { icon: string; message: string }) {
   return (
     <View style={{ alignItems: 'center', paddingVertical: spacing.xl }}>
@@ -228,4 +276,8 @@ const styles = StyleSheet.create({
   statCard: { width: '48%' as any, borderRadius: borderRadius.md },
   chartCard: { borderRadius: borderRadius.lg, marginBottom: spacing.md },
   chartTitle: { fontWeight: 'bold', fontSize: 16, marginBottom: spacing.sm },
+  reportGrid: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.sm },
+  reportItem: { alignItems: 'center', flex: 1 },
+  reportFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
+  reportFooterText: { fontSize: 13, color: '#666' },
 });

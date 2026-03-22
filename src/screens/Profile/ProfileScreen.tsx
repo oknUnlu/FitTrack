@@ -2,14 +2,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
 import { Text, Card, List, Switch, Button, Divider, useTheme, Dialog, Portal, TextInput, RadioButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeStore } from '../../store/themeStore';
 import { useUserStore } from '../../store/userStore';
 import { getUserById, User } from '../../services/database/userDao';
 import { initializeGemini } from '../../services/ai';
+import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage, LANGUAGES } from '../../i18n';
 import type { Language } from '../../i18n';
+import {
+  requestNotificationPermission,
+  scheduleMealReminders,
+  scheduleWaterReminders,
+  scheduleWorkoutReminder,
+} from '../../services/notifications/notificationService';
 
 const NOTIF_MEAL_KEY = 'pref_meal_reminder';
 const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
@@ -22,9 +30,11 @@ export function ProfileScreen() {
   const toggleDark = useThemeStore((s) => s.toggleDarkMode);
   const userId = useUserStore((s) => s.userId);
 
+  const navigation = useNavigation();
   const [user, setUser] = useState<User | null>(null);
   const [mealReminder, setMealReminder] = useState(false);
   const [workoutReminder, setWorkoutReminder] = useState(false);
+  const [waterReminder, setWaterReminder] = useState(false);
   const [apiKeyDialogVisible, setApiKeyDialogVisible] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [apiKeySet, setApiKeySet] = useState(false);
@@ -61,13 +71,21 @@ export function ProfileScreen() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const toggleMealReminder = async (val: boolean) => {
+    if (val) await requestNotificationPermission();
     setMealReminder(val);
-    await AsyncStorage.setItem(NOTIF_MEAL_KEY, String(val));
+    await scheduleMealReminders(val);
   };
 
   const toggleWorkoutReminder = async (val: boolean) => {
+    if (val) await requestNotificationPermission();
     setWorkoutReminder(val);
-    await AsyncStorage.setItem(NOTIF_WORKOUT_KEY, String(val));
+    await scheduleWorkoutReminder(val);
+  };
+
+  const toggleWaterReminder = async (val: boolean) => {
+    if (val) await requestNotificationPermission();
+    setWaterReminder(val);
+    await scheduleWaterReminders(val);
   };
 
   const saveApiKey = async () => {
@@ -99,10 +117,12 @@ export function ProfileScreen() {
 
   const currentLangName = LANGUAGES.find((l) => l.code === language)?.nativeName ?? language;
 
+  const insets = useSafeAreaInsets();
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 40 }}
     >
       <Text variant="headlineSmall" style={styles.title}>{t.profile.title}</Text>
 
@@ -148,6 +168,19 @@ export function ProfileScreen() {
         </Card>
       )}
 
+      {/* Body Metrics shortcut */}
+      <Card style={styles.card} mode="elevated">
+        <List.Section>
+          <List.Item
+            title={t.bodyMetrics?.title || 'Vücut Ölçüleri'}
+            description={t.bodyMetrics?.trackProgress || 'Ölçümlerini takip et'}
+            left={(props) => <List.Icon {...props} icon="tape-measure" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => (navigation as any).navigate('BodyMetrics')}
+          />
+        </List.Section>
+      </Card>
+
       {/* Settings */}
       <Card style={styles.card} mode="elevated">
         <List.Section>
@@ -171,6 +204,12 @@ export function ProfileScreen() {
             description={mealReminder ? t.profile.on : t.profile.off}
             left={(props) => <List.Icon {...props} icon="bell" />}
             right={() => <Switch value={mealReminder} onValueChange={toggleMealReminder} />}
+          />
+          <List.Item
+            title={t.profile.waterReminder || 'Su Hatırlatıcısı'}
+            description={waterReminder ? t.profile.on : t.profile.off}
+            left={(props) => <List.Icon {...props} icon="water" />}
+            right={() => <Switch value={waterReminder} onValueChange={toggleWaterReminder} />}
           />
           <List.Item
             title={t.profile.workoutReminder}

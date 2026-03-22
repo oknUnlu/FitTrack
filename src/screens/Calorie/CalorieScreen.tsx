@@ -1,11 +1,16 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, ScrollView, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, FlatList, TouchableOpacity, Platform, Alert } from 'react-native';
 import { Text, Card, FAB, Searchbar, Chip, useTheme, IconButton, Button, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '../../store/userStore';
 import { useMealStore } from '../../store/mealStore';
 import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../services/database/mealDao';
 import { searchFoodItems, FoodItem } from '../../services/database/foodDao';
+import { getProductByBarcode } from '../../services/api/openFoodFacts';
+import { BarcodeScanner } from '../../components/BarcodeScanner';
+import { recognizeFoodFromImage, RecognizedFood } from '../../services/ai/foodRecognition';
+import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { todayString, MEAL_TYPES, formatCalories, generateId } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
@@ -45,6 +50,11 @@ export function CalorieScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FoodItem[]>([]);
   const [activeMealType, setActiveMealType] = useState<string>('breakfast');
+  const [barcodeVisible, setBarcodeVisible] = useState(false);
+  const [barcodeLoading, setBarcodeLoading] = useState(false);
+  const [aiResults, setAiResults] = useState<RecognizedFood[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiModalVisible, setAiModalVisible] = useState(false);
 
   const loadMeals = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -117,6 +127,83 @@ export function CalorieScreen() {
     }
   }, [loadMeals]);
 
+  const handleBarcodeScan = useCallback(async (barcode: string) => {
+    setBarcodeLoading(true);
+    try {
+      const product = await getProductByBarcode(barcode);
+      if (product) {
+        const food: FoodItem = {
+          id: product.id,
+          name: product.name,
+          nameTr: product.nameTr,
+          calories: product.calories,
+          protein: product.protein,
+          carbs: product.carbs,
+          fat: product.fat,
+          fiber: product.fiber,
+          sugar: product.sugar,
+          barcode: product.barcode,
+          servingSize: 100,
+          servingUnit: 'g',
+          isCustom: false,
+          isFavorite: false,
+          source: 'openfoodfacts',
+        };
+        setBarcodeVisible(false);
+        setBarcodeLoading(false);
+        handleAddFood(food);
+      } else {
+        setBarcodeLoading(false);
+        Alert.alert('', t.barcode.notFound);
+      }
+    } catch (e) {
+      setBarcodeLoading(false);
+      Alert.alert(t.common.error, t.barcode.notFound);
+    }
+  }, [activeMealType, handleAddFood, t]);
+
+  const handlePhotoRecognition = useCallback(async () => {
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        quality: 0.7,
+        allowsEditing: false,
+      });
+      if (result.canceled || !result.assets[0]) return;
+
+      setAiLoading(true);
+      setAiModalVisible(true);
+      const foods = await recognizeFoodFromImage(result.assets[0].uri);
+      setAiResults(foods);
+      setAiLoading(false);
+    } catch (e: any) {
+      setAiLoading(false);
+      Alert.alert(t.common.error, e.message || 'AI besin tanıma başarısız');
+    }
+  }, [t]);
+
+  const handleAddAiFood = useCallback((food: RecognizedFood) => {
+    const foodItem: FoodItem = {
+      id: `ai_${Date.now()}_${food.name}`,
+      name: food.name,
+      nameTr: food.name,
+      calories: food.calories,
+      protein: food.protein,
+      carbs: food.carbs,
+      fat: food.fat,
+      fiber: null,
+      sugar: null,
+      barcode: null,
+      servingSize: food.servingSize,
+      servingUnit: food.servingUnit,
+      isCustom: false,
+      isFavorite: false,
+      source: 'ai_recognition',
+    };
+    handleAddFood(foodItem);
+    setAiModalVisible(false);
+    setAiResults([]);
+  }, [handleAddFood]);
+
   const totalCalories = meals.reduce((s, m) => s + m.caloriesConsumed, 0);
 
   const getMealLabel = (key: string): string => {
@@ -124,8 +211,10 @@ export function CalorieScreen() {
     return labelKey ? t.calorie[labelKey] : key;
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
       {/* Date Header */}
       <View style={styles.dateRow}>
         <IconButton icon="chevron-left" onPress={() => {
@@ -187,6 +276,59 @@ export function CalorieScreen() {
         })}
       </ScrollView>
 
+      {/* AI Food Recognition Modal */}
+      {aiModalVisible && (
+        <View style={styles.searchOverlay}>
+          <View style={styles.searchContainer}>
+            <View style={styles.rowBetween}>
+              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                {'AI Besin Tanıma'}
+              </Text>
+              <IconButton icon="close" onPress={() => { setAiModalVisible(false); setAiResults([]); }} />
+            </View>
+            {aiLoading ? (
+              <View style={{ alignItems: 'center', padding: 40 }}>
+                <Text style={{ color: '#999' }}>{t.common.loading}</Text>
+              </View>
+            ) : aiResults.length === 0 ? (
+              <Text style={{ textAlign: 'center', color: '#999', padding: 20 }}>{t.calorie.noResults}</Text>
+            ) : (
+              <FlatList
+                data={aiResults}
+                keyExtractor={(_, i) => `ai_${i}`}
+                renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handleAddAiFood(item)} style={styles.searchItem}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontWeight: '600' }}>{item.name}</Text>
+                        <View style={{ backgroundColor: item.confidence === 'high' ? '#E8F5E9' : item.confidence === 'medium' ? '#FFF3E0' : '#FFEBEE', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                          <Text style={{ fontSize: 9, color: item.confidence === 'high' ? '#2E7D32' : item.confidence === 'medium' ? '#E65100' : '#C62828' }}>
+                            {item.confidence}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={{ color: '#999', fontSize: 11 }}>
+                        {item.calories} {t.common.kcal} · P:{item.protein}g · K:{item.carbs}g · Y:{item.fat}g
+                      </Text>
+                    </View>
+                    <MaterialCommunityIcons name="plus-circle" size={24} color={colors.primary} />
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Barcode Scanner */}
+      {barcodeVisible && (
+        <BarcodeScanner
+          onScan={handleBarcodeScan}
+          onClose={() => { setBarcodeVisible(false); setBarcodeLoading(false); }}
+          loading={barcodeLoading}
+        />
+      )}
+
       {/* Search Modal */}
       {searchVisible && (
         <View style={styles.searchOverlay}>
@@ -195,12 +337,30 @@ export function CalorieScreen() {
               <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{t.calorie.searchFood}</Text>
               <IconButton icon="close" onPress={() => setSearchVisible(false)} />
             </View>
-            <Searchbar
-              placeholder={t.calorie.searchPlaceholder}
-              value={searchQuery}
-              onChangeText={handleSearch}
-              style={{ marginBottom: spacing.sm }}
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: spacing.sm }}>
+              <Searchbar
+                placeholder={t.calorie.searchPlaceholder}
+                value={searchQuery}
+                onChangeText={handleSearch}
+                style={{ flex: 1 }}
+              />
+              {Platform.OS !== 'web' && (
+                <>
+                  <TouchableOpacity
+                    style={styles.barcodeBtn}
+                    onPress={() => { setSearchVisible(false); setBarcodeVisible(true); }}
+                  >
+                    <MaterialCommunityIcons name="barcode-scan" size={24} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.barcodeBtn, { backgroundColor: colors.orange }]}
+                    onPress={() => { setSearchVisible(false); handlePhotoRecognition(); }}
+                  >
+                    <MaterialCommunityIcons name="camera" size={24} color="#fff" />
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
             <FlatList
               data={searchResults}
               keyExtractor={(item) => item.id}
@@ -236,4 +396,5 @@ const styles = StyleSheet.create({
   searchOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   searchContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: spacing.md, maxHeight: '80%' },
   searchItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+  barcodeBtn: { width: 48, height: 48, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
 });
