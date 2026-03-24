@@ -1,29 +1,47 @@
 import React, { useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  getAchievements,
+  refreshAchievements,
   Achievement,
   getUnlockedCount,
   getTotalCount,
 } from '../../services/achievements/achievementService';
+import { useUserStore } from '../../store/userStore';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
+
+type FilterKey = 'all' | Achievement['category'];
+
+const FILTERS: { key: FilterKey; labelKey: string }[] = [
+  { key: 'all',       labelKey: 'filterAll' },
+  { key: 'workout',   labelKey: 'filterWorkout' },
+  { key: 'meal',      labelKey: 'filterMeal' },
+  { key: 'streak',    labelKey: 'filterStreak' },
+  { key: 'water',     labelKey: 'filterWater' },
+  { key: 'nutrition', labelKey: 'filterNutrition' },
+];
 
 export function AchievementsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
+  const userId = useUserStore((s) => s.userId);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
 
   useFocusEffect(
     useCallback(() => {
-      getAchievements().then(setAchievements);
-    }, [])
+      refreshAchievements(userId).then(setAchievements);
+    }, [userId])
   );
+
+  const filtered = activeFilter === 'all'
+    ? achievements
+    : achievements.filter((a) => a.category === activeFilter);
 
   const unlocked = getUnlockedCount(achievements);
   const total = getTotalCount();
@@ -32,23 +50,44 @@ export function AchievementsScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.md }}
     >
-      <Text variant="headlineSmall" style={styles.title}>{t.achievements.title}</Text>
-
       {/* Progress header */}
-      <View style={styles.progressCard}>
+      <View style={[styles.progressCard, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.progressRow}>
           <Text style={styles.progressText}>{unlocked} / {total}</Text>
           <Text style={styles.progressLabel}>{t.achievements.unlocked}</Text>
         </View>
         <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
+          <View style={[styles.progressBarFill, { width: `${progress * 100}%` as any }]} />
         </View>
       </View>
 
+      {/* Category filter chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterRow}
+        contentContainerStyle={{ gap: 8, paddingRight: spacing.sm }}
+      >
+        {FILTERS.map((f) => {
+          const label = (t.achievements as any)[f.labelKey] ?? f.key;
+          const active = activeFilter === f.key;
+          return (
+            <TouchableOpacity
+              key={f.key}
+              onPress={() => setActiveFilter(f.key)}
+              style={[styles.chip, active && styles.chipActive]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
       {/* Achievement cards */}
-      {achievements.map((a) => (
+      {filtered.map((a) => (
         <AchievementCard key={a.id} achievement={a} t={t} />
       ))}
     </ScrollView>
@@ -62,8 +101,8 @@ function AchievementCard({ achievement, t }: { achievement: Achievement; t: any 
   const descText = (t.achievements as any)[a.descKey] || a.descKey;
 
   return (
-    <View style={[styles.card, a.unlocked && styles.cardUnlocked]}>
-      <View style={[styles.iconWrap, { backgroundColor: a.unlocked ? `${a.color}20` : '#F0F0F0' }]}>
+    <View style={[styles.card, a.unlocked && { borderLeftColor: a.color }]}>
+      <View style={[styles.iconWrap, { backgroundColor: a.unlocked ? `${a.color}20` : colors.divider }]}>
         <MaterialCommunityIcons
           name={a.icon as any}
           size={28}
@@ -84,7 +123,7 @@ function AchievementCard({ achievement, t }: { achievement: Achievement; t: any 
           <View style={styles.cardProgressRow}>
             <View style={styles.cardProgressBg}>
               <View
-                style={[styles.cardProgressFill, { width: `${progress * 100}%`, backgroundColor: a.color }]}
+                style={[styles.cardProgressFill, { width: `${progress * 100}%` as any, backgroundColor: a.color }]}
               />
             </View>
             <Text style={styles.cardProgressText}>{a.current}/{a.target}</Text>
@@ -106,7 +145,6 @@ const styles = StyleSheet.create({
   title: { fontWeight: 'bold', marginBottom: spacing.md },
 
   progressCard: {
-    backgroundColor: '#fff',
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -128,18 +166,42 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 14,
-    color: '#999',
+    color: colors.textTertiary,
     marginLeft: 8,
   },
   progressBarBg: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E8E8E8',
+    backgroundColor: colors.border,
   },
   progressBarFill: {
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.primary,
+  },
+
+  filterRow: {
+    marginBottom: spacing.md,
+  },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: colors.divider,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  chipTextActive: {
+    color: '#fff',
   },
 
   card: {
@@ -150,15 +212,12 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#E0E0E0',
+    borderLeftColor: colors.border,
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-  },
-  cardUnlocked: {
-    borderLeftColor: colors.primary,
   },
   iconWrap: {
     width: 50,
@@ -180,10 +239,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#333',
+    flex: 1,
+    marginRight: 6,
   },
   cardDesc: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
     marginTop: 2,
   },
   cardProgressRow: {
@@ -196,7 +257,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: colors.divider,
   },
   cardProgressFill: {
     height: 6,
@@ -204,7 +265,7 @@ const styles = StyleSheet.create({
   },
   cardProgressText: {
     fontSize: 11,
-    color: '#999',
+    color: colors.textTertiary,
     minWidth: 30,
   },
   unlockedDate: {

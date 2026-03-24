@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Text, Card, TextInput, Button, SegmentedButtons, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import {
   calculateBMR, calculateTDEE, calculateCalorieTarget, calculateMacroTargets,
@@ -191,6 +192,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontWeight: 'bold', marginBottom: spacing.sm },
   input: { marginBottom: spacing.sm },
   resultBox: { backgroundColor: '#f5f5f5', borderRadius: borderRadius.md, padding: spacing.md, marginTop: spacing.sm, alignItems: 'center' },
-  resultLabel: { fontSize: 14, color: '#666' },
+  resultLabel: { fontSize: 14, color: colors.textSecondary },
   resultValue: { fontSize: 28, fontWeight: 'bold' },
 });

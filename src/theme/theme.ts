@@ -18,6 +18,23 @@ export const colors = {
   fat: '#EF5350',
   water: '#29B6F6',
 
+  // Text
+  textPrimary: '#333',
+  textSecondary: '#666',
+  textTertiary: '#999',
+  textDisabled: '#ccc',
+  textOnPrimary: '#fff',
+
+  // Border & Divider
+  border: '#E0E0E0',
+  divider: '#F0F0F0',
+
+  // Background tints
+  successBg: '#E8F5E9',
+  warningBg: '#FFF3E0',
+  errorBg: '#FFEBEE',
+  infoBg: '#E3F2FD',
+
   // Surface
   background: '#FAFAFA',
   surface: '#FFFFFF',

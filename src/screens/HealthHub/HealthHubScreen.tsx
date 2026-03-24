@@ -16,18 +16,20 @@ import {
 } from '../../services/health/healthService';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { generateId, todayString } from '../../utils/helpers';
-
-const DATA_TYPES: { key: HealthDataPoint['type']; label: string; icon: string; color: string; unit: string; placeholder: string }[] = [
-  { key: 'steps', label: 'Adım', icon: 'walk', color: '#4CAF50', unit: 'adım', placeholder: '10000' },
-  { key: 'heartRate', label: 'Kalp Atışı', icon: 'heart-pulse', color: '#F44336', unit: 'bpm', placeholder: '72' },
-  { key: 'sleep', label: 'Uyku', icon: 'sleep', color: '#5C6BC0', unit: 'saat', placeholder: '7.5' },
-  { key: 'activeCalories', label: 'Aktif Kalori', icon: 'fire', color: '#FF9800', unit: 'kcal', placeholder: '350' },
-];
+import { useLanguage } from '../../i18n';
 
 export function HealthHubScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   const today = todayString();
+
+  const DATA_TYPES: { key: HealthDataPoint['type']; label: string; icon: string; color: string; unit: string; placeholder: string }[] = [
+    { key: 'steps', label: t.healthHub.steps, icon: 'walk', color: colors.primary, unit: t.healthHub.stepsUnit, placeholder: '10000' },
+    { key: 'heartRate', label: t.healthHub.heartRate, icon: 'heart-pulse', color: colors.red, unit: 'bpm', placeholder: '72' },
+    { key: 'sleep', label: t.healthHub.sleepLabel, icon: 'sleep', color: colors.secondary, unit: t.healthHub.sleepUnit, placeholder: '7.5' },
+    { key: 'activeCalories', label: t.healthHub.activeCalories, icon: 'fire', color: colors.orange, unit: 'kcal', placeholder: '350' },
+  ];
 
   const [config, setConfig] = useState<HealthSyncConfig | null>(null);
   const [todayData, setTodayData] = useState<HealthDataPoint[]>([]);
@@ -70,15 +72,15 @@ export function HealthHubScreen() {
     try {
       const data = await exportAllData();
       if (Platform.OS === 'web') {
-        Alert.alert('Dışa Aktarma', 'Veri panoya kopyalandı');
+        Alert.alert(t.healthHub.export, t.healthHub.exportSuccess);
         return;
       }
       await Share.share({
         message: data,
-        title: 'FitTrack Sağlık Verileri',
+        title: t.healthHub.shareTitle,
       });
     } catch (e) {
-      Alert.alert('Hata', 'Dışa aktarma başarısız');
+      Alert.alert(t.common.error, t.healthHub.exportFailed);
     }
   };
 
@@ -100,30 +102,29 @@ export function HealthHubScreen() {
       contentContainerStyle={{ padding: spacing.md, paddingTop: spacing.md, paddingBottom: 40 }}
     >
       <View style={styles.headerRow}>
-        <Text variant="headlineSmall" style={styles.title}>Sağlık Merkezi</Text>
         <Button mode="outlined" onPress={handleExport} icon="export" compact>
-          Dışa Aktar
+          {t.healthHub.export}
         </Button>
       </View>
 
       {/* Connection Status */}
-      <Card style={[styles.card, { backgroundColor: '#E3F2FD' }]} mode="elevated">
+      <Card style={[styles.card, { backgroundColor: colors.infoBg }]} mode="elevated">
         <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <MaterialCommunityIcons name="watch" size={32} color="#1976D2" />
+          <MaterialCommunityIcons name="watch" size={32} color={colors.secondary} />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <Text style={{ fontWeight: 'bold' }}>Cihaz Bağlantısı</Text>
-            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>
-              Manuel veri girişi aktif
+            <Text style={{ fontWeight: 'bold' }}>{t.healthHub.deviceConnection}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
+              {t.healthHub.manualInput}
             </Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: '#4CAF50' }]}>
-            <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>Aktif</Text>
+          <View style={[styles.statusBadge, { backgroundColor: colors.primary }]}>
+            <Text style={{ color: colors.textOnPrimary, fontSize: 10, fontWeight: 'bold' }}>{t.healthHub.active}</Text>
           </View>
         </Card.Content>
       </Card>
 
       {/* Today's Health Data */}
-      <Text variant="titleMedium" style={styles.sectionTitle}>Bugünkü Veriler</Text>
+      <Text variant="titleMedium" style={styles.sectionTitle}>{t.healthHub.todayData}</Text>
       <View style={styles.dataGrid}>
         {DATA_TYPES.map((type) => {
           const value = getDataValue(type.key);
@@ -140,7 +141,7 @@ export function HealthHubScreen() {
                   <Text style={{ fontWeight: 'bold', fontSize: 20, marginTop: 8 }}>
                     {value !== null ? value : '--'}
                   </Text>
-                  <Text style={{ color: '#999', fontSize: 11 }}>{type.unit}</Text>
+                  <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{type.unit}</Text>
                   <Text style={{ fontWeight: '600', fontSize: 12, marginTop: 4 }}>{type.label}</Text>
                 </Card.Content>
               </Card>
@@ -153,19 +154,19 @@ export function HealthHubScreen() {
       {stats && stats.totalEntries > 0 && (
         <Card style={styles.card} mode="elevated">
           <Card.Content>
-            <Text style={{ fontWeight: 'bold', marginBottom: 12 }}>Haftalık Ortalamalar</Text>
+            <Text style={{ fontWeight: 'bold', marginBottom: 12 }}>{t.healthHub.weeklyAverages}</Text>
             <View style={styles.statsGrid}>
               {stats.avgSteps > 0 && (
-                <StatItem icon="walk" color="#4CAF50" label="Adım" value={`${stats.avgSteps}`} />
+                <StatItem icon="walk" color={colors.primary} label={t.healthHub.steps} value={`${stats.avgSteps}`} />
               )}
               {stats.avgHeartRate > 0 && (
-                <StatItem icon="heart-pulse" color="#F44336" label="Kalp" value={`${stats.avgHeartRate} bpm`} />
+                <StatItem icon="heart-pulse" color={colors.red} label={t.healthHub.heartRate} value={`${stats.avgHeartRate} bpm`} />
               )}
               {stats.avgSleep > 0 && (
-                <StatItem icon="sleep" color="#5C6BC0" label="Uyku" value={`${stats.avgSleep}s`} />
+                <StatItem icon="sleep" color={colors.secondary} label={t.healthHub.sleepLabel} value={`${stats.avgSleep}s`} />
               )}
               {stats.avgActiveCalories > 0 && (
-                <StatItem icon="fire" color="#FF9800" label="Kalori" value={`${stats.avgActiveCalories}`} />
+                <StatItem icon="fire" color={colors.orange} label={t.healthHub.activeCalories} value={`${stats.avgActiveCalories}`} />
               )}
             </View>
           </Card.Content>
@@ -173,15 +174,14 @@ export function HealthHubScreen() {
       )}
 
       {/* Info Card */}
-      <Card style={[styles.card, { backgroundColor: '#FFF8E1' }]} mode="elevated">
+      <Card style={[styles.card, { backgroundColor: colors.warningBg }]} mode="elevated">
         <Card.Content>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <MaterialCommunityIcons name="information" size={20} color="#F57F17" />
-            <Text style={{ fontWeight: 'bold', marginLeft: 8, color: '#F57F17' }}>Bilgi</Text>
+            <MaterialCommunityIcons name="information" size={20} color={colors.orange} />
+            <Text style={{ fontWeight: 'bold', marginLeft: 8, color: colors.orange }}>{t.healthHub.info}</Text>
           </View>
-          <Text style={{ color: '#666', fontSize: 13, lineHeight: 20 }}>
-            Sağlık verilerinizi manuel olarak girebilirsiniz. Apple Health ve Google Fit entegrasyonu
-            gelecek güncellemelerde eklenecektir. Verilerinizi dışa aktarma butonu ile paylaşabilirsiniz.
+          <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+            {t.healthHub.infoText}
           </Text>
         </Card.Content>
       </Card>
@@ -189,22 +189,22 @@ export function HealthHubScreen() {
       {/* Add Data Dialog */}
       <Portal>
         <Dialog visible={addDialogVisible} onDismiss={() => setAddDialogVisible(false)}>
-          <Dialog.Title>{DATA_TYPES.find((t) => t.key === selectedType)?.label} Ekle</Dialog.Title>
+          <Dialog.Title>{DATA_TYPES.find((dt) => dt.key === selectedType)?.label} - {t.healthHub.addValue}</Dialog.Title>
           <Dialog.Content>
             <TextInput
-              label={`Değer (${DATA_TYPES.find((t) => t.key === selectedType)?.unit})`}
+              label={`${t.healthHub.valueLabel} (${DATA_TYPES.find((dt) => dt.key === selectedType)?.unit})`}
               value={inputValue}
               onChangeText={setInputValue}
               keyboardType="numeric"
               mode="outlined"
               dense
-              placeholder={DATA_TYPES.find((t) => t.key === selectedType)?.placeholder}
-              style={{ backgroundColor: '#fff' }}
+              placeholder={DATA_TYPES.find((dt) => dt.key === selectedType)?.placeholder}
+              style={{ backgroundColor: colors.surface }}
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setAddDialogVisible(false)}>İptal</Button>
-            <Button onPress={handleAddData} disabled={!inputValue.trim()}>Kaydet</Button>
+            <Button onPress={() => setAddDialogVisible(false)}>{t.common.cancel}</Button>
+            <Button onPress={handleAddData} disabled={!inputValue.trim()}>{t.common.save}</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -217,7 +217,7 @@ function StatItem({ icon, color, label, value }: { icon: string; color: string; 
     <View style={styles.statItem}>
       <MaterialCommunityIcons name={icon as any} size={20} color={color} />
       <Text style={{ fontWeight: 'bold', fontSize: 14, marginTop: 4 }}>{value}</Text>
-      <Text style={{ color: '#999', fontSize: 10 }}>{label}</Text>
+      <Text style={{ color: colors.textTertiary, fontSize: 10 }}>{label}</Text>
     </View>
   );
 }

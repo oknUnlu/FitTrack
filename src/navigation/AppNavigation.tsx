@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -16,6 +16,7 @@ import { ProfileScreen } from '../screens/Profile/ProfileScreen';
 import { AICoachScreen } from '../screens/AICoach/AICoachScreen';
 import { ToolsScreen } from '../screens/Tools/ToolsScreen';
 import { ActiveWorkoutScreen } from '../screens/Workout/ActiveWorkoutScreen';
+import { SessionDetailScreen } from '../screens/Workout/SessionDetailScreen';
 import { AchievementsScreen } from '../screens/Achievements/AchievementsScreen';
 import { BodyMetricsScreen } from '../screens/BodyMetrics/BodyMetricsScreen';
 import { SupplementsScreen } from '../screens/Supplements/SupplementsScreen';
@@ -35,7 +36,8 @@ export type RootStackParamList = {
   Wellness: undefined;
   HealthHub: undefined;
   Social: undefined;
-  ActiveWorkout: undefined;
+  ActiveWorkout: { templateId?: string; templateName?: string; preloadedExerciseIds?: string[] } | undefined;
+  SessionDetail: { sessionId: string; sessionName: string; date: string; durationMinutes: number; caloriesBurned: number };
 };
 
 export type TabParamList = {
@@ -135,40 +137,46 @@ function AppStack() {
       <Stack.Screen
         name="BodyMetrics"
         component={BodyMetricsScreen}
-        options={{ headerShown: true, title: 'Vücut Ölçüleri', animation: 'slide_from_right' }}
+        options={{ headerShown: true, title: t.screenTitles.bodyMetrics, animation: 'slide_from_right' }}
       />
       <Stack.Screen
         name="Supplements"
         component={SupplementsScreen}
-        options={{ headerShown: true, title: 'Takviyeler', animation: 'slide_from_right' }}
+        options={{ headerShown: true, title: t.screenTitles.supplements, animation: 'slide_from_right' }}
       />
       <Stack.Screen
         name="Wellness"
         component={WellnessScreen}
-        options={{ headerShown: true, title: 'Wellness', animation: 'slide_from_right' }}
+        options={{ headerShown: true, title: t.screenTitles.wellness, animation: 'slide_from_right' }}
       />
       <Stack.Screen
         name="HealthHub"
         component={HealthHubScreen}
-        options={{ headerShown: true, title: 'Sağlık Merkezi', animation: 'slide_from_right' }}
+        options={{ headerShown: true, title: t.screenTitles.healthHub, animation: 'slide_from_right' }}
       />
       <Stack.Screen
         name="Social"
         component={SocialScreen}
-        options={{ headerShown: true, title: 'Challenges', animation: 'slide_from_right' }}
+        options={{ headerShown: true, title: t.screenTitles.challenges, animation: 'slide_from_right' }}
       />
       <Stack.Screen
         name="ActiveWorkout"
         component={ActiveWorkoutScreen}
         options={{ headerShown: false, animation: 'slide_from_bottom' }}
       />
+      <Stack.Screen
+        name="SessionDetail"
+        component={SessionDetailScreen}
+        options={{ headerShown: true, title: t.workout.sessionDetail, animation: 'slide_from_right' }}
+      />
     </Stack.Navigator>
   );
 }
 
 export function AppNavigation() {
+  const isOnboarded = useUserStore((s) => s.isOnboarded);
   return (
-    <NavigationContainer>
+    <NavigationContainer key={isOnboarded ? 'onboarded' : 'onboarding'}>
       <AppStack />
     </NavigationContainer>
   );

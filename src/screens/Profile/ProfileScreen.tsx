@@ -29,6 +29,7 @@ export function ProfileScreen() {
   const isDark = useThemeStore((s) => s.isDarkMode);
   const toggleDark = useThemeStore((s) => s.toggleDarkMode);
   const userId = useUserStore((s) => s.userId);
+  const resetOnboarding = useUserStore((s) => s.resetOnboarding);
 
   const navigation = useNavigation();
   const [user, setUser] = useState<User | null>(null);
@@ -48,20 +49,21 @@ export function ProfileScreen() {
   };
 
   const loadData = useCallback(async () => {
-    if (Platform.OS === 'web') return;
     try {
-      const [u, meal, workout, savedKey] = await Promise.all([
-        getUserById(userId),
+      const [meal, workout, savedKey] = await Promise.all([
         AsyncStorage.getItem(NOTIF_MEAL_KEY),
         AsyncStorage.getItem(NOTIF_WORKOUT_KEY),
         AsyncStorage.getItem(GEMINI_KEY_STORAGE),
       ]);
-      setUser(u);
       setMealReminder(meal === 'true');
       setWorkoutReminder(workout === 'true');
       if (savedKey) {
         setApiKeySet(true);
         initializeGemini(savedKey);
+      }
+      if (Platform.OS !== 'web') {
+        const u = await getUserById(userId);
+        setUser(u);
       }
     } catch (e) {
       console.warn('ProfileScreen load failed:', e);
@@ -122,7 +124,7 @@ export function ProfileScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 100 }}
     >
       <Text variant="headlineSmall" style={styles.title}>{t.profile.title}</Text>
 
@@ -136,7 +138,7 @@ export function ProfileScreen() {
             {user?.name ?? t.profile.user}
           </Text>
           {user && (
-            <Text style={{ color: '#999', marginTop: 4 }}>
+            <Text style={{ color: colors.textTertiary, marginTop: 4 }}>
               {user.age} {t.profile.age} • {user.height} {t.common.cm} • {user.weight} {t.common.kg}
             </Text>
           )}
@@ -172,8 +174,8 @@ export function ProfileScreen() {
       <Card style={styles.card} mode="elevated">
         <List.Section>
           <List.Item
-            title={t.bodyMetrics?.title || 'Vücut Ölçüleri'}
-            description={t.bodyMetrics?.trackProgress || 'Ölçümlerini takip et'}
+            title={t.bodyMetrics.title}
+            description={t.bodyMetrics.trackProgress}
             left={(props) => <List.Icon {...props} icon="tape-measure" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => (navigation as any).navigate('BodyMetrics')}
@@ -206,7 +208,7 @@ export function ProfileScreen() {
             right={() => <Switch value={mealReminder} onValueChange={toggleMealReminder} />}
           />
           <List.Item
-            title={t.profile.waterReminder || 'Su Hatırlatıcısı'}
+            title={t.profile.waterReminder}
             description={waterReminder ? t.profile.on : t.profile.off}
             left={(props) => <List.Icon {...props} icon="water" />}
             right={() => <Switch value={waterReminder} onValueChange={toggleWaterReminder} />}
@@ -236,7 +238,32 @@ export function ProfileScreen() {
         </List.Section>
       </Card>
 
-      <Text style={{ textAlign: 'center', color: '#999', marginTop: spacing.md, fontSize: 12 }}>
+      {/* Reset Account */}
+      <Card style={styles.card} mode="elevated">
+        <List.Section>
+          <List.Item
+            title={t.profile.resetAccount}
+            description={t.profile.resetAccountDesc}
+            left={(props) => <List.Icon {...props} icon="refresh" color="#F44336" />}
+            onPress={() =>
+              Alert.alert(
+                t.profile.resetAccount,
+                t.profile.resetAccountConfirm,
+                [
+                  { text: t.common.cancel, style: 'cancel' },
+                  {
+                    text: t.common.yes,
+                    style: 'destructive',
+                    onPress: () => resetOnboarding(),
+                  },
+                ]
+              )
+            }
+          />
+        </List.Section>
+      </Card>
+
+      <Text style={{ textAlign: 'center', color: colors.textTertiary, marginTop: spacing.md, fontSize: 12 }}>
         {t.profile.version}
       </Text>
 
@@ -245,7 +272,7 @@ export function ProfileScreen() {
         <Dialog visible={apiKeyDialogVisible} onDismiss={() => setApiKeyDialogVisible(false)}>
           <Dialog.Title>{t.profile.geminiApiKey}</Dialog.Title>
           <Dialog.Content>
-            <Text style={{ color: '#666', marginBottom: spacing.sm, fontSize: 13 }}>
+            <Text style={{ color: colors.textSecondary, marginBottom: spacing.sm, fontSize: 13 }}>
               {t.profile.apiKeyInstruction}
             </Text>
             <TextInput
@@ -287,23 +314,23 @@ export function ProfileScreen() {
   );
 }
 
-function InfoChip({ icon, label }: { icon: string; label: string }) {
+const InfoChip = React.memo(function InfoChip({ icon, label }: { icon: string; label: string }) {
   return (
     <View style={styles.chip}>
       <MaterialCommunityIcons name={icon as any} size={14} color={colors.primary} />
       <Text style={styles.chipText}>{label}</Text>
     </View>
   );
-}
+});
 
-function MacroItem({ label, value, color }: { label: string; value: string; color: string }) {
+const MacroItem = React.memo(function MacroItem({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <View style={{ alignItems: 'center', flex: 1 }}>
       <Text style={{ fontWeight: 'bold', fontSize: 15, color }}>{value}</Text>
-      <Text style={{ color: '#999', fontSize: 11 }}>{label}</Text>
+      <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{label}</Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -313,13 +340,13 @@ const styles = StyleSheet.create({
     width: 80, height: 80, borderRadius: 40,
     backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center',
   },
-  sectionLabel: { fontWeight: 'bold', fontSize: 14, marginBottom: spacing.sm, color: '#555' },
+  sectionLabel: { fontWeight: 'bold', fontSize: 14, marginBottom: spacing.sm, color: colors.textSecondary },
   infoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 4,
+    backgroundColor: colors.successBg, paddingHorizontal: 10, paddingVertical: 4,
     borderRadius: 12,
   },
-  chipText: { fontSize: 12, color: '#333' },
+  chipText: { fontSize: 12, color: colors.textPrimary },
   macroRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.sm },
 });

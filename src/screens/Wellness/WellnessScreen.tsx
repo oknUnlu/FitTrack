@@ -6,34 +6,41 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   getWellnessEntryByDate,
+  getWellnessEntries,
   addWellnessEntry,
   getWellnessStats,
   WellnessEntry,
 } from '../../services/wellness/wellnessService';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { generateId, todayString } from '../../utils/helpers';
+import { useLanguage } from '../../i18n';
 
-const MOOD_OPTIONS: { key: WellnessEntry['mood']; icon: string; label: string; color: string }[] = [
-  { key: 'great', icon: 'emoticon-excited', label: 'Harika', color: '#4CAF50' },
-  { key: 'good', icon: 'emoticon-happy', label: 'İyi', color: '#8BC34A' },
-  { key: 'neutral', icon: 'emoticon-neutral', label: 'Normal', color: '#FFC107' },
-  { key: 'bad', icon: 'emoticon-sad', label: 'Kötü', color: '#FF9800' },
-  { key: 'terrible', icon: 'emoticon-dead', label: 'Berbat', color: '#F44336' },
+const MOOD_KEYS: { key: WellnessEntry['mood']; icon: string; labelKey: string; color: string }[] = [
+  { key: 'great', icon: 'emoticon-excited', labelKey: 'moodGreat', color: colors.primary },
+  { key: 'good', icon: 'emoticon-happy', labelKey: 'moodGood', color: colors.calorieGreen },
+  { key: 'neutral', icon: 'emoticon-neutral', labelKey: 'moodNeutral', color: colors.yellow },
+  { key: 'bad', icon: 'emoticon-sad', labelKey: 'moodBad', color: colors.orange },
+  { key: 'terrible', icon: 'emoticon-dead', labelKey: 'moodTerrible', color: colors.red },
 ];
 
-const SLEEP_QUALITY_LABELS = ['', 'Çok Kötü', 'Kötü', 'Normal', 'İyi', 'Mükemmel'];
+const SLEEP_QUALITY_KEYS = ['', 'sleepVeryBad', 'sleepBad', 'sleepNormal', 'sleepGood', 'sleepExcellent'];
 
 export function WellnessScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   const today = todayString();
 
   const [entry, setEntry] = useState<WellnessEntry | null>(null);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [meditationActive, setMeditationActive] = useState(false);
+  const [meditationPaused, setMeditationPaused] = useState(false);
   const [meditationSeconds, setMeditationSeconds] = useState(0);
+  const [meditationPreset, setMeditationPreset] = useState<number>(0); // 0 = free timer, else target minutes
   const [stats, setStats] = useState<Awaited<ReturnType<typeof getWellnessStats>> | null>(null);
+  const [recentMeditations, setRecentMeditations] = useState<{ date: string; minutes: number }[]>([]);
   const meditationTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const presetRef = useRef(0);
 
   // Form state
   const [formSleepHours, setFormSleepHours] = useState('7');
@@ -44,12 +51,20 @@ export function WellnessScreen() {
   const [formNotes, setFormNotes] = useState('');
 
   const loadData = useCallback(async () => {
-    const [todayEntry, weekStats] = await Promise.all([
+    const [todayEntry, weekStats, allEntries] = await Promise.all([
       getWellnessEntryByDate(today),
       getWellnessStats(7),
+      getWellnessEntries(),
     ]);
     setEntry(todayEntry);
     setStats(weekStats);
+    // Recent meditation sessions (last 7 with meditation > 0)
+    const medSessions = allEntries
+      .filter((e) => e.meditationMinutes > 0)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 7)
+      .map((e) => ({ date: e.date, minutes: e.meditationMinutes }));
+    setRecentMeditations(medSessions);
     if (todayEntry) {
       setFormSleepHours(todayEntry.sleepHours.toString());
       setFormSleepQuality(todayEntry.sleepQuality);
@@ -87,18 +102,47 @@ export function WellnessScreen() {
     loadData();
   };
 
-  const startMeditation = () => {
-    setMeditationActive(true);
-    setMeditationSeconds(0);
+  const MEDITATION_PRESETS = [0, 5, 10, 15, 20]; // 0 = free
+
+  const runTimer = () => {
     meditationTimer.current = setInterval(() => {
-      setMeditationSeconds((prev) => prev + 1);
+      setMeditationSeconds((prev) => {
+        if (presetRef.current > 0) {
+          if (prev <= 1) {
+            // Timer complete — schedule finish outside setState
+            setTimeout(() => finishMeditation(presetRef.current), 0);
+            return 0;
+          }
+          return prev - 1;
+        }
+        return prev + 1;
+      });
     }, 1000);
   };
 
-  const stopMeditation = async () => {
+  const startMeditation = () => {
+    presetRef.current = meditationPreset;
+    setMeditationActive(true);
+    setMeditationPaused(false);
+    setMeditationSeconds(meditationPreset > 0 ? meditationPreset * 60 : 0);
+    runTimer();
+  };
+
+  const pauseMeditation = () => {
+    if (meditationTimer.current) clearInterval(meditationTimer.current);
+    setMeditationPaused(true);
+  };
+
+  const resumeMeditation = () => {
+    setMeditationPaused(false);
+    runTimer();
+  };
+
+  const finishMeditation = async (presetMinutes?: number) => {
     if (meditationTimer.current) clearInterval(meditationTimer.current);
     setMeditationActive(false);
-    const addedMinutes = Math.max(1, Math.round(meditationSeconds / 60));
+    setMeditationPaused(false);
+    const addedMinutes = presetMinutes || Math.max(1, Math.round(meditationSeconds / 60));
     const currentEntry = await getWellnessEntryByDate(today);
     const updatedEntry: WellnessEntry = currentEntry
       ? { ...currentEntry, meditationMinutes: currentEntry.meditationMinutes + addedMinutes }
@@ -118,6 +162,8 @@ export function WellnessScreen() {
     loadData();
     setMeditationSeconds(0);
   };
+
+  const stopMeditation = () => finishMeditation();
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -143,7 +189,10 @@ export function WellnessScreen() {
     </View>
   );
 
-  const getMoodEmoji = (mood: string) => MOOD_OPTIONS.find((m) => m.key === mood);
+  const getMoodLabel = (mood: string) => {
+    const found = MOOD_KEYS.find((m) => m.key === mood);
+    return found ? { ...found, label: (t.wellness as any)[found.labelKey] || found.labelKey } : undefined;
+  };
 
   return (
     <ScrollView
@@ -151,9 +200,8 @@ export function WellnessScreen() {
       contentContainerStyle={{ padding: spacing.md, paddingTop: spacing.md, paddingBottom: 40 }}
     >
       <View style={styles.headerRow}>
-        <Text variant="headlineSmall" style={styles.title}>Wellness</Text>
         <Button mode="contained" onPress={() => setDialogVisible(true)} icon="pencil" compact>
-          {entry ? 'Güncelle' : 'Kaydet'}
+          {entry ? t.wellness.update : t.wellness.save}
         </Button>
       </View>
 
@@ -161,27 +209,27 @@ export function WellnessScreen() {
       {entry ? (
         <Card style={styles.card} mode="elevated">
           <Card.Content>
-            <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>Bugünkü Durum</Text>
+            <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>{t.wellness.todayStatus}</Text>
             <View style={styles.summaryGrid}>
               <View style={styles.summaryItem}>
                 <MaterialCommunityIcons name="sleep" size={24} color="#5C6BC0" />
                 <Text style={styles.summaryValue}>{entry.sleepHours}s</Text>
-                <Text style={styles.summaryLabel}>Uyku</Text>
+                <Text style={styles.summaryLabel}>{t.wellness.sleep}</Text>
               </View>
               <View style={styles.summaryItem}>
-                <MaterialCommunityIcons name={(getMoodEmoji(entry.mood)?.icon || 'emoticon') as any} size={24} color={getMoodEmoji(entry.mood)?.color || '#999'} />
-                <Text style={styles.summaryValue}>{getMoodEmoji(entry.mood)?.label}</Text>
-                <Text style={styles.summaryLabel}>Ruh Hali</Text>
+                <MaterialCommunityIcons name={(getMoodLabel(entry.mood)?.icon || 'emoticon') as any} size={24} color={getMoodLabel(entry.mood)?.color || colors.textTertiary} />
+                <Text style={styles.summaryValue}>{getMoodLabel(entry.mood)?.label}</Text>
+                <Text style={styles.summaryLabel}>{t.wellness.mood}</Text>
               </View>
               <View style={styles.summaryItem}>
                 <MaterialCommunityIcons name="lightning-bolt" size={24} color="#FF9800" />
                 <Text style={styles.summaryValue}>{entry.energyLevel}/5</Text>
-                <Text style={styles.summaryLabel}>Enerji</Text>
+                <Text style={styles.summaryLabel}>{t.wellness.energy}</Text>
               </View>
               <View style={styles.summaryItem}>
                 <MaterialCommunityIcons name="head-heart" size={24} color="#E91E63" />
                 <Text style={styles.summaryValue}>{entry.stressLevel}/5</Text>
-                <Text style={styles.summaryLabel}>Stres</Text>
+                <Text style={styles.summaryLabel}>{t.wellness.stress}</Text>
               </View>
             </View>
           </Card.Content>
@@ -189,10 +237,10 @@ export function WellnessScreen() {
       ) : (
         <Card style={styles.card} mode="elevated">
           <Card.Content style={{ alignItems: 'center', padding: spacing.lg }}>
-            <MaterialCommunityIcons name="heart-pulse" size={48} color="#ccc" />
-            <Text style={{ color: '#999', marginTop: 8 }}>Bugün henüz kayıt yok</Text>
+            <MaterialCommunityIcons name="heart-pulse" size={48} color={colors.textDisabled} />
+            <Text style={{ color: colors.textTertiary, marginTop: 8 }}>{t.wellness.noRecordYet}</Text>
             <Button mode="outlined" onPress={() => setDialogVisible(true)} style={{ marginTop: 12 }}>
-              Günlük Kayıt Ekle
+              {t.wellness.addDailyRecord}
             </Button>
           </Card.Content>
         </Card>
@@ -201,54 +249,106 @@ export function WellnessScreen() {
       {/* Meditation Timer */}
       <Card style={styles.card} mode="elevated">
         <Card.Content style={{ alignItems: 'center' }}>
-          <Text style={{ fontWeight: 'bold', marginBottom: 12 }}>Meditasyon Zamanlayıcı</Text>
-          <View style={[styles.meditationCircle, meditationActive && styles.meditationCircleActive]}>
+          <Text style={{ fontWeight: 'bold', marginBottom: 12 }}>{t.wellness.meditationTimer}</Text>
+
+          {/* Preset buttons */}
+          {!meditationActive && (
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              {MEDITATION_PRESETS.map((p) => (
+                <TouchableOpacity
+                  key={p}
+                  onPress={() => setMeditationPreset(p)}
+                  style={[
+                    styles.presetBtn,
+                    meditationPreset === p && { backgroundColor: colors.primary, borderColor: colors.primary },
+                  ]}
+                >
+                  <Text style={{ color: meditationPreset === p ? colors.textOnPrimary : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
+                    {p === 0 ? t.wellness.freeTimer : `${p} ${t.common.min}`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <View style={[styles.meditationCircle, meditationActive && !meditationPaused && styles.meditationCircleActive, meditationPaused && { borderColor: colors.orange }]}>
             <Text style={styles.meditationTime}>{formatTime(meditationSeconds)}</Text>
+            {meditationPreset > 0 && !meditationActive && (
+              <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{meditationPreset} {t.common.min}</Text>
+            )}
           </View>
+
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
             {!meditationActive ? (
-              <Button mode="contained" onPress={startMeditation} icon="play" style={{ backgroundColor: '#4CAF50' }}>
-                Başlat
+              <Button mode="contained" onPress={startMeditation} icon="play" style={{ backgroundColor: colors.primary }}>
+                {t.wellness.start}
               </Button>
             ) : (
-              <Button mode="contained" onPress={stopMeditation} icon="stop" style={{ backgroundColor: '#F44336' }}>
-                Bitir
-              </Button>
+              <>
+                {meditationPaused ? (
+                  <Button mode="contained" onPress={resumeMeditation} icon="play" style={{ backgroundColor: colors.primary }}>
+                    {t.wellness.resume}
+                  </Button>
+                ) : (
+                  <Button mode="outlined" onPress={pauseMeditation} icon="pause">
+                    {t.wellness.pause}
+                  </Button>
+                )}
+                <Button mode="contained" onPress={stopMeditation} icon="stop" style={{ backgroundColor: colors.red }}>
+                  {t.wellness.stop}
+                </Button>
+              </>
             )}
           </View>
           {entry && entry.meditationMinutes > 0 && (
-            <Text style={{ color: '#999', marginTop: 8, fontSize: 12 }}>
-              Bugün toplam: {entry.meditationMinutes} dk
+            <Text style={{ color: colors.textTertiary, marginTop: 8, fontSize: 12 }}>
+              {t.wellness.todayTotal} {entry.meditationMinutes} {t.common.min}
             </Text>
           )}
         </Card.Content>
       </Card>
 
+      {/* Meditation History */}
+      {recentMeditations.length > 0 && (
+        <Card style={styles.card} mode="elevated">
+          <Card.Content>
+            <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>{t.wellness.recentSessions}</Text>
+            {recentMeditations.map((s) => (
+              <View key={s.date} style={styles.historyRow}>
+                <MaterialCommunityIcons name="meditation" size={16} color={colors.purple} />
+                <Text style={{ flex: 1, marginLeft: 8, color: colors.textSecondary, fontSize: 13 }}>{s.date}</Text>
+                <Text style={{ fontWeight: '600', fontSize: 13 }}>{s.minutes} {t.common.min}</Text>
+              </View>
+            ))}
+          </Card.Content>
+        </Card>
+      )}
+
       {/* Weekly Stats */}
       {stats && stats.totalEntries > 0 && (
         <Card style={styles.card} mode="elevated">
           <Card.Content>
-            <Text style={{ fontWeight: 'bold', marginBottom: 12 }}>Haftalık Özet</Text>
+            <Text style={{ fontWeight: 'bold', marginBottom: 12 }}>{t.wellness.weeklySummary}</Text>
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <MaterialCommunityIcons name="sleep" size={20} color="#5C6BC0" />
                 <Text style={styles.statValue}>{stats.avgSleep}s</Text>
-                <Text style={styles.statLabel}>Ort. Uyku</Text>
+                <Text style={styles.statLabel}>{t.wellness.avgSleep}</Text>
               </View>
               <View style={styles.statItem}>
                 <MaterialCommunityIcons name="head-heart" size={20} color="#E91E63" />
                 <Text style={styles.statValue}>{stats.avgStress}/5</Text>
-                <Text style={styles.statLabel}>Ort. Stres</Text>
+                <Text style={styles.statLabel}>{t.wellness.avgStress}</Text>
               </View>
               <View style={styles.statItem}>
                 <MaterialCommunityIcons name="lightning-bolt" size={20} color="#FF9800" />
                 <Text style={styles.statValue}>{stats.avgEnergy}/5</Text>
-                <Text style={styles.statLabel}>Ort. Enerji</Text>
+                <Text style={styles.statLabel}>{t.wellness.avgEnergy}</Text>
               </View>
               <View style={styles.statItem}>
                 <MaterialCommunityIcons name="meditation" size={20} color="#9C27B0" />
-                <Text style={styles.statValue}>{stats.avgMeditation}dk</Text>
-                <Text style={styles.statLabel}>Ort. Meditasyon</Text>
+                <Text style={styles.statValue}>{stats.avgMeditation}{t.common.min}</Text>
+                <Text style={styles.statLabel}>{t.wellness.avgMeditation}</Text>
               </View>
             </View>
           </Card.Content>
@@ -258,11 +358,11 @@ export function WellnessScreen() {
       {/* Entry Dialog */}
       <Portal>
         <Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)} style={{ maxHeight: '80%' }}>
-          <Dialog.Title>Günlük Wellness Kaydı</Dialog.Title>
+          <Dialog.Title>{t.wellness.dailyRecord}</Dialog.Title>
           <Dialog.ScrollArea style={{ paddingHorizontal: 0 }}>
             <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 8 }}>
               {/* Sleep */}
-              <Text style={styles.formLabel}>Uyku Süresi (saat)</Text>
+              <Text style={styles.formLabel}>{t.wellness.sleepDuration}</Text>
               <TextInput
                 value={formSleepHours}
                 onChangeText={setFormSleepHours}
@@ -270,35 +370,36 @@ export function WellnessScreen() {
                 mode="outlined"
                 dense
                 style={styles.input}
+                placeholder="7.5"
               />
 
               {/* Sleep Quality */}
-              <Text style={styles.formLabel}>Uyku Kalitesi</Text>
-              {renderRatingDots(formSleepQuality, setFormSleepQuality, '#5C6BC0')}
-              <Text style={{ fontSize: 11, color: '#999', marginTop: 2 }}>{SLEEP_QUALITY_LABELS[formSleepQuality]}</Text>
+              <Text style={styles.formLabel}>{t.wellness.sleepQuality}</Text>
+              {renderRatingDots(formSleepQuality, setFormSleepQuality, colors.secondary)}
+              <Text style={{ fontSize: 11, color: colors.textTertiary, marginTop: 2 }}>{(t.wellness as any)[SLEEP_QUALITY_KEYS[formSleepQuality]] || ''}</Text>
 
               {/* Mood */}
-              <Text style={[styles.formLabel, { marginTop: 12 }]}>Ruh Hali</Text>
+              <Text style={[styles.formLabel, { marginTop: 12 }]}>{t.wellness.mood}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-                {MOOD_OPTIONS.map((m) => (
+                {MOOD_KEYS.map((m) => (
                   <TouchableOpacity key={m.key} onPress={() => setFormMood(m.key)}>
                     <View style={[styles.moodOption, formMood === m.key && { backgroundColor: m.color + '20', borderColor: m.color }]}>
-                      <MaterialCommunityIcons name={m.icon as any} size={24} color={formMood === m.key ? m.color : '#999'} />
+                      <MaterialCommunityIcons name={m.icon as any} size={24} color={formMood === m.key ? m.color : colors.textTertiary} />
                     </View>
                   </TouchableOpacity>
                 ))}
               </View>
 
               {/* Energy */}
-              <Text style={[styles.formLabel, { marginTop: 12 }]}>Enerji Seviyesi</Text>
-              {renderRatingDots(formEnergyLevel, setFormEnergyLevel, '#FF9800')}
+              <Text style={[styles.formLabel, { marginTop: 12 }]}>{t.wellness.energyLevel}</Text>
+              {renderRatingDots(formEnergyLevel, setFormEnergyLevel, colors.orange)}
 
               {/* Stress */}
-              <Text style={[styles.formLabel, { marginTop: 12 }]}>Stres Seviyesi</Text>
-              {renderRatingDots(formStressLevel, setFormStressLevel, '#E91E63')}
+              <Text style={[styles.formLabel, { marginTop: 12 }]}>{t.wellness.stressLevel}</Text>
+              {renderRatingDots(formStressLevel, setFormStressLevel, colors.red)}
 
               {/* Notes */}
-              <Text style={[styles.formLabel, { marginTop: 12 }]}>Notlar</Text>
+              <Text style={[styles.formLabel, { marginTop: 12 }]}>{t.wellness.notes}</Text>
               <TextInput
                 value={formNotes}
                 onChangeText={setFormNotes}
@@ -307,13 +408,13 @@ export function WellnessScreen() {
                 multiline
                 numberOfLines={2}
                 style={styles.input}
-                placeholder="İsteğe bağlı..."
+                placeholder={t.wellness.notesPlaceholder}
               />
             </ScrollView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
-            <Button onPress={() => setDialogVisible(false)}>İptal</Button>
-            <Button onPress={handleSave}>Kaydet</Button>
+            <Button onPress={() => setDialogVisible(false)}>{t.common.cancel}</Button>
+            <Button onPress={handleSave}>{t.common.save}</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -329,24 +430,24 @@ const styles = StyleSheet.create({
   summaryGrid: { flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap' },
   summaryItem: { alignItems: 'center', minWidth: 70 },
   summaryValue: { fontWeight: 'bold', fontSize: 14, marginTop: 4 },
-  summaryLabel: { color: '#999', fontSize: 11 },
+  summaryLabel: { color: colors.textTertiary, fontSize: 11 },
   meditationCircle: {
     width: 140,
     height: 140,
     borderRadius: 70,
     borderWidth: 4,
-    borderColor: '#E0E0E0',
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  meditationCircleActive: { borderColor: '#4CAF50' },
+  meditationCircleActive: { borderColor: colors.primary },
   meditationTime: { fontSize: 32, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
   statsRow: { flexDirection: 'row', justifyContent: 'space-around' },
   statItem: { alignItems: 'center' },
   statValue: { fontWeight: 'bold', fontSize: 14, marginTop: 4 },
-  statLabel: { color: '#999', fontSize: 10, marginTop: 2 },
-  formLabel: { fontWeight: '600', fontSize: 13, color: '#555', marginTop: 8 },
-  input: { marginBottom: 4, backgroundColor: '#fff' },
+  statLabel: { color: colors.textTertiary, fontSize: 10, marginTop: 2 },
+  formLabel: { fontWeight: '600', fontSize: 13, color: colors.textSecondary, marginTop: 8 },
+  input: { marginBottom: 4, backgroundColor: colors.surface },
   ratingDot: {
     width: 32,
     height: 32,
@@ -360,8 +461,22 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  presetBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
 });

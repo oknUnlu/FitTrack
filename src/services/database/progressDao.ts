@@ -73,6 +73,15 @@ export async function getWaterLog(userId: string, date: string): Promise<WaterLo
   return row ? rowToWater(row) : null;
 }
 
+export async function getWaterLogsByDateRange(userId: string, startDate: string, endDate: string): Promise<WaterLog[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync(
+    'SELECT * FROM water_logs WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date',
+    [userId, startDate, endDate]
+  );
+  return (rows as any[]).map(rowToWater);
+}
+
 export async function upsertWaterLog(log: WaterLog): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(

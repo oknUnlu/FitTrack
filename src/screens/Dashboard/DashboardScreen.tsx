@@ -58,8 +58,8 @@ export function DashboardScreen() {
 
         {/* Supplements Card */}
         <QuickNavCard
-          title="Takviyeler"
-          subtitle="Günlük takviye takibi"
+          title={t.dashboardExtras.supplements}
+          subtitle={t.dashboardExtras.supplementsDesc}
           icon="pill"
           iconColor="#00897B"
           bgColor="#E0F2F1"
@@ -68,8 +68,8 @@ export function DashboardScreen() {
 
         {/* Wellness Card */}
         <QuickNavCard
-          title="Wellness"
-          subtitle="Uyku, stres ve meditasyon"
+          title={t.dashboardExtras.wellness}
+          subtitle={t.dashboardExtras.wellnessDesc}
           icon="heart-pulse"
           iconColor="#E91E63"
           bgColor="#FCE4EC"
@@ -78,8 +78,8 @@ export function DashboardScreen() {
 
         {/* Health Hub Card */}
         <QuickNavCard
-          title="Sağlık Merkezi"
-          subtitle="Adım, kalp atışı ve sağlık verileri"
+          title={t.dashboardExtras.healthHub}
+          subtitle={t.dashboardExtras.healthHubDesc}
           icon="watch"
           iconColor="#1976D2"
           bgColor="#E3F2FD"
@@ -88,8 +88,8 @@ export function DashboardScreen() {
 
         {/* Challenges Card */}
         <QuickNavCard
-          title="Challenges"
-          subtitle="Kendine meydan oku!"
+          title={t.dashboardExtras.challenges}
+          subtitle={t.dashboardExtras.challengesDesc}
           icon="trophy"
           iconColor="#FF6F00"
           bgColor="#FFF3E0"
@@ -148,7 +148,7 @@ function CalorieStat({ label, value, color }: { label: string; value: number; co
   return (
     <View style={{ alignItems: 'center' }}>
       <Text style={{ fontSize: 18, fontWeight: 'bold', color }}>{value}</Text>
-      <Text style={{ fontSize: 12, color: '#999' }}>{label}</Text>
+      <Text style={{ fontSize: 12, color: colors.textTertiary }}>{label}</Text>
     </View>
   );
 }
@@ -176,7 +176,7 @@ function MacroBar({ label, current, target, color }: { label: string; current: n
     <View style={{ marginTop: spacing.sm }}>
       <View style={styles.macroRow}>
         <Text style={{ fontSize: 14 }}>{label}</Text>
-        <Text style={{ fontSize: 12, color: '#999' }}>{Math.round(current)}g / {target}g</Text>
+        <Text style={{ fontSize: 12, color: colors.textTertiary }}>{Math.round(current)}g / {target}g</Text>
       </View>
       <View style={[styles.progressBg, { backgroundColor: `${color}22` }]}>
         <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
@@ -201,7 +201,7 @@ function WaterCard({ consumed, target, onAdd }: { consumed: number; target: numb
             <MaterialCommunityIcons name="water" size={24} color={colors.water} />
             <Text variant="titleMedium" style={[styles.cardTitle, { marginLeft: 8, marginBottom: 0 }]}>{t.dashboard.waterTracking}</Text>
           </View>
-          <Text style={{ color: '#999', fontSize: 12 }}>{glasses} {t.common.glasses}</Text>
+          <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{glasses} {t.common.glasses}</Text>
         </View>
 
         <View style={{ alignItems: 'center', marginVertical: spacing.md }}>
@@ -247,11 +247,11 @@ function WorkoutCard({ summary, onStart }: { summary: DailySummary; onStart: () 
           <View style={styles.rowBetween}>
             <View>
               <Text style={{ fontWeight: '600' }}>{summary.workoutName}</Text>
-              <Text style={{ color: '#999', fontSize: 12 }}>{summary.workoutDuration} {t.common.min}</Text>
+              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{summary.workoutDuration} {t.common.min}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ fontWeight: '600', color: colors.orange }}>{summary.workoutCalories} {t.common.kcal}</Text>
-              <Text style={{ color: '#999', fontSize: 12 }}>{t.dashboard.burnedLabel}</Text>
+              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{t.dashboard.burnedLabel}</Text>
             </View>
           </View>
         ) : (
@@ -277,16 +277,16 @@ function StreakCard({ streak, weeklyActive }: { streak: number; weeklyActive: bo
           <Text style={{ fontSize: 28 }}>🔥</Text>
           <View style={{ marginLeft: spacing.sm }}>
             <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{streak} {t.dashboard.dayStreak}</Text>
-            <Text style={{ color: '#999', fontSize: 12 }}>{t.dashboard.keepGoing}</Text>
+            <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{t.dashboard.keepGoing}</Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 4 }}>
           {weeklyActive.map((active, i) => (
             <View
               key={i}
-              style={[styles.dayDot, { backgroundColor: active ? colors.primary : '#E0E0E0' }]}
+              style={[styles.dayDot, { backgroundColor: active ? colors.primary : colors.border }]}
             >
-              <Text style={{ fontSize: 8, color: active ? '#fff' : '#999', fontWeight: 'bold' }}>
+              <Text style={{ fontSize: 8, color: active ? '#fff' : colors.textTertiary, fontWeight: 'bold' }}>
                 {daysArray[i]}
               </Text>
             </View>
@@ -325,12 +325,12 @@ function MealSuggestionCard({ summary }: { summary: DailySummary }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
           <MaterialCommunityIcons name="lightbulb-on" size={20} color="#9C27B0" />
           <Text style={{ fontWeight: 'bold', marginLeft: 8, color: '#6A1B9A' }}>
-            {'Öneri'}
+            {t.dashboardExtras.suggestion}
           </Text>
-          <Text style={{ color: '#999', fontSize: 11, marginLeft: 'auto' }}>{Math.round(remaining)} {t.common.kcal} {t.dashboard.remainingKcal}</Text>
+          <Text style={{ color: colors.textTertiary, fontSize: 11, marginLeft: 'auto' }}>{Math.round(remaining)} {t.common.kcal} {t.dashboard.remainingKcal}</Text>
         </View>
         <Text style={{ fontSize: 14 }}>{top.name}</Text>
-        <Text style={{ color: '#999', fontSize: 11, marginTop: 2 }}>
+        <Text style={{ color: colors.textTertiary, fontSize: 11, marginTop: 2 }}>
           {top.calories} {t.common.kcal} · P:{top.protein}g · K:{top.carbs}g · Y:{top.fat}g
         </Text>
       </Card.Content>
@@ -352,12 +352,12 @@ function AchievementsCard({ onPress }: { onPress: () => void }) {
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-      <Card style={[styles.card, { backgroundColor: '#FFF3E0' }]} mode="elevated">
+      <Card style={[styles.card, { backgroundColor: colors.warningBg }]} mode="elevated">
         <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons name="trophy" size={32} color="#FF9800" />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
             <Text style={{ fontWeight: 'bold' }}>{t.achievements.title}</Text>
-            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>{unlocked}/{total} {t.achievements.unlocked}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{unlocked}/{total} {t.achievements.unlocked}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
         </Card.Content>
@@ -379,7 +379,7 @@ function QuickNavCard({ title, subtitle, icon, iconColor, bgColor, onPress }: {
           <MaterialCommunityIcons name={icon as any} size={32} color={iconColor} />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
             <Text style={{ fontWeight: 'bold' }}>{title}</Text>
-            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>{subtitle}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{subtitle}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
         </Card.Content>
@@ -395,12 +395,12 @@ function AICoachCard({ onPress }: { onPress: () => void }) {
   const { t } = useLanguage();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-      <Card style={[styles.card, { backgroundColor: '#E8F5E9' }]} mode="elevated">
+      <Card style={[styles.card, { backgroundColor: colors.successBg }]} mode="elevated">
         <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons name="robot" size={32} color={colors.primary} />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
             <Text style={{ fontWeight: 'bold' }}>{t.dashboard.aiCoach}</Text>
-            <Text style={{ color: '#666', fontSize: 12, marginTop: 2 }}>{t.dashboard.askAiCoach}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{t.dashboard.askAiCoach}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
         </Card.Content>

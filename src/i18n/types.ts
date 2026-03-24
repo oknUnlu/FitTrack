@@ -47,6 +47,8 @@ export interface Translations {
     glasses: string;
     reps: string;
     sets: string;
+    retry: string;
+    errorOccurred: string;
   };
 
   // Tab Navigation
@@ -121,6 +123,23 @@ export interface Translations {
     weight: string;
     reps: string;
     add: string;
+    totalSets: string;
+    totalVolume: string;
+    restTimer: string;
+    restTimerDone: string;
+    skipRest: string;
+    addSet: string;
+    personalRecord: string;
+    thisWeek: string;
+    weekWorkouts: string;
+    weekTime: string;
+    weekCalories: string;
+    startTemplate: string;
+    sessionDetail: string;
+    workoutComplete: string;
+    exercisesCount: string;
+    setsCount: string;
+    prsAchieved: string;
   };
 
   // Progress Screen
@@ -179,6 +198,9 @@ export interface Translations {
     moderatelyActive: string;
     active: string;
     veryActive: string;
+    resetAccount: string;
+    resetAccountDesc: string;
+    resetAccountConfirm: string;
   };
 
   // AI Coach
@@ -251,30 +273,64 @@ export interface Translations {
     locked: string;
     unlocked: string;
     progress: string;
+    filterAll: string;
+    filterWorkout: string;
+    filterMeal: string;
+    filterStreak: string;
+    filterWater: string;
+    filterNutrition: string;
     firstMeal: string;
     firstMealDesc: string;
     firstWorkout: string;
     firstWorkoutDesc: string;
+    streak3: string;
+    streak3Desc: string;
     streak7: string;
     streak7Desc: string;
+    streak14: string;
+    streak14Desc: string;
     streak30: string;
     streak30Desc: string;
+    streak60: string;
+    streak60Desc: string;
     meals10: string;
     meals10Desc: string;
+    meals25: string;
+    meals25Desc: string;
     meals50: string;
     meals50Desc: string;
     meals100: string;
     meals100Desc: string;
+    meals200: string;
+    meals200Desc: string;
     workouts10: string;
     workouts10Desc: string;
+    workouts25: string;
+    workouts25Desc: string;
     workouts50: string;
     workouts50Desc: string;
+    workouts100: string;
+    workouts100Desc: string;
+    calorieBurn1000: string;
+    calorieBurn1000Desc: string;
+    calorieBurn5000: string;
+    calorieBurn5000Desc: string;
     water7: string;
     water7Desc: string;
+    water14: string;
+    water14Desc: string;
+    water30: string;
+    water30Desc: string;
     calorieGoal: string;
     calorieGoalDesc: string;
+    calorieGoal7: string;
+    calorieGoal7Desc: string;
     proteinGoal: string;
     proteinGoalDesc: string;
+    proteinGoal7: string;
+    proteinGoal7Desc: string;
+    perfectDay: string;
+    perfectDayDesc: string;
   };
 
   // Barcode Scanner
@@ -342,6 +398,135 @@ export interface Translations {
     fillAllFields: string;
     back: string;
     next: string;
+  };
+
+  // Wellness
+  wellness: {
+    title: string;
+    update: string;
+    save: string;
+    todayStatus: string;
+    sleep: string;
+    mood: string;
+    energy: string;
+    stress: string;
+    noRecordYet: string;
+    addDailyRecord: string;
+    meditationTimer: string;
+    start: string;
+    stop: string;
+    todayTotal: string;
+    weeklySummary: string;
+    avgSleep: string;
+    avgStress: string;
+    avgEnergy: string;
+    avgMeditation: string;
+    dailyRecord: string;
+    sleepDuration: string;
+    sleepQuality: string;
+    energyLevel: string;
+    stressLevel: string;
+    notes: string;
+    notesPlaceholder: string;
+    moodGreat: string;
+    moodGood: string;
+    moodNeutral: string;
+    moodBad: string;
+    moodTerrible: string;
+    sleepVeryBad: string;
+    sleepBad: string;
+    sleepNormal: string;
+    sleepGood: string;
+    sleepExcellent: string;
+    pause: string;
+    resume: string;
+    presets: string;
+    freeTimer: string;
+    meditationComplete: string;
+    meditationCompleteMsg: string;
+    recentSessions: string;
+    noSessions: string;
+  };
+
+  // Health Hub
+  healthHub: {
+    title: string;
+    export: string;
+    exportSuccess: string;
+    exportFailed: string;
+    shareTitle: string;
+    deviceConnection: string;
+    manualInput: string;
+    active: string;
+    todayData: string;
+    weeklyAverages: string;
+    steps: string;
+    stepsUnit: string;
+    heartRate: string;
+    sleepLabel: string;
+    sleepUnit: string;
+    activeCalories: string;
+    info: string;
+    infoText: string;
+    addValue: string;
+    valueLabel: string;
+  };
+
+  // Supplements
+  supplements: {
+    title: string;
+    today: string;
+    noSupplements: string;
+    addSupplement: string;
+    supplementName: string;
+    dosage: string;
+    intakeTime: string;
+    morning: string;
+    afternoon: string;
+    evening: string;
+    preWorkout: string;
+    postWorkout: string;
+  };
+
+  // Social / Challenges
+  social: {
+    title: string;
+    new: string;
+    activeLabel: string;
+    completed: string;
+    total: string;
+    noActive: string;
+    noCompleted: string;
+    startChallenge: string;
+    deleteTitle: string;
+    deleteConfirm: string;
+    selectChallenge: string;
+    updateProgress: string;
+    currentValue: string;
+    share: string;
+    update: string;
+  };
+
+  // Dashboard extras
+  dashboardExtras: {
+    supplements: string;
+    supplementsDesc: string;
+    wellness: string;
+    wellnessDesc: string;
+    healthHub: string;
+    healthHubDesc: string;
+    challenges: string;
+    challengesDesc: string;
+    suggestion: string;
+  };
+
+  // Screen titles (navigation)
+  screenTitles: {
+    bodyMetrics: string;
+    supplements: string;
+    wellness: string;
+    healthHub: string;
+    challenges: string;
   };
 
   // Days of week (abbreviated)

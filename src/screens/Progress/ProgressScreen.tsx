@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, Dimensions, Platform } from 'react-native';
-import { Text, Card, SegmentedButtons, useTheme } from 'react-native-paper';
+import { View, ScrollView, StyleSheet, Dimensions, Platform, ActivityIndicator } from 'react-native';
+import { Text, Card, Button, SegmentedButtons, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LineChart, BarChart } from 'react-native-chart-kit';
@@ -48,11 +48,18 @@ export function ProgressScreen() {
   const [stats, setStats] = useState({ totalWorkouts: 0, totalBurned: 0, longestStreak: 0, weightChange: 0 });
   const [macroAvg, setMacroAvg] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0, activeDays: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const loadData = useCallback(async () => {
-    if (Platform.OS === 'web') { setLoading(false); return; }
+    if (Platform.OS === 'web') {
+      setLoading(false);
+      setWeightData({ labels: [], values: [] });
+      setCalorieData({ labels: [], values: [] });
+      return;
+    }
     try {
       setLoading(true);
+      setError(false);
       const days = getPeriodDays(period);
       const startDate = format(subDays(new Date(), days - 1), 'yyyy-MM-dd');
       const endDate = format(new Date(), 'yyyy-MM-dd');
@@ -135,6 +142,7 @@ export function ProgressScreen() {
       setStats({ totalWorkouts, totalBurned, longestStreak, weightChange });
     } catch (e) {
       console.warn('ProgressScreen load error:', e);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -149,7 +157,7 @@ export function ProgressScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 100 }}
     >
       <Text variant="headlineSmall" style={styles.title}>{t.progress.title}</Text>
 
@@ -165,6 +173,22 @@ export function ProgressScreen() {
         style={{ marginBottom: spacing.md }}
       />
 
+      {loading && (
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ color: colors.textTertiary, marginTop: spacing.sm }}>{t.common.loading}</Text>
+        </View>
+      )}
+
+      {error && !loading && (
+        <View style={styles.centerState}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={48} color="#F44336" />
+          <Text style={{ color: colors.textTertiary, marginTop: spacing.sm, textAlign: 'center' }}>{t.common.errorOccurred}</Text>
+          <Button mode="outlined" onPress={loadData} style={{ marginTop: spacing.md }}>{t.common.retry}</Button>
+        </View>
+      )}
+
+      {!loading && !error && (<>
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         <StatCard icon="dumbbell" label={t.progress.totalWorkouts} value={`${stats.totalWorkouts}`} color={colors.primary} />
@@ -176,9 +200,9 @@ export function ProgressScreen() {
       {/* Macro Averages Report */}
       <Card style={styles.chartCard} mode="elevated">
         <Card.Content>
-          <Text style={styles.chartTitle}>{t.progress.report || 'Dönem Raporu'}</Text>
+          <Text style={styles.chartTitle}>{t.progress.report}</Text>
           <View style={styles.reportGrid}>
-            <ReportItem icon="fire" label={t.progress.avgCalories || 'Ort. Kalori'} value={`${macroAvg.calories}`} unit={t.common.kcal} color={colors.orange} />
+            <ReportItem icon="fire" label={t.progress.avgCalories} value={`${macroAvg.calories}`} unit={t.common.kcal} color={colors.orange} />
             <ReportItem icon="food-steak" label={t.dashboard.protein} value={`${macroAvg.protein}g`} unit="" color={colors.protein} />
             <ReportItem icon="barley" label={t.dashboard.carbs} value={`${macroAvg.carbs}g`} unit="" color={colors.carbs} />
             <ReportItem icon="oil" label={t.dashboard.fat} value={`${macroAvg.fat}g`} unit="" color={colors.fat} />
@@ -234,40 +258,41 @@ export function ProgressScreen() {
           )}
         </Card.Content>
       </Card>
+      </>)}
     </ScrollView>
   );
 }
 
-function StatCard({ icon, label, value, color }: { icon: string; label: string; value: string; color: string }) {
+const StatCard = React.memo(function StatCard({ icon, label, value, color }: { icon: string; label: string; value: string; color: string }) {
   return (
     <Card style={styles.statCard} mode="elevated">
       <Card.Content style={{ alignItems: 'center' }}>
         <MaterialCommunityIcons name={icon as any} size={28} color={color} />
         <Text style={{ fontWeight: 'bold', fontSize: 18, marginTop: 4 }}>{value}</Text>
-        <Text style={{ color: '#999', fontSize: 11, textAlign: 'center' }}>{label}</Text>
+        <Text style={{ color: colors.textTertiary, fontSize: 11, textAlign: 'center' }}>{label}</Text>
       </Card.Content>
     </Card>
   );
-}
+});
 
-function ReportItem({ icon, label, value, unit, color }: { icon: string; label: string; value: string; unit: string; color: string }) {
+const ReportItem = React.memo(function ReportItem({ icon, label, value, unit, color }: { icon: string; label: string; value: string; unit: string; color: string }) {
   return (
     <View style={styles.reportItem}>
       <MaterialCommunityIcons name={icon as any} size={20} color={color} />
       <Text style={{ fontWeight: 'bold', fontSize: 16, color, marginTop: 2 }}>{value}{unit ? ` ${unit}` : ''}</Text>
-      <Text style={{ color: '#999', fontSize: 11 }}>{label}</Text>
+      <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{label}</Text>
     </View>
   );
-}
+});
 
-function EmptyChart({ icon, message }: { icon: string; message: string }) {
+const EmptyChart = React.memo(function EmptyChart({ icon, message }: { icon: string; message: string }) {
   return (
     <View style={{ alignItems: 'center', paddingVertical: spacing.xl }}>
-      <MaterialCommunityIcons name={icon as any} size={48} color="#ccc" />
-      <Text style={{ color: '#999', marginTop: spacing.sm, textAlign: 'center', fontSize: 13 }}>{message}</Text>
+      <MaterialCommunityIcons name={icon as any} size={48} color={colors.textDisabled} />
+      <Text style={{ color: colors.textTertiary, marginTop: spacing.sm, textAlign: 'center', fontSize: 13 }}>{message}</Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -278,6 +303,7 @@ const styles = StyleSheet.create({
   chartTitle: { fontWeight: 'bold', fontSize: 16, marginBottom: spacing.sm },
   reportGrid: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.sm },
   reportItem: { alignItems: 'center', flex: 1 },
-  reportFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
-  reportFooterText: { fontSize: 13, color: '#666' },
+  reportFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.divider },
+  reportFooterText: { fontSize: 13, color: colors.textSecondary },
+  centerState: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.xl * 2 },
 });

@@ -114,10 +114,9 @@ export function BodyMetricsScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.md }}
     >
       <View style={styles.headerRow}>
-        <Text variant="headlineSmall" style={styles.title}>{t.bodyMetrics?.title || 'Vücut Ölçüleri'}</Text>
         <Button mode="contained" onPress={() => setDialogVisible(true)} icon="plus" compact>
           {t.common.add}
         </Button>
@@ -127,23 +126,23 @@ export function BodyMetricsScreen() {
       {latestMetric && (
         <Card style={styles.card} mode="elevated">
           <Card.Content>
-            <Text style={styles.cardTitle}>{t.bodyMetrics?.latest || 'Son Ölçüm'} - {latestMetric.date}</Text>
+            <Text style={styles.cardTitle}>{t.bodyMetrics.latest} - {latestMetric.date}</Text>
             <View style={styles.metricsGrid}>
               <MetricItem label={t.common.kg} value={`${latestMetric.weight}`} diff={getDiff(latestMetric.weight, previousMetric?.weight ?? null)} icon="scale-bathroom" color={colors.primary} />
               {latestMetric.bodyFat !== null && (
                 <MetricItem label="% Yağ" value={`${latestMetric.bodyFat}`} diff={getDiff(latestMetric.bodyFat, previousMetric?.bodyFat ?? null)} icon="percent" color={colors.orange} />
               )}
               {latestMetric.waistCm !== null && (
-                <MetricItem label={t.bodyMetrics?.waist || 'Bel'} value={`${latestMetric.waistCm}`} diff={getDiff(latestMetric.waistCm, previousMetric?.waistCm ?? null)} icon="tape-measure" color={colors.secondary} />
+                <MetricItem label={t.bodyMetrics.waist} value={`${latestMetric.waistCm}`} diff={getDiff(latestMetric.waistCm, previousMetric?.waistCm ?? null)} icon="tape-measure" color={colors.secondary} />
               )}
               {latestMetric.chestCm !== null && (
-                <MetricItem label={t.bodyMetrics?.chest || 'Göğüs'} value={`${latestMetric.chestCm}`} diff={getDiff(latestMetric.chestCm, previousMetric?.chestCm ?? null)} icon="human" color={colors.purple} />
+                <MetricItem label={t.bodyMetrics.chest} value={`${latestMetric.chestCm}`} diff={getDiff(latestMetric.chestCm, previousMetric?.chestCm ?? null)} icon="human" color={colors.purple} />
               )}
               {latestMetric.bicepCm !== null && (
-                <MetricItem label={t.bodyMetrics?.bicep || 'Kol'} value={`${latestMetric.bicepCm}`} diff={getDiff(latestMetric.bicepCm, previousMetric?.bicepCm ?? null)} icon="arm-flex" color={colors.red} />
+                <MetricItem label={t.bodyMetrics.bicep} value={`${latestMetric.bicepCm}`} diff={getDiff(latestMetric.bicepCm, previousMetric?.bicepCm ?? null)} icon="arm-flex" color={colors.red} />
               )}
               {latestMetric.thighCm !== null && (
-                <MetricItem label={t.bodyMetrics?.thigh || 'Bacak'} value={`${latestMetric.thighCm}`} diff={getDiff(latestMetric.thighCm, previousMetric?.thighCm ?? null)} icon="human-handsdown" color={colors.calorieGreen} />
+                <MetricItem label={t.bodyMetrics.thigh} value={`${latestMetric.thighCm}`} diff={getDiff(latestMetric.thighCm, previousMetric?.thighCm ?? null)} icon="human-handsdown" color={colors.calorieGreen} />
               )}
             </View>
           </Card.Content>
@@ -154,7 +153,7 @@ export function BodyMetricsScreen() {
       {photosWithImages.length >= 2 && (
         <Card style={styles.card} mode="elevated">
           <Card.Content>
-            <Text style={styles.cardTitle}>{t.bodyMetrics?.photoCompare || 'Fotoğraf Karşılaştırma'}</Text>
+            <Text style={styles.cardTitle}>{t.bodyMetrics.photoCompare}</Text>
             <View style={styles.photoCompareRow}>
               <View style={styles.photoColumn}>
                 <Text style={styles.photoDate}>{photosWithImages[photosWithImages.length - 1].date}</Text>
@@ -177,11 +176,11 @@ export function BodyMetricsScreen() {
       )}
 
       {/* History */}
-      <Text style={styles.sectionTitle}>{t.bodyMetrics?.history || 'Geçmiş'}</Text>
+      <Text style={styles.sectionTitle}>{t.bodyMetrics.history}</Text>
       {metrics.length === 0 && (
         <View style={styles.emptyState}>
-          <MaterialCommunityIcons name="tape-measure" size={48} color="#ccc" />
-          <Text style={{ color: '#999', marginTop: 8 }}>{t.bodyMetrics?.noData || 'Henüz ölçüm yok'}</Text>
+          <MaterialCommunityIcons name="tape-measure" size={48} color={colors.textDisabled} />
+          <Text style={{ color: colors.textTertiary, marginTop: 8 }}>{t.bodyMetrics.noData}</Text>
         </View>
       )}
       {metrics.map((m) => (
@@ -189,7 +188,7 @@ export function BodyMetricsScreen() {
           <Card.Content style={styles.historyRow}>
             <View>
               <Text style={{ fontWeight: 'bold' }}>{m.date}</Text>
-              <Text style={{ color: '#999', fontSize: 12 }}>
+              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
                 {m.weight} kg
                 {m.bodyFat !== null ? ` · ${m.bodyFat}%` : ''}
                 {m.waistCm !== null ? ` · Bel: ${m.waistCm}cm` : ''}
@@ -205,23 +204,23 @@ export function BodyMetricsScreen() {
       {/* Add measurement dialog */}
       <Portal>
         <Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)} style={{ maxHeight: '85%' }}>
-          <Dialog.Title>{t.bodyMetrics?.addMeasurement || 'Ölçüm Ekle'}</Dialog.Title>
+          <Dialog.Title>{t.bodyMetrics.addMeasurement}</Dialog.Title>
           <Dialog.ScrollArea>
             <ScrollView contentContainerStyle={{ padding: spacing.sm }}>
-              <TextInput label={`${t.common.kg} *`} value={weight} onChangeText={setWeight} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense />
-              <TextInput label="% Yağ" value={bodyFat} onChangeText={setBodyFat} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense />
-              <TextInput label={`${t.bodyMetrics?.waist || 'Bel'} (cm)`} value={waist} onChangeText={setWaist} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense />
-              <TextInput label={`${t.bodyMetrics?.hip || 'Kalça'} (cm)`} value={hip} onChangeText={setHip} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense />
-              <TextInput label={`${t.bodyMetrics?.chest || 'Göğüs'} (cm)`} value={chest} onChangeText={setChest} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense />
-              <TextInput label={`${t.bodyMetrics?.bicep || 'Kol'} (cm)`} value={bicep} onChangeText={setBicep} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense />
-              <TextInput label={`${t.bodyMetrics?.thigh || 'Bacak'} (cm)`} value={thigh} onChangeText={setThigh} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense />
+              <TextInput label={`${t.common.kg} *`} value={weight} onChangeText={setWeight} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="75.0" />
+              <TextInput label="% Yağ" value={bodyFat} onChangeText={setBodyFat} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="18.0" />
+              <TextInput label={`${t.bodyMetrics.waist} (cm)`} value={waist} onChangeText={setWaist} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="80" />
+              <TextInput label={`${t.bodyMetrics.hip} (cm)`} value={hip} onChangeText={setHip} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="95" />
+              <TextInput label={`${t.bodyMetrics.chest} (cm)`} value={chest} onChangeText={setChest} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="100" />
+              <TextInput label={`${t.bodyMetrics.bicep} (cm)`} value={bicep} onChangeText={setBicep} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="35" />
+              <TextInput label={`${t.bodyMetrics.thigh} (cm)`} value={thigh} onChangeText={setThigh} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="55" />
 
               <View style={styles.photoButtons}>
                 <Button mode="outlined" icon="camera" onPress={takePhoto} compact style={{ flex: 1 }}>
-                  {t.bodyMetrics?.takePhoto || 'Fotoğraf Çek'}
+                  {t.bodyMetrics.takePhoto}
                 </Button>
                 <Button mode="outlined" icon="image" onPress={pickPhoto} compact style={{ flex: 1 }}>
-                  {t.bodyMetrics?.pickPhoto || 'Galeriden Seç'}
+                  {t.bodyMetrics.pickPhoto}
                 </Button>
               </View>
 
@@ -240,21 +239,21 @@ export function BodyMetricsScreen() {
   );
 }
 
-function MetricItem({ label, value, diff, icon, color }: { label: string; value: string; diff: number | null; icon: string; color: string }) {
-  const diffColor = diff === null ? '#999' : diff < 0 ? colors.calorieGreen : diff > 0 ? colors.red : '#999';
+const MetricItem = React.memo(function MetricItem({ label, value, diff, icon, color }: { label: string; value: string; diff: number | null; icon: string; color: string }) {
+  const diffColor = diff === null ? colors.textTertiary : diff < 0 ? colors.calorieGreen : diff > 0 ? colors.red : colors.textTertiary;
   const diffSign = diff !== null && diff > 0 ? '+' : '';
 
   return (
     <View style={styles.metricItem}>
       <MaterialCommunityIcons name={icon as any} size={20} color={color} />
       <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{value}</Text>
-      <Text style={{ fontSize: 11, color: '#999' }}>{label}</Text>
+      <Text style={{ fontSize: 11, color: colors.textTertiary }}>{label}</Text>
       {diff !== null && (
         <Text style={{ fontSize: 10, color: diffColor }}>{diffSign}{diff}</Text>
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -268,12 +267,12 @@ const styles = StyleSheet.create({
   historyCard: { borderRadius: borderRadius.md, marginBottom: 8 },
   historyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   emptyState: { alignItems: 'center', paddingVertical: spacing.xl },
-  input: { marginBottom: 8, backgroundColor: '#fff' },
+  input: { marginBottom: 8, backgroundColor: colors.surface },
   photoButtons: { flexDirection: 'row', gap: 8, marginVertical: spacing.sm },
   previewPhoto: { width: '100%', height: 200, borderRadius: borderRadius.md, marginTop: spacing.sm },
   photoCompareRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   photoColumn: { alignItems: 'center', flex: 1 },
-  photoDate: { fontSize: 12, color: '#999', marginBottom: 4 },
+  photoDate: { fontSize: 12, color: colors.textTertiary, marginBottom: 4 },
   comparePhoto: { width: '90%', aspectRatio: 3 / 4, borderRadius: borderRadius.md },
   thumbPhoto: { width: 48, height: 64, borderRadius: 8 },
 });

@@ -16,10 +16,12 @@ import {
 } from '../../services/social/challengeService';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { generateId, todayString } from '../../utils/helpers';
+import { useLanguage } from '../../i18n';
 
 export function SocialScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
 
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [templateDialogVisible, setTemplateDialogVisible] = useState(false);
@@ -69,9 +71,9 @@ export function SocialScreen() {
   };
 
   const handleRemove = async (id: string) => {
-    Alert.alert('Sil', 'Bu challenge\'ı silmek istediğinize emin misiniz?', [
-      { text: 'İptal', style: 'cancel' },
-      { text: 'Sil', style: 'destructive', onPress: async () => { await removeChallenge(id); loadData(); } },
+    Alert.alert(t.social.deleteTitle, t.social.deleteConfirm, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.common.delete, style: 'destructive', onPress: async () => { await removeChallenge(id); loadData(); } },
     ]);
   };
 
@@ -97,26 +99,25 @@ export function SocialScreen() {
       contentContainerStyle={{ padding: spacing.md, paddingTop: spacing.md, paddingBottom: 40 }}
     >
       <View style={styles.headerRow}>
-        <Text variant="headlineSmall" style={styles.title}>Challenges</Text>
         <Button mode="contained" onPress={() => setTemplateDialogVisible(true)} icon="plus" compact>
-          Yeni
+          {t.social.new}
         </Button>
       </View>
 
       {/* Stats Summary */}
-      <Card style={[styles.card, { backgroundColor: '#E8F5E9' }]} mode="elevated">
+      <Card style={[styles.card, { backgroundColor: colors.successBg }]} mode="elevated">
         <Card.Content style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#4CAF50' }}>{active.length}</Text>
-            <Text style={{ color: '#666', fontSize: 12 }}>Aktif</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: colors.primary }}>{active.length}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{t.social.activeLabel}</Text>
           </View>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FF9800' }}>{completed.length}</Text>
-            <Text style={{ color: '#666', fontSize: 12 }}>Tamamlanan</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: colors.orange }}>{completed.length}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{t.social.completed}</Text>
           </View>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#2196F3' }}>{challenges.length}</Text>
-            <Text style={{ color: '#666', fontSize: 12 }}>Toplam</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: colors.secondary }}>{challenges.length}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{t.social.total}</Text>
           </View>
         </Card.Content>
       </Card>
@@ -127,13 +128,13 @@ export function SocialScreen() {
           style={[styles.tabBtn, tab === 'active' && styles.tabBtnActive]}
           onPress={() => setTab('active')}
         >
-          <Text style={[styles.tabText, tab === 'active' && styles.tabTextActive]}>Aktif ({active.length})</Text>
+          <Text style={[styles.tabText, tab === 'active' && styles.tabTextActive]}>{t.social.activeLabel} ({active.length})</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabBtn, tab === 'completed' && styles.tabBtnActive]}
           onPress={() => setTab('completed')}
         >
-          <Text style={[styles.tabText, tab === 'completed' && styles.tabTextActive]}>Tamamlanan ({completed.length})</Text>
+          <Text style={[styles.tabText, tab === 'completed' && styles.tabTextActive]}>{t.social.completed} ({completed.length})</Text>
         </TouchableOpacity>
       </View>
 
@@ -141,13 +142,13 @@ export function SocialScreen() {
       {displayChallenges.length === 0 ? (
         <Card style={styles.card} mode="elevated">
           <Card.Content style={{ alignItems: 'center', padding: spacing.lg }}>
-            <MaterialCommunityIcons name="trophy-outline" size={48} color="#ccc" />
-            <Text style={{ color: '#999', marginTop: 8 }}>
-              {tab === 'active' ? 'Aktif challenge yok' : 'Tamamlanmış challenge yok'}
+            <MaterialCommunityIcons name="trophy-outline" size={48} color={colors.textDisabled} />
+            <Text style={{ color: colors.textTertiary, marginTop: 8 }}>
+              {tab === 'active' ? t.social.noActive : t.social.noCompleted}
             </Text>
             {tab === 'active' && (
               <Button mode="outlined" onPress={() => setTemplateDialogVisible(true)} style={{ marginTop: 12 }}>
-                Challenge Başlat
+                {t.social.startChallenge}
               </Button>
             )}
           </Card.Content>
@@ -164,7 +165,7 @@ export function SocialScreen() {
                   </View>
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{ch.title}</Text>
-                    <Text style={{ color: '#999', fontSize: 12 }}>{ch.description}</Text>
+                    <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{ch.description}</Text>
                   </View>
                   {ch.isCompleted && (
                     <MaterialCommunityIcons name="check-circle" size={24} color="#4CAF50" />
@@ -173,7 +174,7 @@ export function SocialScreen() {
 
                 <View style={{ marginTop: 12 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 12, color: '#666' }}>
+                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>
                       {ch.currentValue} / {ch.targetValue} {ch.unit}
                     </Text>
                     <Text style={{ fontSize: 12, color: ch.color, fontWeight: 'bold' }}>
@@ -186,14 +187,14 @@ export function SocialScreen() {
                 <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8, gap: 4 }}>
                   {!ch.isCompleted && (
                     <Button mode="text" compact onPress={() => openUpdateDialog(ch)} icon="pencil">
-                      Güncelle
+                      {t.social.update}
                     </Button>
                   )}
                   <Button mode="text" compact onPress={() => handleShare(ch)} icon="share">
-                    Paylaş
+                    {t.social.share}
                   </Button>
                   <Button mode="text" compact onPress={() => handleRemove(ch.id)} icon="delete" textColor="#F44336">
-                    Sil
+                    {t.common.delete}
                   </Button>
                 </View>
               </Card.Content>
@@ -205,7 +206,7 @@ export function SocialScreen() {
       {/* Template Dialog */}
       <Portal>
         <Dialog visible={templateDialogVisible} onDismiss={() => setTemplateDialogVisible(false)}>
-          <Dialog.Title>Challenge Seç</Dialog.Title>
+          <Dialog.Title>{t.social.selectChallenge}</Dialog.Title>
           <Dialog.ScrollArea style={{ paddingHorizontal: 0 }}>
             <ScrollView contentContainerStyle={{ paddingHorizontal: 24 }}>
               {CHALLENGE_TEMPLATES.map((tmpl, idx) => (
@@ -218,14 +219,14 @@ export function SocialScreen() {
                   <MaterialCommunityIcons name={tmpl.icon as any} size={28} color={tmpl.color} />
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={{ fontWeight: 'bold' }}>{tmpl.title}</Text>
-                    <Text style={{ color: '#999', fontSize: 12 }}>{tmpl.description}</Text>
+                    <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{tmpl.description}</Text>
                   </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
-            <Button onPress={() => setTemplateDialogVisible(false)}>İptal</Button>
+            <Button onPress={() => setTemplateDialogVisible(false)}>{t.common.cancel}</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -233,28 +234,28 @@ export function SocialScreen() {
       {/* Update Dialog */}
       <Portal>
         <Dialog visible={updateDialogVisible} onDismiss={() => setUpdateDialogVisible(false)}>
-          <Dialog.Title>İlerleme Güncelle</Dialog.Title>
+          <Dialog.Title>{t.social.updateProgress}</Dialog.Title>
           <Dialog.Content>
             {selectedChallenge && (
               <>
-                <Text style={{ marginBottom: 8, color: '#666' }}>
-                  {selectedChallenge.title} - Hedef: {selectedChallenge.targetValue} {selectedChallenge.unit}
+                <Text style={{ marginBottom: 8, color: colors.textSecondary }}>
+                  {selectedChallenge.title} - {selectedChallenge.targetValue} {selectedChallenge.unit}
                 </Text>
                 <TextInput
-                  label={`Mevcut değer (${selectedChallenge.unit})`}
+                  label={`${t.social.currentValue} (${selectedChallenge.unit})`}
                   value={updateValue}
                   onChangeText={setUpdateValue}
                   keyboardType="numeric"
                   mode="outlined"
                   dense
-                  style={{ backgroundColor: '#fff' }}
+                  style={{ backgroundColor: colors.textOnPrimary }}
                 />
               </>
             )}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setUpdateDialogVisible(false)}>İptal</Button>
-            <Button onPress={handleUpdate}>Güncelle</Button>
+            <Button onPress={() => setUpdateDialogVisible(false)}>{t.common.cancel}</Button>
+            <Button onPress={handleUpdate} disabled={!updateValue.trim() || isNaN(parseFloat(updateValue))}>{t.social.update}</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -268,10 +269,10 @@ const styles = StyleSheet.create({
   title: { fontWeight: 'bold' },
   card: { borderRadius: borderRadius.lg, marginBottom: spacing.md },
   tabRow: { flexDirection: 'row', marginBottom: spacing.md, gap: 8 },
-  tabBtn: { flex: 1, paddingVertical: 8, borderRadius: borderRadius.md, backgroundColor: '#F0F0F0', alignItems: 'center' },
+  tabBtn: { flex: 1, paddingVertical: 8, borderRadius: borderRadius.md, backgroundColor: colors.divider, alignItems: 'center' },
   tabBtnActive: { backgroundColor: colors.primary },
-  tabText: { fontWeight: '600', color: '#666' },
-  tabTextActive: { color: '#fff' },
+  tabText: { fontWeight: '600', color: colors.textSecondary },
+  tabTextActive: { color: colors.textOnPrimary },
   challengeCard: { borderRadius: borderRadius.md, marginBottom: 8 },
   iconCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
   templateItem: {
@@ -279,6 +280,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: colors.divider,
   },
 });

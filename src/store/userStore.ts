@@ -9,6 +9,7 @@ interface UserState {
   isLoading: boolean;
   setUserId: (id: string) => void;
   setOnboarded: (value: boolean) => void;
+  resetOnboarding: () => Promise<void>;
   loadOnboardingState: () => Promise<void>;
 }
 
@@ -24,6 +25,14 @@ export const useUserStore = create<UserState>((set) => ({
       console.warn('Failed to save onboarding state:', e);
     }
     set({ isOnboarded: value });
+  },
+  resetOnboarding: async () => {
+    try {
+      await AsyncStorage.removeItem(ONBOARDED_KEY);
+    } catch (e) {
+      console.warn('Failed to reset onboarding state:', e);
+    }
+    set({ isOnboarded: false });
   },
   loadOnboardingState: async () => {
     try {

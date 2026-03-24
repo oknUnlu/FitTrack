@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, TextInput, IconButton, Chip, useTheme } from 'react-native-paper';
 import { useUserStore } from '../../store/userStore';
 import { sendMessage, getChatHistory, getTodayRequestCount, getMaxDailyRequests } from '../../services/ai';
@@ -13,6 +14,7 @@ import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 
 export function AICoachScreen() {
+  const insets = useSafeAreaInsets();
   const userId = useUserStore((s) => s.userId);
   const theme = useTheme();
   const { t } = useLanguage();
@@ -184,13 +186,13 @@ export function AICoachScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   rateBar: { paddingHorizontal: spacing.md, paddingVertical: 4, backgroundColor: '#f5f5f5' },
-  rateText: { fontSize: 11, color: '#999', textAlign: 'right' },
+  rateText: { fontSize: 11, color: colors.textTertiary, textAlign: 'right' },
   quickPrompts: { padding: spacing.md },
   bubble: { maxWidth: '80%', padding: spacing.sm, borderRadius: borderRadius.md, marginBottom: spacing.sm },
   userBubble: { alignSelf: 'flex-end', backgroundColor: colors.secondary },
-  aiBubble: { alignSelf: 'flex-start', backgroundColor: '#F0F0F0' },
+  aiBubble: { alignSelf: 'flex-start', backgroundColor: colors.divider },
   bubbleText: { fontSize: 14, lineHeight: 20 },
-  sourceTag: { fontSize: 10, color: '#999', marginTop: 4, textAlign: 'right' },
-  inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, borderTopWidth: 1, borderTopColor: '#eee' },
+  sourceTag: { fontSize: 10, color: colors.textTertiary, marginTop: 4, textAlign: 'right' },
+  inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, borderTopWidth: 1, borderTopColor: colors.divider },
   textInput: { flex: 1 },
 });

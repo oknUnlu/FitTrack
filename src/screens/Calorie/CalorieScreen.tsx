@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { View, ScrollView, StyleSheet, FlatList, TouchableOpacity, Platform, Alert } from 'react-native';
 import { Text, Card, FAB, Searchbar, Chip, useTheme, IconButton, Button, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -204,7 +204,7 @@ export function CalorieScreen() {
     setAiResults([]);
   }, [handleAddFood]);
 
-  const totalCalories = meals.reduce((s, m) => s + m.caloriesConsumed, 0);
+  const totalCalories = useMemo(() => meals.reduce((s, m) => s + m.caloriesConsumed, 0), [meals]);
 
   const getMealLabel = (key: string): string => {
     const labelKey = MEAL_TYPE_KEYS[key];
@@ -247,14 +247,14 @@ export function CalorieScreen() {
                     <MaterialCommunityIcons name={mt.icon as any} size={20} color={colors.primary} />
                     <Text variant="titleSmall" style={{ fontWeight: 'bold', marginLeft: 8 }}>{getMealLabel(mt.key)}</Text>
                   </View>
-                  <Text style={{ color: '#999', fontSize: 12 }}>{Math.round(sectionCal)} {t.common.kcal}</Text>
+                  <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{Math.round(sectionCal)} {t.common.kcal}</Text>
                 </View>
 
                 {sectionMeals.map((m) => (
                   <View key={m.id} style={styles.mealItem}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 14 }}>{m.foodItemId}</Text>
-                      <Text style={{ color: '#999', fontSize: 11 }}>
+                      <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
                         {Math.round(m.caloriesConsumed)} {t.common.kcal} · P:{Math.round(m.proteinConsumed)}g · K:{Math.round(m.carbsConsumed)}g · Y:{Math.round(m.fatConsumed)}g
                       </Text>
                     </View>
@@ -288,10 +288,10 @@ export function CalorieScreen() {
             </View>
             {aiLoading ? (
               <View style={{ alignItems: 'center', padding: 40 }}>
-                <Text style={{ color: '#999' }}>{t.common.loading}</Text>
+                <Text style={{ color: colors.textTertiary }}>{t.common.loading}</Text>
               </View>
             ) : aiResults.length === 0 ? (
-              <Text style={{ textAlign: 'center', color: '#999', padding: 20 }}>{t.calorie.noResults}</Text>
+              <Text style={{ textAlign: 'center', color: colors.textTertiary, padding: 20 }}>{t.calorie.noResults}</Text>
             ) : (
               <FlatList
                 data={aiResults}
@@ -301,13 +301,13 @@ export function CalorieScreen() {
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Text style={{ fontWeight: '600' }}>{item.name}</Text>
-                        <View style={{ backgroundColor: item.confidence === 'high' ? '#E8F5E9' : item.confidence === 'medium' ? '#FFF3E0' : '#FFEBEE', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                        <View style={{ backgroundColor: item.confidence === 'high' ? colors.successBg : item.confidence === 'medium' ? colors.warningBg : colors.errorBg, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
                           <Text style={{ fontSize: 9, color: item.confidence === 'high' ? '#2E7D32' : item.confidence === 'medium' ? '#E65100' : '#C62828' }}>
                             {item.confidence}
                           </Text>
                         </View>
                       </View>
-                      <Text style={{ color: '#999', fontSize: 11 }}>
+                      <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
                         {item.calories} {t.common.kcal} · P:{item.protein}g · K:{item.carbs}g · Y:{item.fat}g
                       </Text>
                     </View>
@@ -368,7 +368,7 @@ export function CalorieScreen() {
                 <TouchableOpacity onPress={() => handleAddFood(item)} style={styles.searchItem}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontWeight: '600' }}>{item.nameTr || item.name}</Text>
-                    <Text style={{ color: '#999', fontSize: 11 }}>
+                    <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
                       {item.calories} {t.common.kcal}/100g · P:{item.protein}g · K:{item.carbs}g · Y:{item.fat}g
                     </Text>
                   </View>
@@ -376,7 +376,7 @@ export function CalorieScreen() {
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
-                searchQuery.length >= 2 ? <Text style={{ textAlign: 'center', color: '#999' }}>{t.calorie.noResults}</Text> : null
+                searchQuery.length >= 2 ? <Text style={{ textAlign: 'center', color: colors.textTertiary }}>{t.calorie.noResults}</Text> : null
               }
             />
           </View>
@@ -389,12 +389,12 @@ export function CalorieScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   dateRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: spacing.sm },
-  totalText: { textAlign: 'center', fontSize: 14, color: '#999', marginBottom: spacing.sm },
+  totalText: { textAlign: 'center', fontSize: 14, color: colors.textTertiary, marginBottom: spacing.sm },
   mealCard: { borderRadius: borderRadius.lg, marginHorizontal: spacing.md, marginBottom: spacing.sm },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  mealItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+  mealItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: colors.divider },
   searchOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   searchContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: spacing.md, maxHeight: '80%' },
-  searchItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+  searchItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.divider },
   barcodeBtn: { width: 48, height: 48, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
 });
