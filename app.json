@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "scheme": "fittrack",
     "splash": {
       "image": "./assets/splash-icon.png",
       "backgroundColor": "#4CAF50",
@@ -18,8 +19,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fittrack.app",
+      "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "Barkod taramak ve yemek fotoğrafı çekmek için kamera izni gereklidir."
+        "NSCameraUsageDescription": "Barkod taramak ve yemek fotoğrafı çekmek için kamera izni gereklidir.",
+        "NSPhotoLibraryUsageDescription": "Yemek fotoğrafı seçmek için galeri izni gereklidir."
       }
     },
     "android": {
@@ -28,11 +31,16 @@
         "backgroundColor": "#4CAF50"
       },
       "package": "com.fittrack.app",
+      "versionCode": 1,
       "permissions": [
         "CAMERA",
         "VIBRATE",
         "NOTIFICATIONS"
       ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-camera",
@@ -41,6 +49,11 @@
       "expo-sqlite",
       "expo-asset",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
   }
 }

@@ -43,6 +43,22 @@ export const colors = {
   surfaceDark: '#1E1E1E',
 };
 
+export const darkColors = {
+  textPrimary: '#E0E0E0',
+  textSecondary: '#B0B0B0',
+  textTertiary: '#888',
+  textDisabled: '#555',
+  border: '#333',
+  divider: '#2A2A2A',
+  successBg: '#1B3A1B',
+  warningBg: '#3A2A10',
+  errorBg: '#3A1515',
+  infoBg: '#152A3A',
+  surface: '#1E1E1E',
+  surfaceVariant: '#2A2A2A',
+  background: '#121212',
+};
+
 export const lightTheme = {
   ...MD3LightTheme,
   colors: {
@@ -85,3 +101,26 @@ export const borderRadius = {
   xl: 24,
   full: 9999,
 } as const;
+
+/** Returns theme-aware semantic colors based on dark mode state */
+export function getSemanticColors(isDark: boolean) {
+  if (isDark) {
+    return {
+      ...colors,
+      textPrimary: darkColors.textPrimary,
+      textSecondary: darkColors.textSecondary,
+      textTertiary: darkColors.textTertiary,
+      textDisabled: darkColors.textDisabled,
+      border: darkColors.border,
+      divider: darkColors.divider,
+      successBg: darkColors.successBg,
+      warningBg: darkColors.warningBg,
+      errorBg: darkColors.errorBg,
+      infoBg: darkColors.infoBg,
+      surface: darkColors.surface,
+      surfaceVariant: darkColors.surfaceVariant,
+      background: darkColors.background,
+    };
+  }
+  return colors;
+}

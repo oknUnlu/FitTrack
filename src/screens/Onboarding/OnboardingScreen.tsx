@@ -24,6 +24,7 @@ import {
 } from '../../utils/calculations';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
+import { Logo } from '../../components/Logo';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -192,7 +193,7 @@ export function OnboardingScreen() {
   const renderWelcome = () => (
     <View style={styles.welcomeContainer}>
       <View style={styles.welcomeIconContainer}>
-        <MaterialCommunityIcons name="heart-pulse" size={60} color={colors.primary} />
+        <Logo size={80} />
       </View>
       <Text style={styles.welcomeTitle}>{t.onboarding.welcome}</Text>
       <Text style={styles.welcomeSubtitle}>{t.onboarding.welcomeSubtitle}</Text>

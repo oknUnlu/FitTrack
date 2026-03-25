@@ -1,17 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, TextInput, IconButton, Chip, useTheme } from 'react-native-paper';
+import { Text, TextInput, IconButton, Chip, useTheme, Button } from 'react-native-paper';
 import { useUserStore } from '../../store/userStore';
-import { sendMessage, getChatHistory, getTodayRequestCount, getMaxDailyRequests } from '../../services/ai';
+import { sendMessage, getChatHistory, getTodayRequestCount, getMaxDailyRequests, requestPlan } from '../../services/ai';
 import { ConversationMessage } from '../../services/ai/types';
 import { getUserById } from '../../services/database/userDao';
 import { getMealLogsByDate } from '../../services/database/mealDao';
 import { getRecentSessions } from '../../services/database/workoutDao';
+import { deleteAllConversations } from '../../services/database/aiDao';
 import { buildContextString } from '../../services/ai/promptBuilder';
 import { todayString } from '../../utils/helpers';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
+
+type PlanType = 'workout' | 'nutrition' | 'weekly';
 
 export function AICoachScreen() {
   const insets = useSafeAreaInsets();
@@ -32,6 +35,12 @@ export function AICoachScreen() {
     t.aiCoach.prompt5,
   ];
 
+  const planOptions: { type: PlanType; label: string; icon: string }[] = [
+    { type: 'workout', label: 'Antrenman Plani', icon: 'dumbbell' },
+    { type: 'nutrition', label: 'Beslenme Plani', icon: 'food-apple' },
+    { type: 'weekly', label: 'Haftalik Plan', icon: 'calendar-week' },
+  ];
+
   useEffect(() => {
     if (Platform.OS === 'web') return;
     (async () => {
@@ -46,6 +55,38 @@ export function AICoachScreen() {
     })();
   }, [userId]);
 
+  const buildUserContext = useCallback(async (): Promise<string> => {
+    if (Platform.OS === 'web') return '';
+    try {
+      const [user, todayMeals, recentSessions] = await Promise.all([
+        getUserById(userId),
+        getMealLogsByDate(userId, todayString()),
+        getRecentSessions(userId, 7),
+      ]);
+      if (!user) return '';
+      const todayCalories = todayMeals.reduce((s, m) => s + m.caloriesConsumed, 0);
+      const completedWorkouts = recentSessions.filter((s) => s.completedAt !== null);
+      const workoutSummary = completedWorkouts.length > 0
+        ? `${completedWorkouts.length} antrenman tamamlandi`
+        : 'Son 7 gunde antrenman yok';
+      return buildContextString({
+        userName: user.name,
+        age: user.age,
+        gender: user.gender,
+        height: user.height,
+        weight: user.weight,
+        goal: user.goal,
+        activityLevel: user.activityLevel,
+        tdee: user.tdee,
+        todayCalories,
+        recentWorkoutSummary: workoutSummary,
+      });
+    } catch (ctxErr) {
+      console.warn('Context build failed:', ctxErr);
+      return '';
+    }
+  }, [userId]);
+
   const handleSend = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg || loading) return;
@@ -58,37 +99,7 @@ export function AICoachScreen() {
     setLoading(true);
 
     try {
-      let context = '';
-      if (Platform.OS !== 'web') {
-        try {
-          const [user, todayMeals, recentSessions] = await Promise.all([
-            getUserById(userId),
-            getMealLogsByDate(userId, todayString()),
-            getRecentSessions(userId, 7),
-          ]);
-          if (user) {
-            const todayCalories = todayMeals.reduce((s, m) => s + m.caloriesConsumed, 0);
-            const completedWorkouts = recentSessions.filter((s) => s.completedAt !== null);
-            const workoutSummary = completedWorkouts.length > 0
-              ? `${completedWorkouts.length} antrenman tamamlandı`
-              : 'Son 7 günde antrenman yok';
-            context = buildContextString({
-              userName: user.name,
-              age: user.age,
-              gender: user.gender,
-              height: user.height,
-              weight: user.weight,
-              goal: user.goal,
-              activityLevel: user.activityLevel,
-              tdee: user.tdee,
-              todayCalories,
-              recentWorkoutSummary: workoutSummary,
-            });
-          }
-        } catch (ctxErr) {
-          console.warn('Context build failed:', ctxErr);
-        }
-      }
+      const context = await buildUserContext();
       const response = await sendMessage(userId, msg, context);
       const aiMsg: ConversationMessage = {
         id: (Date.now() + 1).toString(), role: 'assistant', content: response.message,
@@ -107,29 +118,101 @@ export function AICoachScreen() {
     }
   };
 
+  const handlePlanRequest = async (planType: PlanType) => {
+    if (loading) return;
+    setLoading(true);
+
+    const planLabels: Record<PlanType, string> = {
+      workout: 'Antrenman plani olustur',
+      nutrition: 'Beslenme plani olustur',
+      weekly: 'Haftalik plan olustur',
+    };
+
+    const userMsg: ConversationMessage = {
+      id: Date.now().toString(), role: 'user', content: planLabels[planType],
+      source: 'gemini_cloud', timestamp: Date.now(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+
+    try {
+      const context = await buildUserContext();
+      const response = await requestPlan(userId, planType, context);
+      const aiMsg: ConversationMessage = {
+        id: (Date.now() + 1).toString(), role: 'assistant', content: response.message,
+        source: response.source, timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, aiMsg]);
+      setRequestCount((c) => c + 1);
+    } catch (e: any) {
+      const errMsg: ConversationMessage = {
+        id: (Date.now() + 1).toString(), role: 'assistant', content: t.aiCoach.errorMessage,
+        source: 'fallback', timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, errMsg]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearChat = async () => {
+    if (Platform.OS === 'web') return;
+    try {
+      await deleteAllConversations(userId);
+      setMessages([]);
+    } catch (e) {
+      console.warn('Clear chat failed:', e);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={90}
     >
-      {/* Rate limit indicator */}
+      {/* Rate limit indicator + clear button */}
       <View style={styles.rateBar}>
+        {messages.length > 0 && (
+          <IconButton
+            icon="delete-outline"
+            size={18}
+            onPress={handleClearChat}
+            style={{ margin: 0, padding: 0 }}
+          />
+        )}
+        <View style={{ flex: 1 }} />
         <Text style={styles.rateText}>{requestCount}/{getMaxDailyRequests()} {t.aiCoach.requestsUsed}</Text>
       </View>
 
-      {/* Quick prompts */}
+      {/* Quick prompts + plan buttons (shown when no messages) */}
       {messages.length === 0 && (
-        <View style={styles.quickPrompts}>
+        <ScrollView style={styles.quickPrompts} contentContainerStyle={{ paddingBottom: spacing.md }}>
           <Text style={{ fontWeight: 'bold', marginBottom: spacing.sm }}>{t.aiCoach.quickQuestions}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: spacing.md }}>
             {quickPrompts.map((p) => (
               <Chip key={p} onPress={() => handleSend(p)} compact textStyle={{ fontSize: 12 }}>
                 {p}
               </Chip>
             ))}
           </View>
-        </View>
+
+          <Text style={{ fontWeight: 'bold', marginBottom: spacing.sm }}>Kisisellestirilmis Plan</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {planOptions.map((plan) => (
+              <Button
+                key={plan.type}
+                mode="outlined"
+                icon={plan.icon}
+                compact
+                onPress={() => handlePlanRequest(plan.type)}
+                style={{ borderColor: colors.primary }}
+                labelStyle={{ fontSize: 12 }}
+              >
+                {plan.label}
+              </Button>
+            ))}
+          </View>
+        </ScrollView>
       )}
 
       {/* Messages */}
@@ -185,9 +268,9 @@ export function AICoachScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  rateBar: { paddingHorizontal: spacing.md, paddingVertical: 4, backgroundColor: '#f5f5f5' },
+  rateBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingVertical: 2, backgroundColor: '#f5f5f5' },
   rateText: { fontSize: 11, color: colors.textTertiary, textAlign: 'right' },
-  quickPrompts: { padding: spacing.md },
+  quickPrompts: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, maxHeight: 220 },
   bubble: { maxWidth: '80%', padding: spacing.sm, borderRadius: borderRadius.md, marginBottom: spacing.sm },
   userBubble: { alignSelf: 'flex-end', backgroundColor: colors.secondary },
   aiBubble: { alignSelf: 'flex-start', backgroundColor: colors.divider },

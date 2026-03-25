@@ -6,8 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ProgressRing } from '../../components/ProgressRing';
 import { ShimmerEffect } from '../../components/ShimmerEffect';
+import { Logo } from '../../components/Logo';
 import { useDashboard, DailySummary } from '../../hooks/useDashboard';
-import { colors, spacing, borderRadius } from '../../theme/theme';
+import { colors, spacing, borderRadius, getSemanticColors } from '../../theme/theme';
+import { useThemeStore } from '../../store/themeStore';
 import { getProgressColor } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
 import { getAchievements, getUnlockedCount, getTotalCount, Achievement } from '../../services/achievements/achievementService';
@@ -17,6 +19,8 @@ export function DashboardScreen() {
   const { summary, loading, error, addWater } = useDashboard();
   const navigation = useNavigation<any>();
   const theme = useTheme();
+  const isDark = useThemeStore((s) => s.isDarkMode);
+  const sc = getSemanticColors(isDark);
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
@@ -27,9 +31,12 @@ export function DashboardScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <Text variant="headlineSmall" style={styles.header}>
-          {t.dashboard.greeting} 👋
-        </Text>
+        <View style={styles.headerRow}>
+          <Logo size={44} />
+          <Text variant="headlineSmall" style={styles.headerText}>
+            {t.dashboard.greeting} 👋
+          </Text>
+        </View>
 
         {/* Calorie Ring Card */}
         <CalorieRingCard summary={summary} />
@@ -145,10 +152,12 @@ function CalorieRingCard({ summary }: { summary: DailySummary }) {
 }
 
 function CalorieStat({ label, value, color }: { label: string; value: number; color: string }) {
+  const isDark = useThemeStore((s) => s.isDarkMode);
+  const sc = getSemanticColors(isDark);
   return (
     <View style={{ alignItems: 'center' }}>
       <Text style={{ fontSize: 18, fontWeight: 'bold', color }}>{value}</Text>
-      <Text style={{ fontSize: 12, color: colors.textTertiary }}>{label}</Text>
+      <Text style={{ fontSize: 12, color: sc.textTertiary }}>{label}</Text>
     </View>
   );
 }
@@ -171,12 +180,14 @@ function MacroCard({ summary }: { summary: DailySummary }) {
 }
 
 function MacroBar({ label, current, target, color }: { label: string; current: number; target: number; color: string }) {
+  const isDark = useThemeStore((s) => s.isDarkMode);
+  const sc = getSemanticColors(isDark);
   const progress = target > 0 ? Math.min(current / target, 1) : 0;
   return (
     <View style={{ marginTop: spacing.sm }}>
       <View style={styles.macroRow}>
-        <Text style={{ fontSize: 14 }}>{label}</Text>
-        <Text style={{ fontSize: 12, color: colors.textTertiary }}>{Math.round(current)}g / {target}g</Text>
+        <Text style={{ fontSize: 14, color: sc.textPrimary }}>{label}</Text>
+        <Text style={{ fontSize: 12, color: sc.textTertiary }}>{Math.round(current)}g / {target}g</Text>
       </View>
       <View style={[styles.progressBg, { backgroundColor: `${color}22` }]}>
         <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
@@ -437,6 +448,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { padding: spacing.md, paddingBottom: 100 },
   header: { fontWeight: 'bold', marginBottom: spacing.md },
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, gap: spacing.sm },
+  headerText: { fontWeight: 'bold' },
   card: { borderRadius: borderRadius.lg, marginBottom: spacing.md },
   cardTitle: { fontWeight: 'bold', marginBottom: spacing.sm },
   calorieStatsRow: { flexDirection: 'row', justifyContent: 'space-evenly', width: '100%' },

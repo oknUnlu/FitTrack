@@ -1,11 +1,11 @@
 import { generateId } from '../../utils/helpers';
 import { AIResponse, ConversationMessage } from './types';
-import { sendToGemini, initializeGemini } from './geminiCloud';
+import { sendToGemini, initializeGemini, isGeminiInitialized, generatePlan } from './geminiCloud';
 import { getFallbackResponse } from './fallbackAI';
 import { canMakeRequest, recordRequest, getTodayRequestCount, getMaxDailyRequests } from './rateLimiter';
 import { insertConversation, getConversations } from '../database/aiDao';
 
-export { initializeGemini } from './geminiCloud';
+export { initializeGemini, isGeminiInitialized } from './geminiCloud';
 export { getTodayRequestCount, getMaxDailyRequests } from './rateLimiter';
 
 export async function sendMessage(
@@ -28,7 +28,9 @@ export async function sendMessage(
   // Try Gemini Cloud first
   const canRequest = await canMakeRequest();
   if (canRequest) {
-    response = await sendToGemini(prompt, context);
+    // Load recent conversation history for multi-turn context
+    const history = await getChatHistory(userId);
+    response = await sendToGemini(prompt, context, history);
     if (response.success) {
       await recordRequest();
     } else {
@@ -61,4 +63,35 @@ export async function getChatHistory(userId: string): Promise<ConversationMessag
     source: c.source,
     timestamp: c.createdAt,
   }));
+}
+
+export async function requestPlan(
+  userId: string,
+  planType: 'workout' | 'nutrition' | 'weekly',
+  context: string
+): Promise<AIResponse> {
+  const canRequest = await canMakeRequest();
+  if (!canRequest) {
+    return {
+      success: false,
+      message: 'Günlük istek limitine ulaşıldı. Yarın tekrar deneyin.',
+      source: 'fallback',
+    };
+  }
+
+  const response = await generatePlan(planType, context);
+  if (response.success) {
+    await recordRequest();
+    // Save the plan as a conversation entry
+    await insertConversation({
+      id: generateId(),
+      userId,
+      role: 'assistant',
+      content: response.message,
+      source: response.source,
+      createdAt: Date.now(),
+    });
+  }
+
+  return response;
 }
