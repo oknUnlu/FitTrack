@@ -82,6 +82,14 @@ export interface Translations {
     askAiCoach: string;
     addMeal: string;
     addWater: string;
+    waterGlass: string;
+    waterCup: string;
+    waterBottle: string;
+    waterLargeBottle: string;
+    waterCustom: string;
+    waterRemaining: string;
+    waterCompleted: string;
+    waterUndoLast: string;
   };
 
   // Calorie Screen
@@ -140,6 +148,21 @@ export interface Translations {
     exercisesCount: string;
     setsCount: string;
     prsAchieved: string;
+    allPrograms: string;
+    equipmentPrograms: string;
+    bodyweightPrograms: string;
+    cardioPrograms: string;
+    beginner: string;
+    intermediate: string;
+    advanced: string;
+    programDays: string;
+    exercises: string;
+    startProgram: string;
+    selectDay: string;
+    popularPrograms: string;
+    quickStart: string;
+    freeWorkout: string;
+    freeWorkoutDesc: string;
   };
 
   // Progress Screen

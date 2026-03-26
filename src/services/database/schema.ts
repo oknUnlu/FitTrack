@@ -95,6 +95,7 @@ export const CREATE_TABLES_SQL = `
     target_muscle_groups TEXT NOT NULL,
     days_json TEXT NOT NULL,
     is_built_in INTEGER NOT NULL DEFAULT 0,
+    category TEXT NOT NULL DEFAULT 'equipment',
     created_at INTEGER NOT NULL
   );
 

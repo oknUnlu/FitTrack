@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Text, Card, Button, useTheme, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -199,41 +199,95 @@ function MacroBar({ label, current, target, color }: { label: string; current: n
 // ═════════════════════════════════════════
 // WATER CARD
 // ═════════════════════════════════════════
+const WATER_OPTIONS = [
+  { key: 'waterGlass', icon: 'cup-water', ml: 200 },
+  { key: 'waterCup', icon: 'coffee', ml: 300 },
+  { key: 'waterBottle', icon: 'bottle-soda-classic-outline', ml: 500 },
+  { key: 'waterLargeBottle', icon: 'bottle-wine', ml: 1000 },
+] as const;
+
 function WaterCard({ consumed, target, onAdd }: { consumed: number; target: number; onAdd: (ml: number) => void }) {
   const { t } = useLanguage();
-  const progress = target > 0 ? consumed / target : 0;
-  const glasses = Math.floor(consumed / 250);
+  const [lastAdded, setLastAdded] = useState<number | null>(null);
+  const progress = target > 0 ? Math.min(consumed / target, 1) : 0;
+  const remaining = Math.max(target - consumed, 0);
+  const completed = consumed >= target;
+
+  const handleAdd = useCallback((ml: number) => {
+    onAdd(ml);
+    setLastAdded(ml);
+  }, [onAdd]);
+
+  const handleUndo = useCallback(() => {
+    if (lastAdded) {
+      onAdd(-lastAdded);
+      setLastAdded(null);
+    }
+  }, [lastAdded, onAdd]);
+
+  // Visual water drops (filled based on progress)
+  const totalDrops = 8;
+  const filledDrops = Math.round(progress * totalDrops);
 
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content>
+        {/* Header */}
         <View style={styles.rowBetween}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <MaterialCommunityIcons name="water" size={24} color={colors.water} />
             <Text variant="titleMedium" style={[styles.cardTitle, { marginLeft: 8, marginBottom: 0 }]}>{t.dashboard.waterTracking}</Text>
           </View>
-          <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{glasses} {t.common.glasses}</Text>
+          <Text style={{ color: completed ? colors.primary : colors.textTertiary, fontSize: 12, fontWeight: completed ? 'bold' : 'normal' }}>
+            {completed ? t.dashboard.waterCompleted : `${remaining}ml ${t.dashboard.waterRemaining}`}
+          </Text>
         </View>
 
-        <View style={{ alignItems: 'center', marginVertical: spacing.md }}>
-          <ProgressRing
-            size={100}
-            strokeWidth={12}
-            progress={progress}
-            color={colors.water}
-            centerLabel={`${consumed}ml`}
-            centerSubLabel={`/ ${target}ml`}
-          />
+        {/* Water drop indicators */}
+        <View style={styles.waterDropRow}>
+          {Array.from({ length: totalDrops }).map((_, i) => (
+            <MaterialCommunityIcons
+              key={i}
+              name={i < filledDrops ? 'water' : 'water-outline'}
+              size={22}
+              color={i < filledDrops ? colors.water : colors.textDisabled}
+            />
+          ))}
         </View>
 
-        <View style={styles.waterButtons}>
-          <Button mode="contained-tonal" onPress={() => onAdd(250)} compact style={styles.waterBtn}>
-            +250ml
-          </Button>
-          <Button mode="contained-tonal" onPress={() => onAdd(500)} compact style={styles.waterBtn}>
-            +500ml
-          </Button>
+        {/* Progress bar */}
+        <View style={styles.waterProgressBg}>
+          <View style={[styles.waterProgressFill, { width: `${progress * 100}%` }]} />
         </View>
+        <Text style={styles.waterProgressLabel}>
+          {consumed} / {target} ml
+        </Text>
+
+        {/* Quick add buttons with icons */}
+        <View style={styles.waterOptionsRow}>
+          {WATER_OPTIONS.map((opt) => (
+            <TouchableOpacity
+              key={opt.key}
+              style={styles.waterOptionBtn}
+              onPress={() => handleAdd(opt.ml)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.waterOptionIcon}>
+                <MaterialCommunityIcons name={opt.icon as any} size={24} color={colors.water} />
+              </View>
+              <Text style={styles.waterOptionLabel}>{(t.dashboard as any)[opt.key]}</Text>
+              <Text style={styles.waterOptionMl}>{opt.ml}ml</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Undo button */}
+        {lastAdded !== null && (
+          <TouchableOpacity style={styles.waterUndoBtn} onPress={handleUndo} activeOpacity={0.7}>
+            <MaterialCommunityIcons name="undo" size={16} color={colors.textTertiary} />
+            <Text style={styles.waterUndoText}>{t.dashboard.waterUndoLast} ({lastAdded}ml)</Text>
+          </TouchableOpacity>
+        )}
       </Card.Content>
     </Card>
   );
@@ -457,7 +511,76 @@ const styles = StyleSheet.create({
   progressBg: { height: 8, borderRadius: 4, marginTop: 4 },
   progressFill: { height: 8, borderRadius: 4 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  waterButtons: { flexDirection: 'row', justifyContent: 'space-evenly' },
-  waterBtn: { flex: 0.45 },
+  waterDropRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  waterProgressBg: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: `${colors.water}20`,
+    overflow: 'hidden' as const,
+  },
+  waterProgressFill: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.water,
+  },
+  waterProgressLabel: {
+    textAlign: 'center' as const,
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+    marginBottom: spacing.md,
+  },
+  waterOptionsRow: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    gap: 8,
+  },
+  waterOptionBtn: {
+    flex: 1,
+    alignItems: 'center' as const,
+    paddingVertical: 10,
+    borderRadius: borderRadius.md,
+    backgroundColor: `${colors.water}10`,
+    borderWidth: 1,
+    borderColor: `${colors.water}25`,
+  },
+  waterOptionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: `${colors.water}15`,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    marginBottom: 4,
+  },
+  waterOptionLabel: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+    textAlign: 'center' as const,
+  },
+  waterOptionMl: {
+    fontSize: 10,
+    color: colors.textTertiary,
+    marginTop: 1,
+  },
+  waterUndoBtn: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginTop: spacing.sm,
+    paddingVertical: 6,
+    gap: 4,
+  },
+  waterUndoText: {
+    fontSize: 12,
+    color: colors.textTertiary,
+  },
   dayDot: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
 });

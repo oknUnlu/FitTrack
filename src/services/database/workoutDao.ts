@@ -45,6 +45,7 @@ export interface WorkoutTemplate {
   targetMuscleGroups: string[];
   days: any[];
   isBuiltIn: boolean;
+  category: string;
   createdAt: number;
 }
 
@@ -71,7 +72,7 @@ function rowToTemplate(row: any): WorkoutTemplate {
     estimatedDuration: row.estimated_duration, difficulty: row.difficulty,
     targetMuscleGroups: JSON.parse(row.target_muscle_groups || '[]'),
     days: JSON.parse(row.days_json || '[]'),
-    isBuiltIn: !!row.is_built_in, createdAt: row.created_at,
+    isBuiltIn: !!row.is_built_in, category: row.category ?? 'equipment', createdAt: row.created_at,
   };
 }
 

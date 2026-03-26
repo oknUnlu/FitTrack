@@ -18,13 +18,31 @@ export async function initDatabase(): Promise<void> {
   if (Platform.OS === 'web') return;
   const database = await getDatabase();
   await database.execAsync(CREATE_TABLES_SQL);
+
+  // Migration: add category column if it doesn't exist
+  try {
+    await database.runAsync(`ALTER TABLE workout_templates ADD COLUMN category TEXT NOT NULL DEFAULT 'equipment'`);
+  } catch (_) {
+    // Column already exists, ignore
+  }
 }
 
 export async function seedDatabase(): Promise<void> {
   if (Platform.OS === 'web') return;
   const database = await getDatabase();
 
-  // Check if already seeded
+  const templatesData = require('../../assets/data/workout_templates.json');
+
+  // Always sync built-in templates (INSERT OR REPLACE ensures new templates are added and existing ones updated)
+  for (const t of templatesData) {
+    await database.runAsync(
+      `INSERT OR REPLACE INTO workout_templates (id, user_id, name, description, estimated_duration, difficulty, target_muscle_groups, days_json, is_built_in, category, created_at)
+       VALUES (?, '', ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+      [t.id, t.name, t.description, t.estimatedDuration, t.difficulty, JSON.stringify(t.targetMuscleGroups), JSON.stringify(t.days), t.category ?? 'equipment', Date.now()]
+    );
+  }
+
+  // Check if foods/exercises already seeded
   const result = await database.getFirstAsync(
     'SELECT COUNT(*) as count FROM food_items WHERE source = ?',
     ['local']
@@ -33,7 +51,6 @@ export async function seedDatabase(): Promise<void> {
 
   const foodsData = require('../../assets/data/foods_tr.json');
   const exercisesData = require('../../assets/data/exercises_tr.json');
-  const templatesData = require('../../assets/data/workout_templates.json');
 
   // Seed foods
   for (const food of foodsData) {
@@ -50,15 +67,6 @@ export async function seedDatabase(): Promise<void> {
       `INSERT OR IGNORE INTO exercises (id, name, name_tr, muscle_groups, equipment_type, instructions, met_value, is_custom)
        VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
       [ex.id, ex.name, ex.nameTr, JSON.stringify(ex.muscleGroups), ex.equipmentType, ex.instructions, ex.metValue]
-    );
-  }
-
-  // Seed templates
-  for (const t of templatesData) {
-    await database.runAsync(
-      `INSERT OR IGNORE INTO workout_templates (id, user_id, name, description, estimated_duration, difficulty, target_muscle_groups, days_json, is_built_in, created_at)
-       VALUES (?, '', ?, ?, ?, ?, ?, ?, 1, ?)`,
-      [t.id, t.name, t.description, t.estimatedDuration, t.difficulty, JSON.stringify(t.targetMuscleGroups), JSON.stringify(t.days), Date.now()]
     );
   }
 
