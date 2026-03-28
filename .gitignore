@@ -45,3 +45,4 @@ coverage/
 
 # Build artifacts
 *.tsbuildinfo
+.vercel

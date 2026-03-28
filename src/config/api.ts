@@ -17,7 +17,7 @@ function getBaseUrl(): string {
   }
 
   // Production: Vercel deployment URL
-  return 'https://fittrack-api.vercel.app';
+  return 'https://fittrack-api-liard.vercel.app';
 }
 
 export const API_BASE_URL = getBaseUrl();

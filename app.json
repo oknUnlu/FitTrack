@@ -54,7 +54,7 @@
       "expo-font"
     ],
     "extra": {
-      "apiBaseUrl": "https://fittrack-api.vercel.app",
+      "apiBaseUrl": "https://fittrack-api-liard.vercel.app",
       "eas": {
         "projectId": ""
       }
