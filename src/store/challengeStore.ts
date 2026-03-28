@@ -38,7 +38,7 @@ export const useChallengeStore = create<ChallengeState>((set) => ({
         isLoading: false,
       });
     } catch (e) {
-      console.warn('Failed to load challenges:', e);
+      if (__DEV__) console.warn('Failed to load challenges:', e);
       set({ isLoading: false });
     }
   },

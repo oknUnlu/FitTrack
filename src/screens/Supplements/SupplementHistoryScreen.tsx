@@ -39,7 +39,7 @@ export function SupplementHistoryScreen() {
       }
       setDailyLogs(logsMap);
     } catch (e) {
-      console.warn('SupplementHistory load failed:', e);
+      if (__DEV__) console.warn('SupplementHistory load failed:', e);
     } finally {
       setLoading(false);
     }

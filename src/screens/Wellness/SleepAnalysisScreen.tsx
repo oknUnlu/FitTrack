@@ -25,7 +25,7 @@ export function SleepAnalysisScreen() {
       const all = await getWellnessEntries();
       setEntries(all.sort((a, b) => b.date.localeCompare(a.date)));
     } catch (e) {
-      console.warn('SleepAnalysis load failed:', e);
+      if (__DEV__) console.warn('SleepAnalysis load failed:', e);
     } finally {
       setLoading(false);
     }

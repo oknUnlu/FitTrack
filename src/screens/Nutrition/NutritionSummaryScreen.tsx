@@ -8,14 +8,17 @@ import { format, subDays } from 'date-fns';
 import { useUserStore } from '../../store/userStore';
 import { useMealStore } from '../../store/mealStore';
 import { getMealLogsByDate, MealLog } from '../../services/database/mealDao';
+import { getUserById } from '../../services/database/userDao';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
+import { usePremiumStore } from '../../store/premiumStore';
+import { isProgressRangeAvailable } from '../../services/premium/featureGate';
+import { PaywallModal } from '../../components/PaywallModal';
 
 type FilterRange = '7d' | '30d';
 
 export function NutritionSummaryScreen() {
   const userId = useUserStore((s) => s.userId);
-  const userProfile = useUserStore((s) => s.profile);
   const { meals: webMeals } = useMealStore();
   const theme = useTheme();
   const { t } = useLanguage();
@@ -24,12 +27,22 @@ export function NutritionSummaryScreen() {
   const [allMeals, setAllMeals] = useState<MealLog[]>([]);
   const [filter, setFilter] = useState<FilterRange>('7d');
   const [loading, setLoading] = useState(true);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
 
   const days = filter === '7d' ? 7 : 30;
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      // Load user targets from DB
+      if (Platform.OS !== 'web') {
+        const user = await getUserById(userId);
+        if (user) {
+          setCalorieTarget(user.tdee || 2000);
+          setProteinTarget(user.proteinTargetG || 150);
+        }
+      }
       const meals: MealLog[] = [];
       for (let i = 0; i < days; i++) {
         const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
@@ -42,7 +55,7 @@ export function NutritionSummaryScreen() {
       }
       setAllMeals(meals);
     } catch (e) {
-      console.warn('NutritionSummary load failed:', e);
+      if (__DEV__) console.warn('NutritionSummary load failed:', e);
     } finally {
       setLoading(false);
     }
@@ -82,8 +95,8 @@ export function NutritionSummaryScreen() {
     };
   }, [allMeals]);
 
-  const calorieTarget = userProfile?.calorieTarget || 2000;
-  const proteinTarget = userProfile?.proteinTarget || 150;
+  const [calorieTarget, setCalorieTarget] = useState(2000);
+  const [proteinTarget, setProteinTarget] = useState(150);
 
   const filters: { key: FilterRange; label: string }[] = [
     { key: '7d', label: t.progress.days7 },
@@ -108,14 +121,22 @@ export function NutritionSummaryScreen() {
           <Chip
             key={f.key}
             selected={filter === f.key}
-            onPress={() => setFilter(f.key)}
+            onPress={() => {
+              if (!isProgressRangeAvailable(f.key)) {
+                setPaywallVisible(true);
+                return;
+              }
+              setFilter(f.key);
+            }}
             compact
             textStyle={{ fontSize: 12 }}
           >
-            {f.label}
+            {f.label}{!isPremium && f.key !== '7d' ? ' 🔒' : ''}
           </Chip>
         ))}
       </View>
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="progress_analysis" />
 
       {loading ? (
         <View style={styles.emptyState}>

@@ -17,6 +17,9 @@ import {
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { todayString } from '../../utils/helpers';
+import { usePremiumStore } from '../../store/premiumStore';
+import { getAvailableProgramCount } from '../../services/premium/featureGate';
+import { PaywallModal } from '../../components/PaywallModal';
 import builtInTemplatesJson from '../../assets/data/workout_templates.json';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -55,6 +58,9 @@ export function WorkoutScreen() {
   const [error, setError] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
+  const maxFreePrograms = getAvailableProgramCount();
 
   const loadData = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -83,7 +89,7 @@ export function WorkoutScreen() {
         totalCalories: completed.reduce((s, w) => s + w.caloriesBurned, 0),
       });
     } catch (e) {
-      console.warn('WorkoutScreen load failed:', e);
+      if (__DEV__) console.warn('WorkoutScreen load failed:', e);
       setError(true);
     } finally {
       setLoading(false);
@@ -174,9 +180,9 @@ export function WorkoutScreen() {
         {/* ── Week Stats ── */}
         {weekStats && weekStats.count > 0 && (
           <View style={styles.weekStatsRow}>
-            <WeekStatCard icon="dumbbell" value={weekStats.count} label={t.workout.weekWorkouts} color={colors.primary} />
-            <WeekStatCard icon="timer-outline" value={weekStats.totalMinutes} label={t.common.min} color="#5C6BC0" />
-            <WeekStatCard icon="fire" value={weekStats.totalCalories} label={t.common.kcal} color="#EF5350" />
+            <WeekStatCard icon="dumbbell" value={weekStats.count} label={t.workout.weekWorkouts} color={colors.primary} surfaceColor={theme.colors.surface} />
+            <WeekStatCard icon="timer-outline" value={weekStats.totalMinutes} label={t.common.min} color="#5C6BC0" surfaceColor={theme.colors.surface} />
+            <WeekStatCard icon="fire" value={weekStats.totalCalories} label={t.common.kcal} color="#EF5350" surfaceColor={theme.colors.surface} />
           </View>
         )}
 
@@ -192,6 +198,7 @@ export function WorkoutScreen() {
                 key={cat}
                 style={[
                   styles.filterChip,
+                  { backgroundColor: theme.colors.surfaceVariant },
                   isActive && styles.filterChipActive,
                 ]}
                 onPress={() => setCategoryFilter(cat)}
@@ -212,18 +219,27 @@ export function WorkoutScreen() {
 
         {/* ── Template Grid ── */}
         <View style={styles.templateGrid}>
-          {filteredTemplates.map((tmpl) => {
+          {filteredTemplates.map((tmpl, index) => {
             const catColor = CATEGORY_COLORS[tmpl.category] || colors.primary;
             const diffColor = DIFFICULTY_COLORS[tmpl.difficulty] || colors.textTertiary;
+            const isLocked = !isPremium && index >= maxFreePrograms;
             return (
               <TouchableOpacity
                 key={tmpl.id}
-                style={styles.templateCard}
-                onPress={() => setSelectedTemplate(tmpl)}
+                style={[styles.templateCard, { backgroundColor: theme.colors.surface, opacity: isLocked ? 0.7 : 1 }]}
+                onPress={() => {
+                  if (isLocked) { setPaywallVisible(true); return; }
+                  setSelectedTemplate(tmpl);
+                }}
                 activeOpacity={0.8}
               >
                 {/* Category color stripe */}
                 <View style={[styles.templateStripe, { backgroundColor: catColor }]} />
+                {isLocked && (
+                  <View style={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
+                    <MaterialCommunityIcons name="lock" size={18} color={colors.orange} />
+                  </View>
+                )}
                 <View style={styles.templateContent}>
                   {/* Header row */}
                   <View style={styles.templateHeader}>
@@ -269,7 +285,7 @@ export function WorkoutScreen() {
         {/* ── Recent Sessions ── */}
         <Text variant="titleMedium" style={[styles.sectionTitle, { marginTop: spacing.md }]}>{t.workout.recentWorkouts}</Text>
         {sessions.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]}>
             <MaterialCommunityIcons name="dumbbell" size={48} color={colors.textDisabled} />
             <Text style={{ color: colors.textTertiary, marginTop: 8 }}>{t.workout.noRecords}</Text>
           </View>
@@ -277,7 +293,7 @@ export function WorkoutScreen() {
           sessions.map((s, idx) => (
             <TouchableOpacity
               key={s.id}
-              style={styles.sessionCard}
+              style={[styles.sessionCard, { backgroundColor: theme.colors.surface }]}
               onPress={() => navigation.navigate('SessionDetail', {
                 sessionId: s.id,
                 sessionName: s.name,
@@ -346,7 +362,7 @@ export function WorkoutScreen() {
               {(selectedTemplate.days as any[]).map((day: any, idx: number) => (
                 <TouchableOpacity
                   key={idx}
-                  style={styles.dayCard}
+                  style={[styles.dayCard, { backgroundColor: theme.colors.surfaceVariant }]}
                   onPress={() => handleStartDay(selectedTemplate, idx)}
                   activeOpacity={0.7}
                 >
@@ -374,14 +390,16 @@ export function WorkoutScreen() {
           )}
         </Modal>
       </Portal>
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="advanced_programs" />
     </View>
   );
 }
 
 // ── Sub-components ──
-const WeekStatCard = React.memo(function WeekStatCard({ icon, value, label, color }: { icon: string; value: number; label: string; color: string }) {
+const WeekStatCard = React.memo(function WeekStatCard({ icon, value, label, color, surfaceColor }: { icon: string; value: number; label: string; color: string; surfaceColor?: string }) {
   return (
-    <View style={styles.weekStatCard}>
+    <View style={[styles.weekStatCard, { backgroundColor: surfaceColor || '#fff' }]}>
       <View style={[styles.weekStatIcon, { backgroundColor: `${color}15` }]}>
         <MaterialCommunityIcons name={icon as any} size={18} color={color} />
       </View>
@@ -432,7 +450,6 @@ const styles = StyleSheet.create({
   weekStatCard: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: borderRadius.md,
     paddingVertical: spacing.sm,
     elevation: 1,
@@ -460,7 +477,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
     marginRight: 8,
     gap: 5,
   },
@@ -485,7 +501,6 @@ const styles = StyleSheet.create({
   templateCard: {
     width: CARD_WIDTH,
     borderRadius: borderRadius.md,
-    backgroundColor: '#fff',
     overflow: 'hidden',
     elevation: 2,
     shadowColor: '#000',
@@ -537,7 +552,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: colors.border,
     paddingTop: 8,
   },
   templateStat: {
@@ -554,7 +569,6 @@ const styles = StyleSheet.create({
   sessionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
@@ -580,7 +594,6 @@ const styles = StyleSheet.create({
   emptyCard: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
-    backgroundColor: '#fff',
     borderRadius: borderRadius.md,
   },
 
@@ -636,7 +649,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    backgroundColor: '#F8F8F8',
     marginBottom: 8,
   },
   dayNumber: {

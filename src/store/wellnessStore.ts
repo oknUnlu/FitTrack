@@ -38,7 +38,7 @@ export const useWellnessStore = create<WellnessState>((set) => ({
       const entries = await getWellnessEntries();
       set({ entries, isLoading: false });
     } catch (e) {
-      console.warn('Failed to load wellness entries:', e);
+      if (__DEV__) console.warn('Failed to load wellness entries:', e);
       set({ isLoading: false });
     }
   },
@@ -48,7 +48,7 @@ export const useWellnessStore = create<WellnessState>((set) => ({
       const todayEntry = await getWellnessEntryByDate(date);
       set({ todayEntry });
     } catch (e) {
-      console.warn('Failed to load today wellness entry:', e);
+      if (__DEV__) console.warn('Failed to load today wellness entry:', e);
     }
   },
 
@@ -74,7 +74,7 @@ export const useWellnessStore = create<WellnessState>((set) => ({
       const stats = await getWellnessStats(days);
       set({ stats });
     } catch (e) {
-      console.warn('Failed to load wellness stats:', e);
+      if (__DEV__) console.warn('Failed to load wellness stats:', e);
     }
   },
 }));

@@ -95,13 +95,14 @@ export function AchievementsScreen() {
 }
 
 function AchievementCard({ achievement, t }: { achievement: Achievement; t: any }) {
+  const theme = useTheme();
   const a = achievement;
   const progress = a.target > 0 ? Math.min(a.current / a.target, 1) : 0;
   const titleText = (t.achievements as any)[a.titleKey] || a.titleKey;
   const descText = (t.achievements as any)[a.descKey] || a.descKey;
 
   return (
-    <View style={[styles.card, a.unlocked && { borderLeftColor: a.color }]}>
+    <View style={[styles.card, { backgroundColor: theme.colors.surface }, a.unlocked && { borderLeftColor: a.color }]}>
       <View style={[styles.iconWrap, { backgroundColor: a.unlocked ? `${a.color}20` : colors.divider }]}>
         <MaterialCommunityIcons
           name={a.icon as any}
@@ -207,7 +208,6 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: borderRadius.md,
     padding: 14,
     marginBottom: 10,

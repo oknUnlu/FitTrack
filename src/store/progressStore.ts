@@ -29,7 +29,7 @@ export const useProgressStore = create<ProgressState>((set) => ({
       const metrics = await getAllMetrics(userId);
       set({ metrics, latestMetric: metrics[0] || null, isLoading: false });
     } catch (e) {
-      console.warn('Failed to load metrics:', e);
+      if (__DEV__) console.warn('Failed to load metrics:', e);
       set({ isLoading: false });
     }
   },
@@ -39,7 +39,7 @@ export const useProgressStore = create<ProgressState>((set) => ({
       const latestMetric = await getLatestMetric(userId);
       set({ latestMetric });
     } catch (e) {
-      console.warn('Failed to load latest metric:', e);
+      if (__DEV__) console.warn('Failed to load latest metric:', e);
     }
   },
 
@@ -49,7 +49,7 @@ export const useProgressStore = create<ProgressState>((set) => ({
       const metrics = await getMetricsByRange(userId, start, end);
       set({ metrics, isLoading: false });
     } catch (e) {
-      console.warn('Failed to load metrics by range:', e);
+      if (__DEV__) console.warn('Failed to load metrics by range:', e);
       set({ isLoading: false });
     }
   },

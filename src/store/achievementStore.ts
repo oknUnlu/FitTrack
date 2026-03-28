@@ -33,7 +33,7 @@ export const useAchievementStore = create<AchievementState>((set) => ({
         isLoading: false,
       });
     } catch (e) {
-      console.warn('Failed to load achievements:', e);
+      if (__DEV__) console.warn('Failed to load achievements:', e);
       set({ isLoading: false });
     }
   },
@@ -48,7 +48,7 @@ export const useAchievementStore = create<AchievementState>((set) => ({
         isLoading: false,
       });
     } catch (e) {
-      console.warn('Failed to refresh achievements:', e);
+      if (__DEV__) console.warn('Failed to refresh achievements:', e);
       set({ isLoading: false });
     }
   },

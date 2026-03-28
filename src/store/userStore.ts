@@ -22,7 +22,7 @@ export const useUserStore = create<UserState>((set) => ({
     try {
       await AsyncStorage.setItem(ONBOARDED_KEY, JSON.stringify(value));
     } catch (e) {
-      console.warn('Failed to save onboarding state:', e);
+      if (__DEV__) console.warn('Failed to save onboarding state:', e);
     }
     set({ isOnboarded: value });
   },
@@ -30,7 +30,7 @@ export const useUserStore = create<UserState>((set) => ({
     try {
       await AsyncStorage.removeItem(ONBOARDED_KEY);
     } catch (e) {
-      console.warn('Failed to reset onboarding state:', e);
+      if (__DEV__) console.warn('Failed to reset onboarding state:', e);
     }
     set({ isOnboarded: false });
   },
@@ -43,7 +43,7 @@ export const useUserStore = create<UserState>((set) => ({
         set({ isLoading: false });
       }
     } catch (e) {
-      console.warn('Failed to load onboarding state:', e);
+      if (__DEV__) console.warn('Failed to load onboarding state:', e);
       set({ isLoading: false });
     }
   },

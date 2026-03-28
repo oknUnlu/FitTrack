@@ -82,7 +82,7 @@ export async function saveAchievements(achievements: Achievement[]): Promise<voi
   try {
     await AsyncStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
   } catch (e) {
-    console.warn('Failed to save achievements:', e);
+    if (__DEV__) console.warn('Failed to save achievements:', e);
   }
 }
 
@@ -239,7 +239,7 @@ export async function refreshAchievements(userId: string): Promise<Achievement[]
       allGoalsMet,
     });
   } catch (e) {
-    console.warn('refreshAchievements failed:', e);
+    if (__DEV__) console.warn('refreshAchievements failed:', e);
     return getAchievements();
   }
 }

@@ -32,7 +32,7 @@ export const useSupplementStore = create<SupplementState>((set) => ({
       const supplements = await getSupplements();
       set({ supplements, isLoading: false });
     } catch (e) {
-      console.warn('Failed to load supplements:', e);
+      if (__DEV__) console.warn('Failed to load supplements:', e);
       set({ isLoading: false });
     }
   },
@@ -42,7 +42,7 @@ export const useSupplementStore = create<SupplementState>((set) => ({
       const todayLogs = await getSupplementLogs(date);
       set({ todayLogs });
     } catch (e) {
-      console.warn('Failed to load supplement logs:', e);
+      if (__DEV__) console.warn('Failed to load supplement logs:', e);
     }
   },
 

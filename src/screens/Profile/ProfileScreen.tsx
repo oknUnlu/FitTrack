@@ -7,11 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeStore } from '../../store/themeStore';
 import { useUserStore } from '../../store/userStore';
 import { getUserById, User } from '../../services/database/userDao';
-import { initializeGemini } from '../../services/ai';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage, LANGUAGES } from '../../i18n';
 import type { Language } from '../../i18n';
+import { usePremiumStore, PremiumPlan } from '../../store/premiumStore';
+import { PaywallModal } from '../../components/PaywallModal';
 import {
   requestNotificationPermission,
   scheduleMealReminders,
@@ -21,7 +22,6 @@ import {
 
 const NOTIF_MEAL_KEY = 'pref_meal_reminder';
 const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
-const GEMINI_KEY_STORAGE = 'gemini_api_key_plain';
 
 export function ProfileScreen() {
   const theme = useTheme();
@@ -36,10 +36,12 @@ export function ProfileScreen() {
   const [mealReminder, setMealReminder] = useState(false);
   const [workoutReminder, setWorkoutReminder] = useState(false);
   const [waterReminder, setWaterReminder] = useState(false);
-  const [apiKeyDialogVisible, setApiKeyDialogVisible] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState('');
-  const [apiKeySet, setApiKeySet] = useState(false);
   const [langDialogVisible, setLangDialogVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
+  const premiumPlan = usePremiumStore((s) => s.plan);
+  const premiumExpiresAt = usePremiumStore((s) => s.expiresAt);
+  const clearPremium = usePremiumStore((s) => s.clearPremium);
 
   const GOAL_LABELS: Record<string, string> = {
     lose: t.profile.loseWeight, gain: t.profile.gainWeight, muscle: t.profile.buildMuscle, maintain: t.profile.maintainWeight,
@@ -50,23 +52,18 @@ export function ProfileScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [meal, workout, savedKey] = await Promise.all([
+      const [meal, workout] = await Promise.all([
         AsyncStorage.getItem(NOTIF_MEAL_KEY),
         AsyncStorage.getItem(NOTIF_WORKOUT_KEY),
-        AsyncStorage.getItem(GEMINI_KEY_STORAGE),
       ]);
       setMealReminder(meal === 'true');
       setWorkoutReminder(workout === 'true');
-      if (savedKey) {
-        setApiKeySet(true);
-        initializeGemini(savedKey);
-      }
       if (Platform.OS !== 'web') {
         const u = await getUserById(userId);
         setUser(u);
       }
     } catch (e) {
-      console.warn('ProfileScreen load failed:', e);
+      if (__DEV__) console.warn('ProfileScreen load failed:', e);
     }
   }, [userId]);
 
@@ -88,33 +85,6 @@ export function ProfileScreen() {
     if (val) await requestNotificationPermission();
     setWaterReminder(val);
     await scheduleWaterReminders(val);
-  };
-
-  const saveApiKey = async () => {
-    const key = apiKeyInput.trim();
-    if (!key) return;
-    try {
-      await AsyncStorage.setItem(GEMINI_KEY_STORAGE, key);
-      initializeGemini(key);
-      setApiKeySet(true);
-      setApiKeyDialogVisible(false);
-      setApiKeyInput('');
-      Alert.alert(t.common.success, t.profile.apiKeySaved);
-    } catch (e) {
-      Alert.alert(t.common.error, t.profile.apiKeySaveError);
-    }
-  };
-
-  const removeApiKey = async () => {
-    Alert.alert(t.profile.deleteApiKey, t.profile.deleteApiKeyConfirm, [
-      { text: t.common.cancel, style: 'cancel' },
-      {
-        text: t.common.delete, style: 'destructive', onPress: async () => {
-          await AsyncStorage.removeItem(GEMINI_KEY_STORAGE);
-          setApiKeySet(false);
-        },
-      },
-    ]);
   };
 
   const currentLangName = LANGUAGES.find((l) => l.code === language)?.nativeName ?? language;
@@ -154,6 +124,49 @@ export function ProfileScreen() {
           </Card.Content>
         )}
       </Card>
+
+      {/* Premium Section */}
+      {isPremium ? (
+        <Card style={[styles.card, { borderColor: '#FFD700', borderWidth: 1 }]} mode="elevated">
+          <Card.Content>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
+              <MaterialCommunityIcons name="crown" size={24} color="#FFD700" />
+              <Text style={{ fontWeight: 'bold', fontSize: 16, marginLeft: 8 }}>
+                {(t as any).premium?.title || 'FitTrack Premium'}
+              </Text>
+              <View style={{ marginLeft: 'auto', backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
+                  {premiumPlan.toUpperCase()}
+                </Text>
+              </View>
+            </View>
+            {premiumExpiresAt && (
+              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+                {(t as any).premium?.expiresAt || 'Expires'}: {new Date(premiumExpiresAt).toLocaleDateString()}
+              </Text>
+            )}
+          </Card.Content>
+        </Card>
+      ) : (
+        <Card
+          style={[styles.card, { backgroundColor: 'rgba(255,215,0,0.08)' }]}
+          mode="elevated"
+          onPress={() => setPaywallVisible(true)}
+        >
+          <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <MaterialCommunityIcons name="crown" size={32} color="#FFD700" />
+            <View style={{ flex: 1, marginLeft: spacing.sm }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
+                {(t as any).premium?.upgradeNow || 'Upgrade to Premium'}
+              </Text>
+              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+                {(t as any).premium?.subtitle || 'Unlock all features'}
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textTertiary} />
+          </Card.Content>
+        </Card>
+      )}
 
       {/* Makro Hedefler */}
       {user && (
@@ -219,22 +232,6 @@ export function ProfileScreen() {
             left={(props) => <List.Icon {...props} icon="bell-ring" />}
             right={() => <Switch value={workoutReminder} onValueChange={toggleWorkoutReminder} />}
           />
-          <Divider />
-          <List.Subheader>{t.profile.aiCoachSection}</List.Subheader>
-          <List.Item
-            title={t.profile.geminiApiKey}
-            description={apiKeySet ? t.profile.configured : t.profile.notConfigured}
-            left={(props) => <List.Icon {...props} icon="key" />}
-            right={() => (
-              <Button
-                compact
-                mode="outlined"
-                onPress={() => apiKeySet ? removeApiKey() : setApiKeyDialogVisible(true)}
-              >
-                {apiKeySet ? t.common.delete : t.common.add}
-              </Button>
-            )}
-          />
         </List.Section>
       </Card>
 
@@ -267,29 +264,7 @@ export function ProfileScreen() {
         {t.profile.version}
       </Text>
 
-      {/* API Key Dialog */}
       <Portal>
-        <Dialog visible={apiKeyDialogVisible} onDismiss={() => setApiKeyDialogVisible(false)}>
-          <Dialog.Title>{t.profile.geminiApiKey}</Dialog.Title>
-          <Dialog.Content>
-            <Text style={{ color: colors.textSecondary, marginBottom: spacing.sm, fontSize: 13 }}>
-              {t.profile.apiKeyInstruction}
-            </Text>
-            <TextInput
-              label={t.profile.geminiApiKey}
-              value={apiKeyInput}
-              onChangeText={setApiKeyInput}
-              mode="outlined"
-              secureTextEntry
-              dense
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setApiKeyDialogVisible(false)}>{t.common.cancel}</Button>
-            <Button onPress={saveApiKey} disabled={!apiKeyInput.trim()}>{t.common.save}</Button>
-          </Dialog.Actions>
-        </Dialog>
-
         {/* Language Selection Dialog */}
         <Dialog visible={langDialogVisible} onDismiss={() => setLangDialogVisible(false)}>
           <Dialog.Title>{t.profile.selectLanguage}</Dialog.Title>
@@ -310,6 +285,8 @@ export function ProfileScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} />
     </ScrollView>
   );
 }

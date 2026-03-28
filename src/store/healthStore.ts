@@ -48,7 +48,7 @@ export const useHealthStore = create<HealthState>((set) => ({
       const config = await getHealthSyncConfig();
       set({ config });
     } catch (e) {
-      console.warn('Failed to load health config:', e);
+      if (__DEV__) console.warn('Failed to load health config:', e);
     }
   },
 
@@ -63,7 +63,7 @@ export const useHealthStore = create<HealthState>((set) => ({
       const todayData = await getHealthData(date);
       set({ todayData, isLoading: false });
     } catch (e) {
-      console.warn('Failed to load today health data:', e);
+      if (__DEV__) console.warn('Failed to load today health data:', e);
       set({ isLoading: false });
     }
   },
@@ -89,7 +89,7 @@ export const useHealthStore = create<HealthState>((set) => ({
       const stats = await getHealthStats(days);
       set({ stats });
     } catch (e) {
-      console.warn('Failed to load health stats:', e);
+      if (__DEV__) console.warn('Failed to load health stats:', e);
     }
   },
 }));

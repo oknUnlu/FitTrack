@@ -33,7 +33,7 @@ export function SessionDetailScreen() {
       setExerciseMap(new Map(allExercises.map((e) => [e.id, e])));
       setSets(sessionSets);
     } catch (e) {
-      console.warn('SessionDetail load failed:', e);
+      if (__DEV__) console.warn('SessionDetail load failed:', e);
       setError(true);
     } finally {
       setLoading(false);

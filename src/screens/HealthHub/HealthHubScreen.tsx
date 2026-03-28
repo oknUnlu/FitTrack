@@ -17,6 +17,9 @@ import {
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { generateId, todayString } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
+import { usePremiumStore } from '../../store/premiumStore';
+import { canAccessFeature, isHealthHubFullAvailable } from '../../services/premium/featureGate';
+import { PaywallModal } from '../../components/PaywallModal';
 
 export function HealthHubScreen() {
   const theme = useTheme();
@@ -37,6 +40,9 @@ export function HealthHubScreen() {
   const [addDialogVisible, setAddDialogVisible] = useState(false);
   const [selectedType, setSelectedType] = useState<HealthDataPoint['type']>('steps');
   const [inputValue, setInputValue] = useState('');
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
+  const hasFullAccess = isHealthHubFullAvailable();
 
   const loadData = useCallback(async () => {
     const [cfg, data, weekStats] = await Promise.all([
@@ -69,6 +75,10 @@ export function HealthHubScreen() {
   };
 
   const handleExport = async () => {
+    if (!canAccessFeature('data_export')) {
+      setPaywallVisible(true);
+      return;
+    }
     try {
       const data = await exportAllData();
       if (Platform.OS === 'web') {
@@ -128,18 +138,25 @@ export function HealthHubScreen() {
       <View style={styles.dataGrid}>
         {DATA_TYPES.map((type) => {
           const value = getDataValue(type.key);
+          const isLocked = !hasFullAccess && type.key !== 'steps';
           return (
             <TouchableOpacity
               key={type.key}
               style={styles.dataCard}
-              onPress={() => openAddDialog(type.key)}
+              onPress={() => {
+                if (isLocked) { setPaywallVisible(true); return; }
+                openAddDialog(type.key);
+              }}
               activeOpacity={0.7}
             >
-              <Card style={{ borderRadius: borderRadius.md }} mode="elevated">
+              <Card style={{ borderRadius: borderRadius.md, opacity: isLocked ? 0.6 : 1 }} mode="elevated">
                 <Card.Content style={{ alignItems: 'center', paddingVertical: spacing.md }}>
+                  {isLocked && (
+                    <MaterialCommunityIcons name="lock" size={16} color={colors.orange} style={{ position: 'absolute', top: 8, right: 8 }} />
+                  )}
                   <MaterialCommunityIcons name={type.icon as any} size={28} color={type.color} />
                   <Text style={{ fontWeight: 'bold', fontSize: 20, marginTop: 8 }}>
-                    {value !== null ? value : '--'}
+                    {isLocked ? '🔒' : value !== null ? value : '--'}
                   </Text>
                   <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{type.unit}</Text>
                   <Text style={{ fontWeight: '600', fontSize: 12, marginTop: 4 }}>{type.label}</Text>
@@ -149,6 +166,8 @@ export function HealthHubScreen() {
           );
         })}
       </View>
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="health_hub" />
 
       {/* Weekly Averages */}
       {stats && stats.totalEntries > 0 && (

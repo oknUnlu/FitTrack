@@ -1,71 +1,58 @@
-import { GoogleGenerativeAI, Content } from '@google/generative-ai';
 import { AIResponse, ConversationMessage } from './types';
-import { buildSystemPrompt, buildContextString } from './promptBuilder';
-
-let genAI: GoogleGenerativeAI | null = null;
-
-export function initializeGemini(apiKey: string): void {
-  genAI = new GoogleGenerativeAI(apiKey);
-}
-
-export function isGeminiInitialized(): boolean {
-  return genAI !== null;
-}
+import { buildSystemPrompt } from './promptBuilder';
+import { apiPost } from '../api/apiClient';
+import { API_ENDPOINTS } from '../../config/api';
 
 /**
- * Send a message to Gemini with full conversation history for multi-turn chat.
+ * Send a message to Gemini via backend proxy with full conversation history.
  */
 export async function sendToGemini(
   prompt: string,
   context: string,
   history: ConversationMessage[] = []
 ): Promise<AIResponse> {
-  if (!genAI) {
-    return { success: false, message: 'API anahtarı ayarlanmamış', source: 'gemini_cloud' };
-  }
-
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-    // Build system instruction from context
     let systemInstruction = buildSystemPrompt();
     if (context.trim()) {
       systemInstruction += '\n\n=== KULLANICI PROFİLİ VE VERİLERİ ===\n' + context;
     }
 
-    // Convert conversation history to Gemini Content format
-    const chatHistory: Content[] = history
-      .slice(-20) // Keep last 20 messages to stay within token limits
-      .map((msg) => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }],
-      }));
+    // Convert conversation history to server format
+    const serverHistory = history.slice(-20).map((msg) => ({
+      role: msg.role === 'user' ? ('user' as const) : ('model' as const),
+      content: msg.content,
+    }));
 
-    const chat = model.startChat({
-      history: chatHistory,
+    const data = await apiPost<AIResponse>(API_ENDPOINTS.chat, {
+      prompt,
       systemInstruction,
+      history: serverHistory,
     });
 
-    const result = await chat.sendMessage(prompt);
-    const text = result.response.text();
-
-    return { success: true, message: text, source: 'gemini_cloud' };
+    return data;
   } catch (error: any) {
-    return { success: false, message: `Gemini hatası: ${error.message}`, source: 'gemini_cloud' };
+    if (error.message === 'RATE_LIMIT_EXCEEDED') {
+      return {
+        success: false,
+        message: 'Günlük istek limitine ulaşıldı. Yarın tekrar deneyin.',
+        source: 'fallback',
+      };
+    }
+    return {
+      success: false,
+      message: `Gemini hatası: ${error.message}`,
+      source: 'gemini_cloud',
+    };
   }
 }
 
 /**
- * Generate a personalized fitness or nutrition plan via Gemini.
+ * Generate a personalized fitness or nutrition plan via backend proxy.
  */
 export async function generatePlan(
   planType: 'workout' | 'nutrition' | 'weekly',
   context: string
 ): Promise<AIResponse> {
-  if (!genAI) {
-    return { success: false, message: 'API anahtarı ayarlanmamış', source: 'gemini_cloud' };
-  }
-
   const planPrompts: Record<string, string> = {
     workout: [
       'Kullanıcı profiline göre kişiselleştirilmiş bir haftalık antrenman planı oluştur.',
@@ -88,21 +75,29 @@ export async function generatePlan(
   };
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
     let systemInstruction = buildSystemPrompt();
     if (context.trim()) {
       systemInstruction += '\n\n=== KULLANICI PROFİLİ VE VERİLERİ ===\n' + context;
     }
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: planPrompts[planType] }] }],
-      systemInstruction: { role: 'user', parts: [{ text: systemInstruction }] },
+    const data = await apiPost<AIResponse>(API_ENDPOINTS.plan, {
+      planPrompt: planPrompts[planType],
+      systemInstruction,
     });
-    const text = result.response.text();
 
-    return { success: true, message: text, source: 'gemini_cloud' };
+    return data;
   } catch (error: any) {
-    return { success: false, message: `Plan oluşturma hatası: ${error.message}`, source: 'gemini_cloud' };
+    if (error.message === 'RATE_LIMIT_EXCEEDED') {
+      return {
+        success: false,
+        message: 'Günlük istek limitine ulaşıldı. Yarın tekrar deneyin.',
+        source: 'fallback',
+      };
+    }
+    return {
+      success: false,
+      message: `Plan oluşturma hatası: ${error.message}`,
+      source: 'gemini_cloud',
+    };
   }
 }

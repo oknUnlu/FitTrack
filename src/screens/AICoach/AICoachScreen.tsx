@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, TextInput, IconButton, Chip, useTheme, Button } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserStore } from '../../store/userStore';
 import { sendMessage, getChatHistory, getTodayRequestCount, getMaxDailyRequests, requestPlan } from '../../services/ai';
 import { ConversationMessage } from '../../services/ai/types';
@@ -13,6 +14,9 @@ import { buildContextString } from '../../services/ai/promptBuilder';
 import { todayString } from '../../utils/helpers';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
+import { usePremiumStore } from '../../store/premiumStore';
+import { checkUsageLimit, recordFeatureUsage, getFeatureFreeLimit } from '../../services/premium/featureGate';
+import { PaywallModal } from '../../components/PaywallModal';
 
 type PlanType = 'workout' | 'nutrition' | 'weekly';
 
@@ -26,6 +30,9 @@ export function AICoachScreen() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [requestCount, setRequestCount] = useState(0);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
+  const freeLimit = getFeatureFreeLimit('ai_coach') || 10;
 
   const quickPrompts = [
     t.aiCoach.prompt1,
@@ -50,7 +57,7 @@ export function AICoachScreen() {
         const count = await getTodayRequestCount();
         setRequestCount(count);
       } catch (e) {
-        console.warn('AICoachScreen load failed:', e);
+        if (__DEV__) console.warn('AICoachScreen load failed:', e);
       }
     })();
   }, [userId]);
@@ -82,7 +89,7 @@ export function AICoachScreen() {
         recentWorkoutSummary: workoutSummary,
       });
     } catch (ctxErr) {
-      console.warn('Context build failed:', ctxErr);
+      if (__DEV__) console.warn('Context build failed:', ctxErr);
       return '';
     }
   }, [userId]);
@@ -90,6 +97,15 @@ export function AICoachScreen() {
   const handleSend = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg || loading) return;
+
+    // Check premium usage limit
+    if (!isPremium) {
+      const usage = await checkUsageLimit('ai_coach');
+      if (!usage.allowed) {
+        setPaywallVisible(true);
+        return;
+      }
+    }
 
     const userMsg: ConversationMessage = {
       id: Date.now().toString(), role: 'user', content: msg, source: 'gemini_cloud', timestamp: Date.now(),
@@ -107,6 +123,7 @@ export function AICoachScreen() {
       };
       setMessages((prev) => [...prev, aiMsg]);
       setRequestCount((c) => c + 1);
+      await recordFeatureUsage('ai_coach');
     } catch (e: any) {
       const errMsg: ConversationMessage = {
         id: (Date.now() + 1).toString(), role: 'assistant', content: t.aiCoach.errorMessage,
@@ -120,6 +137,16 @@ export function AICoachScreen() {
 
   const handlePlanRequest = async (planType: PlanType) => {
     if (loading) return;
+
+    // Check premium usage limit
+    if (!isPremium) {
+      const usage = await checkUsageLimit('ai_coach');
+      if (!usage.allowed) {
+        setPaywallVisible(true);
+        return;
+      }
+    }
+
     setLoading(true);
 
     const planLabels: Record<PlanType, string> = {
@@ -143,6 +170,7 @@ export function AICoachScreen() {
       };
       setMessages((prev) => [...prev, aiMsg]);
       setRequestCount((c) => c + 1);
+      await recordFeatureUsage('ai_coach');
     } catch (e: any) {
       const errMsg: ConversationMessage = {
         id: (Date.now() + 1).toString(), role: 'assistant', content: t.aiCoach.errorMessage,
@@ -160,7 +188,7 @@ export function AICoachScreen() {
       await deleteAllConversations(userId);
       setMessages([]);
     } catch (e) {
-      console.warn('Clear chat failed:', e);
+      if (__DEV__) console.warn('Clear chat failed:', e);
     }
   };
 
@@ -171,7 +199,7 @@ export function AICoachScreen() {
       keyboardVerticalOffset={90}
     >
       {/* Rate limit indicator + clear button */}
-      <View style={styles.rateBar}>
+      <View style={[styles.rateBar, { backgroundColor: theme.colors.surfaceVariant }]}>
         {messages.length > 0 && (
           <IconButton
             icon="delete-outline"
@@ -181,8 +209,17 @@ export function AICoachScreen() {
           />
         )}
         <View style={{ flex: 1 }} />
-        <Text style={styles.rateText}>{requestCount}/{getMaxDailyRequests()} {t.aiCoach.requestsUsed}</Text>
+        {isPremium ? (
+          <View style={styles.proBadge}>
+            <MaterialCommunityIcons name="crown" size={12} color="#FFD700" />
+            <Text style={styles.proText}>PRO</Text>
+          </View>
+        ) : (
+          <Text style={styles.rateText}>{requestCount}/{freeLimit} {t.aiCoach.requestsUsed}</Text>
+        )}
       </View>
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="ai_coach" />
 
       {/* Quick prompts + plan buttons (shown when no messages) */}
       {messages.length === 0 && (
@@ -268,7 +305,9 @@ export function AICoachScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  rateBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingVertical: 2, backgroundColor: '#f5f5f5' },
+  rateBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingVertical: 2 },
+  proBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,215,0,0.15)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, gap: 4 },
+  proText: { fontSize: 11, fontWeight: 'bold', color: '#FFD700' },
   rateText: { fontSize: 11, color: colors.textTertiary, textAlign: 'right' },
   quickPrompts: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, maxHeight: 220 },
   bubble: { maxWidth: '80%', padding: spacing.sm, borderRadius: borderRadius.md, marginBottom: spacing.sm },

@@ -33,7 +33,7 @@ export const useWaterStore = create<WaterState>((set, get) => ({
       const todayLog = await getWaterLog(userId, date);
       set({ todayLog, isLoading: false });
     } catch (e) {
-      console.warn('Failed to load water log:', e);
+      if (__DEV__) console.warn('Failed to load water log:', e);
       set({ isLoading: false });
     }
   },

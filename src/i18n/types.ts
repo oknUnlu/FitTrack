@@ -552,6 +552,36 @@ export interface Translations {
     challenges: string;
   };
 
+  // Premium
+  premium: {
+    title: string;
+    subtitle: string;
+    featureLockedMsg: string;
+    popular: string;
+    yearly: string;
+    monthly: string;
+    lifetime: string;
+    year: string;
+    month: string;
+    savePercent: string;
+    restore: string;
+    aiCoachUnlimited: string;
+    foodRecognitionUnlimited: string;
+    barcodeUnlimited: string;
+    progressFull: string;
+    dataExport: string;
+    advancedPrograms: string;
+    wellnessDetail: string;
+    healthHubFull: string;
+    limitReached: string;
+    upgradeNow: string;
+    freeLimit: string;
+    premiumBadge: string;
+    currentPlan: string;
+    expiresAt: string;
+    managePlan: string;
+  };
+
   // Days of week (abbreviated)
   daysShort: {
     mon: string;

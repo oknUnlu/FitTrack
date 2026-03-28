@@ -134,7 +134,7 @@ export function OnboardingScreen() {
       }
       setOnboarded(true);
     } catch (e) {
-      console.warn('Onboarding save failed:', e);
+      if (__DEV__) console.warn('Onboarding save failed:', e);
       setOnboarded(true);
     }
   };
@@ -223,7 +223,7 @@ export function OnboardingScreen() {
           value={name}
           onChangeText={setName}
           placeholder={t.onboarding.namePlaceholder}
-          style={styles.textInput}
+          style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
           outlineColor="#E0E0E0"
           activeOutlineColor={colors.primary}
         />
@@ -237,7 +237,7 @@ export function OnboardingScreen() {
           onChangeText={setAge}
           placeholder={t.onboarding.agePlaceholder}
           keyboardType="number-pad"
-          style={styles.textInput}
+          style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
           outlineColor="#E0E0E0"
           activeOutlineColor={colors.primary}
         />
@@ -278,7 +278,7 @@ export function OnboardingScreen() {
             onChangeText={setHeight}
             placeholder={t.onboarding.heightPlaceholder}
             keyboardType="decimal-pad"
-            style={[styles.textInput, { flex: 1 }]}
+            style={[styles.textInput, { flex: 1, backgroundColor: theme.colors.surface }]}
             outlineColor="#E0E0E0"
             activeOutlineColor={colors.primary}
           />
@@ -297,7 +297,7 @@ export function OnboardingScreen() {
             onChangeText={setWeight}
             placeholder={t.onboarding.weightPlaceholder}
             keyboardType="decimal-pad"
-            style={[styles.textInput, { flex: 1 }]}
+            style={[styles.textInput, { flex: 1, backgroundColor: theme.colors.surface }]}
             outlineColor="#E0E0E0"
             activeOutlineColor={colors.primary}
           />
@@ -343,7 +343,7 @@ export function OnboardingScreen() {
             onPress={() => setActivityLevel(level.key)}
             activeOpacity={0.7}
           >
-            <View style={[styles.optionIconWrap, activityLevel === level.key && { backgroundColor: `${colors.primary}20` }]}>
+            <View style={[styles.optionIconWrap, { backgroundColor: theme.colors.surfaceVariant }, activityLevel === level.key && { backgroundColor: `${colors.primary}20` }]}>
               <MaterialCommunityIcons
                 name={level.icon as any}
                 size={28}
@@ -386,7 +386,7 @@ export function OnboardingScreen() {
             onPress={() => setGoal(g.key)}
             activeOpacity={0.7}
           >
-            <View style={[styles.optionIconWrap, goal === g.key && { backgroundColor: `${g.color}20` }]}>
+            <View style={[styles.optionIconWrap, { backgroundColor: theme.colors.surfaceVariant }, goal === g.key && { backgroundColor: `${g.color}20` }]}>
               <MaterialCommunityIcons
                 name={g.icon as any}
                 size={28}
@@ -437,7 +437,7 @@ export function OnboardingScreen() {
         {/* Macro cards */}
         <View style={styles.macroGrid}>
           {items.slice(1).map((item) => (
-            <View key={item.label} style={[styles.macroCard, { borderLeftColor: item.color }]}>
+            <View key={item.label} style={[styles.macroCard, { backgroundColor: theme.colors.surface, borderLeftColor: item.color }]}>
               <MaterialCommunityIcons name={item.icon as any} size={22} color={item.color} />
               <Text style={styles.macroValue}>{item.value}<Text style={styles.macroUnit}> {item.unit}</Text></Text>
               <Text style={styles.macroLabel}>{item.label}</Text>
@@ -496,7 +496,7 @@ export function OnboardingScreen() {
 
         {/* Bottom nav buttons */}
         {showNavButtons && (
-          <View style={[styles.bottomNav, { paddingBottom: insets.bottom + spacing.sm }]}>
+          <View style={[styles.bottomNav, { paddingBottom: insets.bottom + spacing.sm, backgroundColor: theme.colors.surface }]}>
             <TouchableOpacity style={styles.backButton} onPress={goBack} activeOpacity={0.7}>
               <MaterialCommunityIcons name="arrow-left" size={20} color="#666" />
               <Text style={styles.backButtonText}>{t.onboarding.back}</Text>
@@ -662,7 +662,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   textInput: {
-    backgroundColor: '#fff',
   },
   unitInputRow: {
     flexDirection: 'row',
@@ -721,7 +720,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -789,7 +787,6 @@ const styles = StyleSheet.create({
     width: (SCREEN_WIDTH - spacing.md * 2 - 10) / 2,
     padding: 14,
     borderRadius: borderRadius.md,
-    backgroundColor: '#fff',
     borderLeftWidth: 4,
     elevation: 1,
     shadowColor: '#000',
@@ -859,7 +856,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
-    backgroundColor: '#fff',
   },
   backButton: {
     flexDirection: 'row',

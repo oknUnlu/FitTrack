@@ -55,7 +55,7 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       const sessions = await getRecentSessions(userId, limit);
       set({ sessions, isLoading: false });
     } catch (e) {
-      console.warn('Failed to load recent sessions:', e);
+      if (__DEV__) console.warn('Failed to load recent sessions:', e);
       set({ isLoading: false });
     }
   },
@@ -65,7 +65,7 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       const sessions = await getSessionsByDate(userId, date);
       set({ sessions });
     } catch (e) {
-      console.warn('Failed to load sessions by date:', e);
+      if (__DEV__) console.warn('Failed to load sessions by date:', e);
     }
   },
 
@@ -74,7 +74,7 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       const activeSession = await getActiveSession(userId);
       set({ activeSession });
     } catch (e) {
-      console.warn('Failed to load active session:', e);
+      if (__DEV__) console.warn('Failed to load active session:', e);
     }
   },
 
@@ -97,7 +97,7 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       const currentSets = await getSetsBySession(sessionId);
       set({ currentSets });
     } catch (e) {
-      console.warn('Failed to load sets:', e);
+      if (__DEV__) console.warn('Failed to load sets:', e);
     }
   },
 
@@ -113,7 +113,7 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       const exercises = await getAllExercises();
       set({ exercises });
     } catch (e) {
-      console.warn('Failed to load exercises:', e);
+      if (__DEV__) console.warn('Failed to load exercises:', e);
     }
   },
 
@@ -122,7 +122,7 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       const templates = await getAllTemplates();
       set({ templates });
     } catch (e) {
-      console.warn('Failed to load templates:', e);
+      if (__DEV__) console.warn('Failed to load templates:', e);
     }
   },
 
@@ -131,7 +131,7 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       const todayCaloriesBurned = await getTotalCaloriesBurnedByDate(userId, date);
       set({ todayCaloriesBurned });
     } catch (e) {
-      console.warn('Failed to load calories burned:', e);
+      if (__DEV__) console.warn('Failed to load calories burned:', e);
     }
   },
 

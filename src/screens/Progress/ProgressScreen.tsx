@@ -12,6 +12,9 @@ import { getMealLogsByDateRange } from '../../services/database/mealDao';
 import { getSessionsByDateRange } from '../../services/database/workoutDao';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
+import { usePremiumStore } from '../../store/premiumStore';
+import { isProgressRangeAvailable } from '../../services/premium/featureGate';
+import { PaywallModal } from '../../components/PaywallModal';
 
 const screenWidth = Dimensions.get('window').width - spacing.md * 2;
 
@@ -49,6 +52,8 @@ export function ProgressScreen() {
   const [macroAvg, setMacroAvg] = useState({ calories: 0, protein: 0, carbs: 0, fat: 0, activeDays: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
 
   const loadData = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -141,7 +146,7 @@ export function ProgressScreen() {
 
       setStats({ totalWorkouts, totalBurned, longestStreak, weightChange });
     } catch (e) {
-      console.warn('ProgressScreen load error:', e);
+      if (__DEV__) console.warn('ProgressScreen load error:', e);
       setError(true);
     } finally {
       setLoading(false);
@@ -163,15 +168,24 @@ export function ProgressScreen() {
 
       <SegmentedButtons
         value={period}
-        onValueChange={(v) => setPeriod(v)}
+        onValueChange={(v) => {
+          const rangeKey = v === '7' ? '7d' : v === '30' ? '30d' : v === '90' ? '90d' : 'all';
+          if (!isProgressRangeAvailable(rangeKey)) {
+            setPaywallVisible(true);
+            return;
+          }
+          setPeriod(v);
+        }}
         buttons={[
           { value: '7', label: t.progress.days7 },
-          { value: '30', label: t.progress.days30 },
-          { value: '90', label: t.progress.days90 },
-          { value: 'all', label: t.progress.all },
+          { value: '30', label: isPremium ? t.progress.days30 : `${t.progress.days30} 🔒` },
+          { value: '90', label: isPremium ? t.progress.days90 : `${t.progress.days90} 🔒` },
+          { value: 'all', label: isPremium ? t.progress.all : `${t.progress.all} 🔒` },
         ]}
         style={{ marginBottom: spacing.md }}
       />
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="progress_analysis" />
 
       {loading && (
         <View style={styles.centerState}>

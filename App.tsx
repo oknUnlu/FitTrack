@@ -4,15 +4,16 @@ import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Platform, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppNavigation } from './src/navigation/AppNavigation';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { LanguageProvider } from './src/i18n';
 import { useThemeStore } from './src/store/themeStore';
 import { useUserStore } from './src/store/userStore';
+import { usePremiumStore } from './src/store/premiumStore';
 import { lightTheme, darkTheme } from './src/theme/theme';
 import { initDatabase, seedDatabase } from './src/services/database/database';
-import { initializeGemini } from './src/services/ai';
+import { getDeviceToken } from './src/services/api/apiClient';
 
 // Splash screen'i uygulama hazır olana kadar görünür tut
 SplashScreen.preventAutoHideAsync();
@@ -22,12 +23,14 @@ export default function App() {
   const theme = isDark ? darkTheme : lightTheme;
   const loadOnboardingState = useUserStore((s) => s.loadOnboardingState);
   const isLoading = useUserStore((s) => s.isLoading);
+  const loadPremiumState = usePremiumStore((s) => s.loadPremiumState);
 
   useEffect(() => {
     const init = async () => {
       await loadOnboardingState();
+      await loadPremiumState();
       if (Platform.OS === 'web') {
-        console.log('FitTrack: SQLite not available on web, skipping DB init.');
+        if (__DEV__) console.log('FitTrack: SQLite not available on web, skipping DB init.');
         await SplashScreen.hideAsync();
         return;
       }
@@ -35,13 +38,13 @@ export default function App() {
         await initDatabase();
         await seedDatabase();
       } catch (e) {
-        console.warn('FitTrack: Database init failed:', e);
+        if (__DEV__) console.warn('FitTrack: Database init failed:', e);
       }
+      // Initialize device token for API authentication
       try {
-        const savedKey = await AsyncStorage.getItem('gemini_api_key_plain');
-        if (savedKey) initializeGemini(savedKey);
+        await getDeviceToken();
       } catch (e) {
-        console.warn('FitTrack: Could not load API key:', e);
+        if (__DEV__) console.warn('FitTrack: Could not init device token:', e);
       }
       await SplashScreen.hideAsync();
     };
@@ -51,16 +54,18 @@ export default function App() {
   if (isLoading) return null;
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaProvider>
-        <PaperProvider theme={theme}>
-          <LanguageProvider>
-            <StatusBar style={isDark ? 'light' : 'dark'} translucent={false} />
-            <AppNavigation />
-          </LanguageProvider>
-        </PaperProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={styles.container}>
+        <SafeAreaProvider>
+          <PaperProvider theme={theme}>
+            <LanguageProvider>
+              <StatusBar style={isDark ? 'light' : 'dark'} translucent={false} />
+              <AppNavigation />
+            </LanguageProvider>
+          </PaperProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }
 

@@ -14,6 +14,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { todayString, MEAL_TYPES, formatCalories, generateId } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
+import { usePremiumStore } from '../../store/premiumStore';
+import { checkUsageLimit, recordFeatureUsage } from '../../services/premium/featureGate';
+import { PaywallModal } from '../../components/PaywallModal';
 
 // Web fallback: load foods JSON directly for search
 const foodsJsonData: any[] = require('../../assets/data/foods_tr.json');
@@ -55,6 +58,9 @@ export function CalorieScreen() {
   const [aiResults, setAiResults] = useState<RecognizedFood[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiModalVisible, setAiModalVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState('');
+  const isPremium = usePremiumStore((s) => s.isPremium);
 
   const loadMeals = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -65,7 +71,7 @@ export function CalorieScreen() {
       const data = await getMealLogsByDate(userId, date);
       setMeals(data);
     } catch (e) {
-      console.warn('loadMeals failed:', e);
+      if (__DEV__) console.warn('loadMeals failed:', e);
     }
   }, [userId, date, webMeals]);
 
@@ -82,7 +88,7 @@ export function CalorieScreen() {
           setSearchResults(results);
         }
       } catch (e) {
-        console.warn('searchFoodItems failed:', e);
+        if (__DEV__) console.warn('searchFoodItems failed:', e);
       }
     } else {
       setSearchResults([]);
@@ -110,7 +116,7 @@ export function CalorieScreen() {
       setSearchQuery('');
       setSearchResults([]);
     } catch (e) {
-      console.warn('handleAddFood failed:', e);
+      if (__DEV__) console.warn('handleAddFood failed:', e);
     }
   }, [userId, date, activeMealType, loadMeals]);
 
@@ -123,9 +129,31 @@ export function CalorieScreen() {
         loadMeals();
       }
     } catch (e) {
-      console.warn('handleDelete failed:', e);
+      if (__DEV__) console.warn('handleDelete failed:', e);
     }
   }, [loadMeals]);
+
+  const checkBarcodeAccess = useCallback(async (): Promise<boolean> => {
+    if (isPremium) return true;
+    const usage = await checkUsageLimit('barcode_scanner');
+    if (!usage.allowed) {
+      setPaywallFeature('barcode_scanner');
+      setPaywallVisible(true);
+      return false;
+    }
+    return true;
+  }, [isPremium]);
+
+  const checkFoodRecognitionAccess = useCallback(async (): Promise<boolean> => {
+    if (isPremium) return true;
+    const usage = await checkUsageLimit('food_recognition');
+    if (!usage.allowed) {
+      setPaywallFeature('food_recognition');
+      setPaywallVisible(true);
+      return false;
+    }
+    return true;
+  }, [isPremium]);
 
   const handleBarcodeScan = useCallback(async (barcode: string) => {
     setBarcodeLoading(true);
@@ -151,6 +179,7 @@ export function CalorieScreen() {
         };
         setBarcodeVisible(false);
         setBarcodeLoading(false);
+        await recordFeatureUsage('barcode_scanner');
         handleAddFood(food);
       } else {
         setBarcodeLoading(false);
@@ -163,6 +192,10 @@ export function CalorieScreen() {
   }, [activeMealType, handleAddFood, t]);
 
   const handlePhotoRecognition = useCallback(async () => {
+    // Check premium usage limit
+    const canAccess = await checkFoodRecognitionAccess();
+    if (!canAccess) return;
+
     try {
       const result = await ImagePicker.launchCameraAsync({
         quality: 0.7,
@@ -175,6 +208,7 @@ export function CalorieScreen() {
       const foods = await recognizeFoodFromImage(result.assets[0].uri);
       setAiResults(foods);
       setAiLoading(false);
+      await recordFeatureUsage('food_recognition');
     } catch (e: any) {
       setAiLoading(false);
       Alert.alert(t.common.error, e.message || 'AI besin tanıma başarısız');
@@ -279,7 +313,7 @@ export function CalorieScreen() {
       {/* AI Food Recognition Modal */}
       {aiModalVisible && (
         <View style={styles.searchOverlay}>
-          <View style={styles.searchContainer}>
+          <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.rowBetween}>
               <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
                 {'AI Besin Tanıma'}
@@ -332,7 +366,7 @@ export function CalorieScreen() {
       {/* Search Modal */}
       {searchVisible && (
         <View style={styles.searchOverlay}>
-          <View style={styles.searchContainer}>
+          <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.rowBetween}>
               <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{t.calorie.searchFood}</Text>
               <IconButton icon="close" onPress={() => setSearchVisible(false)} />
@@ -348,7 +382,10 @@ export function CalorieScreen() {
                 <>
                   <TouchableOpacity
                     style={styles.barcodeBtn}
-                    onPress={() => { setSearchVisible(false); setBarcodeVisible(true); }}
+                    onPress={async () => {
+                      const canAccess = await checkBarcodeAccess();
+                      if (canAccess) { setSearchVisible(false); setBarcodeVisible(true); }
+                    }}
                   >
                     <MaterialCommunityIcons name="barcode-scan" size={24} color="#fff" />
                   </TouchableOpacity>
@@ -382,6 +419,7 @@ export function CalorieScreen() {
           </View>
         </View>
       )}
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature={paywallFeature} />
     </View>
   );
 }
@@ -394,7 +432,7 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   mealItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: colors.divider },
   searchOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  searchContainer: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: spacing.md, maxHeight: '80%' },
+  searchContainer: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: spacing.md, maxHeight: '80%' },
   searchItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.divider },
   barcodeBtn: { width: 48, height: 48, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
 });

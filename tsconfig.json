@@ -15,5 +15,6 @@
       "@assets/*": ["src/assets/*"],
       "@navigation/*": ["src/navigation/*"]
     }
-  }
+  },
+  "exclude": ["api"]
 }

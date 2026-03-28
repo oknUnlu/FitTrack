@@ -1,12 +1,11 @@
 import { generateId } from '../../utils/helpers';
 import { AIResponse, ConversationMessage } from './types';
-import { sendToGemini, initializeGemini, isGeminiInitialized, generatePlan } from './geminiCloud';
+import { sendToGemini, generatePlan } from './geminiCloud';
 import { getFallbackResponse } from './fallbackAI';
-import { canMakeRequest, recordRequest, getTodayRequestCount, getMaxDailyRequests } from './rateLimiter';
 import { insertConversation, getConversations } from '../database/aiDao';
+import { getTodayRequestCount, getMaxDailyRequests } from './rateLimiter';
 
-export { initializeGemini, isGeminiInitialized } from './geminiCloud';
-export { getTodayRequestCount, getMaxDailyRequests } from './rateLimiter';
+export { getTodayRequestCount, getMaxDailyRequests };
 
 export async function sendMessage(
   userId: string,
@@ -25,20 +24,19 @@ export async function sendMessage(
 
   let response: AIResponse;
 
-  // Try Gemini Cloud first
-  const canRequest = await canMakeRequest();
-  if (canRequest) {
-    // Load recent conversation history for multi-turn context
-    const history = await getChatHistory(userId);
-    response = await sendToGemini(prompt, context, history);
-    if (response.success) {
-      await recordRequest();
+  // Load recent conversation history for multi-turn context
+  const history = await getChatHistory(userId);
+  response = await sendToGemini(prompt, context, history);
+
+  if (!response.success) {
+    // Use fallback if server is unreachable or errors
+    const fallback = getFallbackResponse(prompt);
+    // Only use fallback if it's a network/server issue, not rate limit
+    if (response.message.includes('RATE_LIMIT') || response.message.includes('limitine')) {
+      // Keep the rate limit message from server
     } else {
-      // Fallback
-      response = getFallbackResponse(prompt);
+      response = fallback;
     }
-  } else {
-    response = getFallbackResponse(prompt);
   }
 
   // Save AI response
@@ -70,18 +68,9 @@ export async function requestPlan(
   planType: 'workout' | 'nutrition' | 'weekly',
   context: string
 ): Promise<AIResponse> {
-  const canRequest = await canMakeRequest();
-  if (!canRequest) {
-    return {
-      success: false,
-      message: 'Günlük istek limitine ulaşıldı. Yarın tekrar deneyin.',
-      source: 'fallback',
-    };
-  }
-
   const response = await generatePlan(planType, context);
+
   if (response.success) {
-    await recordRequest();
     // Save the plan as a conversation entry
     await insertConversation({
       id: generateId(),

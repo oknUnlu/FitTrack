@@ -14,6 +14,9 @@ import {
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { generateId, todayString } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
+import { usePremiumStore } from '../../store/premiumStore';
+import { isWellnessDetailAvailable } from '../../services/premium/featureGate';
+import { PaywallModal } from '../../components/PaywallModal';
 
 const MOOD_KEYS: { key: WellnessEntry['mood']; icon: string; labelKey: string; color: string }[] = [
   { key: 'great', icon: 'emoticon-excited', labelKey: 'moodGreat', color: colors.primary },
@@ -33,6 +36,9 @@ export function WellnessScreen() {
 
   const [entry, setEntry] = useState<WellnessEntry | null>(null);
   const [dialogVisible, setDialogVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
+  const hasDetailAccess = isWellnessDetailAvailable();
   const [meditationActive, setMeditationActive] = useState(false);
   const [meditationPaused, setMeditationPaused] = useState(false);
   const [meditationSeconds, setMeditationSeconds] = useState(0);
@@ -326,34 +332,53 @@ export function WellnessScreen() {
 
       {/* Weekly Stats */}
       {stats && stats.totalEntries > 0 && (
-        <Card style={styles.card} mode="elevated">
-          <Card.Content>
-            <Text style={{ fontWeight: 'bold', marginBottom: 12 }}>{t.wellness.weeklySummary}</Text>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <MaterialCommunityIcons name="sleep" size={20} color="#5C6BC0" />
-                <Text style={styles.statValue}>{stats.avgSleep}s</Text>
-                <Text style={styles.statLabel}>{t.wellness.avgSleep}</Text>
+        <TouchableOpacity
+          activeOpacity={hasDetailAccess ? 1 : 0.7}
+          onPress={() => { if (!hasDetailAccess) setPaywallVisible(true); }}
+        >
+          <Card style={[styles.card, !hasDetailAccess && { opacity: 0.6 }]} mode="elevated">
+            <Card.Content>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={{ fontWeight: 'bold', flex: 1 }}>{t.wellness.weeklySummary}</Text>
+                {!hasDetailAccess && <MaterialCommunityIcons name="lock" size={18} color={colors.orange} />}
               </View>
-              <View style={styles.statItem}>
-                <MaterialCommunityIcons name="head-heart" size={20} color="#E91E63" />
-                <Text style={styles.statValue}>{stats.avgStress}/5</Text>
-                <Text style={styles.statLabel}>{t.wellness.avgStress}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <MaterialCommunityIcons name="lightning-bolt" size={20} color="#FF9800" />
-                <Text style={styles.statValue}>{stats.avgEnergy}/5</Text>
-                <Text style={styles.statLabel}>{t.wellness.avgEnergy}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <MaterialCommunityIcons name="meditation" size={20} color="#9C27B0" />
-                <Text style={styles.statValue}>{stats.avgMeditation}{t.common.min}</Text>
-                <Text style={styles.statLabel}>{t.wellness.avgMeditation}</Text>
-              </View>
-            </View>
-          </Card.Content>
-        </Card>
+              {hasDetailAccess ? (
+                <View style={styles.statsRow}>
+                  <View style={styles.statItem}>
+                    <MaterialCommunityIcons name="sleep" size={20} color="#5C6BC0" />
+                    <Text style={styles.statValue}>{stats.avgSleep}s</Text>
+                    <Text style={styles.statLabel}>{t.wellness.avgSleep}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <MaterialCommunityIcons name="head-heart" size={20} color="#E91E63" />
+                    <Text style={styles.statValue}>{stats.avgStress}/5</Text>
+                    <Text style={styles.statLabel}>{t.wellness.avgStress}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <MaterialCommunityIcons name="lightning-bolt" size={20} color="#FF9800" />
+                    <Text style={styles.statValue}>{stats.avgEnergy}/5</Text>
+                    <Text style={styles.statLabel}>{t.wellness.avgEnergy}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <MaterialCommunityIcons name="meditation" size={20} color="#9C27B0" />
+                    <Text style={styles.statValue}>{stats.avgMeditation}{t.common.min}</Text>
+                    <Text style={styles.statLabel}>{t.wellness.avgMeditation}</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={{ alignItems: 'center', paddingVertical: spacing.md }}>
+                  <MaterialCommunityIcons name="crown" size={32} color="#FFD700" />
+                  <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 4 }}>
+                    {(t as any).premium?.upgradeNow || 'Upgrade to Premium'}
+                  </Text>
+                </View>
+              )}
+            </Card.Content>
+          </Card>
+        </TouchableOpacity>
       )}
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="wellness_detail" />
 
       {/* Entry Dialog */}
       <Portal>

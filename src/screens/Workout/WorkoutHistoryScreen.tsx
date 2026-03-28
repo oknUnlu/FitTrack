@@ -51,7 +51,7 @@ export function WorkoutHistoryScreen() {
       setSessions(data.filter((s) => s.completedAt !== null).sort((a, b) => b.date.localeCompare(a.date)));
       setTotalCount(count);
     } catch (e) {
-      console.warn('WorkoutHistory load failed:', e);
+      if (__DEV__) console.warn('WorkoutHistory load failed:', e);
     } finally {
       setLoading(false);
     }
