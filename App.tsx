@@ -14,6 +14,7 @@ import { usePremiumStore } from './src/store/premiumStore';
 import { lightTheme, darkTheme } from './src/theme/theme';
 import { initDatabase, seedDatabase } from './src/services/database/database';
 import { getDeviceToken } from './src/services/api/apiClient';
+import { configureRevenueCat, checkSubscriptionStatus } from './src/services/premium/revenueCat';
 
 // Splash screen'i uygulama hazır olana kadar görünür tut
 SplashScreen.preventAutoHideAsync();
@@ -45,6 +46,13 @@ export default function App() {
         await getDeviceToken();
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: Could not init device token:', e);
+      }
+      // Initialize RevenueCat and check subscription status
+      try {
+        await configureRevenueCat();
+        await checkSubscriptionStatus();
+      } catch (e) {
+        if (__DEV__) console.warn('FitTrack: RevenueCat init failed:', e);
       }
       await SplashScreen.hideAsync();
     };

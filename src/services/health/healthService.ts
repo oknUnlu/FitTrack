@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getHealthAdapter, getHealthSource, getTodayRange } from './nativeHealthAdapter';
+import { format } from 'date-fns';
 
 const HEALTH_SYNC_KEY = 'fittrack_health_sync';
 const HEALTH_DATA_KEY = 'fittrack_health_data';
@@ -94,4 +96,121 @@ export async function exportAllData(): Promise<string> {
     getHealthSyncConfig(),
   ]);
   return JSON.stringify({ healthData, config, exportDate: new Date().toISOString() }, null, 2);
+}
+
+// ── Native Health Integration ─────────────────────────────────────────────
+
+/**
+ * Check if native health SDK (HealthKit / Health Connect) is available.
+ */
+export async function isNativeHealthAvailable(): Promise<boolean> {
+  const adapter = getHealthAdapter();
+  return adapter.isAvailable();
+}
+
+/**
+ * Request health permissions and connect.
+ * Returns true if permissions were granted.
+ */
+export async function connectNativeHealth(): Promise<boolean> {
+  const adapter = getHealthAdapter();
+
+  const available = await adapter.isAvailable();
+  if (!available) return false;
+
+  const granted = await adapter.requestPermissions();
+  if (!granted) return false;
+
+  const config = await getHealthSyncConfig();
+  config.isConnected = true;
+  await saveHealthSyncConfig(config);
+
+  return true;
+}
+
+/**
+ * Disconnect native health (keep data, just stop syncing).
+ */
+export async function disconnectNativeHealth(): Promise<void> {
+  const config = await getHealthSyncConfig();
+  config.isConnected = false;
+  config.lastSyncDate = null;
+  await saveHealthSyncConfig(config);
+}
+
+/**
+ * Sync today's data from native health SDK into local storage.
+ * Only syncs metric types that are enabled in config.
+ */
+export async function syncFromNativeHealth(): Promise<{
+  synced: boolean;
+  metrics: { steps: number; heartRate: number; sleep: number; activeCalories: number };
+}> {
+  const config = await getHealthSyncConfig();
+  if (!config.isConnected) {
+    return { synced: false, metrics: { steps: 0, heartRate: 0, sleep: 0, activeCalories: 0 } };
+  }
+
+  const adapter = getHealthAdapter();
+  const source = getHealthSource();
+  const { start, end } = getTodayRange();
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+  const allMetrics = await adapter.getAllMetrics(start, end);
+
+  const metrics = { steps: 0, heartRate: 0, sleep: 0, activeCalories: 0 };
+
+  if (config.syncSteps && allMetrics.steps > 0) {
+    metrics.steps = allMetrics.steps;
+    await addHealthDataPoint({
+      id: `${todayStr}_steps_${source}`,
+      date: todayStr,
+      type: 'steps',
+      value: allMetrics.steps,
+      unit: 'steps',
+      source,
+    });
+  }
+
+  if (config.syncHeartRate && allMetrics.heartRate) {
+    metrics.heartRate = allMetrics.heartRate.avg;
+    await addHealthDataPoint({
+      id: `${todayStr}_heartRate_${source}`,
+      date: todayStr,
+      type: 'heartRate',
+      value: allMetrics.heartRate.avg,
+      unit: 'bpm',
+      source,
+    });
+  }
+
+  if (config.syncSleep && allMetrics.sleep > 0) {
+    metrics.sleep = allMetrics.sleep;
+    await addHealthDataPoint({
+      id: `${todayStr}_sleep_${source}`,
+      date: todayStr,
+      type: 'sleep',
+      value: allMetrics.sleep,
+      unit: 'hours',
+      source,
+    });
+  }
+
+  if (config.syncCalories && allMetrics.activeCalories > 0) {
+    metrics.activeCalories = allMetrics.activeCalories;
+    await addHealthDataPoint({
+      id: `${todayStr}_activeCalories_${source}`,
+      date: todayStr,
+      type: 'activeCalories',
+      value: allMetrics.activeCalories,
+      unit: 'kcal',
+      source,
+    });
+  }
+
+  // Update last sync timestamp
+  config.lastSyncDate = new Date().toISOString();
+  await saveHealthSyncConfig(config);
+
+  return { synced: true, metrics };
 }

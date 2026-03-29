@@ -7,6 +7,10 @@ import {
   getHealthData,
   addHealthDataPoint,
   getHealthStats,
+  isNativeHealthAvailable,
+  connectNativeHealth,
+  disconnectNativeHealth,
+  syncFromNativeHealth,
 } from '../services/health/healthService';
 
 interface HealthState {
@@ -20,12 +24,19 @@ interface HealthState {
     totalEntries: number;
   } | null;
   isLoading: boolean;
+  isSyncing: boolean;
+  isNativeAvailable: boolean;
+  connectionError: string | null;
 
   loadConfig: () => Promise<void>;
   updateConfig: (config: HealthSyncConfig) => Promise<void>;
   loadTodayData: (date: string) => Promise<void>;
   addDataPoint: (point: HealthDataPoint) => Promise<void>;
   loadStats: (days: number) => Promise<void>;
+  checkNativeAvailability: () => Promise<void>;
+  connect: () => Promise<boolean>;
+  disconnect: () => Promise<void>;
+  syncNative: () => Promise<void>;
 }
 
 const DEFAULT_CONFIG: HealthSyncConfig = {
@@ -37,11 +48,14 @@ const DEFAULT_CONFIG: HealthSyncConfig = {
   syncCalories: true,
 };
 
-export const useHealthStore = create<HealthState>((set) => ({
+export const useHealthStore = create<HealthState>((set, get) => ({
   config: DEFAULT_CONFIG,
   todayData: [],
   stats: null,
   isLoading: false,
+  isSyncing: false,
+  isNativeAvailable: false,
+  connectionError: null,
 
   loadConfig: async () => {
     try {
@@ -90,6 +104,65 @@ export const useHealthStore = create<HealthState>((set) => ({
       set({ stats });
     } catch (e) {
       if (__DEV__) console.warn('Failed to load health stats:', e);
+    }
+  },
+
+  checkNativeAvailability: async () => {
+    try {
+      const available = await isNativeHealthAvailable();
+      set({ isNativeAvailable: available });
+    } catch {
+      set({ isNativeAvailable: false });
+    }
+  },
+
+  connect: async () => {
+    set({ connectionError: null });
+    try {
+      const success = await connectNativeHealth();
+      if (success) {
+        const config = await getHealthSyncConfig();
+        set({ config, connectionError: null });
+        // Auto-sync after connecting
+        await get().syncNative();
+        return true;
+      } else {
+        set({ connectionError: 'permission_denied' });
+        return false;
+      }
+    } catch (e: any) {
+      set({ connectionError: e.message || 'connection_failed' });
+      return false;
+    }
+  },
+
+  disconnect: async () => {
+    await disconnectNativeHealth();
+    const config = await getHealthSyncConfig();
+    set({ config, connectionError: null });
+  },
+
+  syncNative: async () => {
+    const { config } = get();
+    if (!config.isConnected) return;
+
+    set({ isSyncing: true });
+    try {
+      const { synced } = await syncFromNativeHealth();
+      if (synced) {
+        // Reload today data and config after sync
+        const today = new Date().toISOString().slice(0, 10);
+        const [todayData, updatedConfig] = await Promise.all([
+          getHealthData(today),
+          getHealthSyncConfig(),
+        ]);
+        set({ todayData, config: updatedConfig, isSyncing: false });
+      } else {
+        set({ isSyncing: false });
+      }
+    } catch (e) {
+      if (__DEV__) console.warn('Native health sync failed:', e);
+      set({ isSyncing: false });
     }
   },
 }));

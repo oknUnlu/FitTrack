@@ -38,7 +38,11 @@
       "permissions": [
         "CAMERA",
         "VIBRATE",
-        "NOTIFICATIONS"
+        "NOTIFICATIONS",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED"
       ]
     },
     "web": {
@@ -51,7 +55,20 @@
       "expo-secure-store",
       "expo-sqlite",
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      ["react-native-health", {
+        "isClinicalDataEnabled": false
+      }],
+      ["expo-health-connect", {
+        "requestPermissionsOnStart": false
+      }],
+      ["expo-build-properties", {
+        "android": {
+          "compileSdkVersion": 35,
+          "targetSdkVersion": 35,
+          "minSdkVersion": 26
+        }
+      }]
     ],
     "extra": {
       "apiBaseUrl": "https://fittrack-api-liard.vercel.app",

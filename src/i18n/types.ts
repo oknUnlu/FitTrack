@@ -491,8 +491,21 @@ export interface Translations {
     activeCalories: string;
     info: string;
     infoText: string;
+    infoTextConnected: string;
+    infoTextAvailable: string;
     addValue: string;
     valueLabel: string;
+    connect: string;
+    connected: string;
+    disconnect: string;
+    disconnectConfirm: string;
+    lastSync: string;
+    tapToConnect: string;
+    manual: string;
+    permissionDenied: string;
+    connectionFailed: string;
+    syncNow: string;
+    syncing: string;
   };
 
   // Supplements

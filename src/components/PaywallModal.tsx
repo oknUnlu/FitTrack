@@ -1,8 +1,15 @@
-import React from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePremiumStore } from '../store/premiumStore';
+import {
+  isRevenueCatConfigured,
+  getOfferings,
+  purchasePackage,
+  restorePurchases,
+  PRODUCT_IDS,
+} from '../services/premium/revenueCat';
 import { colors, spacing, borderRadius } from '../theme/theme';
 import { useLanguage } from '../i18n';
 
@@ -29,21 +36,111 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const setPremium = usePremiumStore((s) => s.setPremium);
 
   const premiumTexts = (t as any).premium || {};
+  const rcConfigured = isRevenueCatConfigured();
 
-  const handleRestore = () => {
-    // TODO: RevenueCat restore purchases
-    onClose();
+  const [offerings, setOfferings] = useState<any>(null);
+  const [isLoadingOfferings, setIsLoadingOfferings] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+
+  // Load offerings when modal opens
+  useEffect(() => {
+    if (visible && rcConfigured && !offerings) {
+      loadOfferings();
+    }
+  }, [visible]);
+
+  const loadOfferings = async () => {
+    setIsLoadingOfferings(true);
+    try {
+      const result = await getOfferings();
+      setOfferings(result);
+    } catch (e) {
+      if (__DEV__) console.warn('Failed to load offerings:', e);
+    }
+    setIsLoadingOfferings(false);
+  };
+
+  const getPackageByPlan = (plan: 'monthly' | 'yearly' | 'lifetime') => {
+    if (!offerings?.availablePackages) return null;
+    const productId = PRODUCT_IDS[plan];
+    return offerings.availablePackages.find(
+      (pkg: any) => pkg.product?.identifier === productId
+    ) || null;
+  };
+
+  const getPackagePrice = (plan: 'monthly' | 'yearly' | 'lifetime'): string | null => {
+    const pkg = getPackageByPlan(plan);
+    return pkg?.product?.priceString || null;
+  };
+
+  const handleRestore = async () => {
+    if (!rcConfigured) {
+      // Mock mode: just close
+      onClose();
+      return;
+    }
+
+    setIsRestoring(true);
+    try {
+      const restored = await restorePurchases();
+      if (restored) {
+        Alert.alert(
+          premiumTexts.restore || 'Restore',
+          premiumTexts.restoreSuccess || 'Premium restored successfully!',
+          [{ text: 'OK', onPress: onClose }]
+        );
+      } else {
+        Alert.alert(
+          premiumTexts.restore || 'Restore',
+          premiumTexts.restoreNotFound || 'No previous purchases found.'
+        );
+      }
+    } catch (e) {
+      Alert.alert(
+        t.common.error,
+        premiumTexts.restoreFailed || 'Restore failed. Please try again.'
+      );
+    }
+    setIsRestoring(false);
   };
 
   const handlePurchase = async (plan: 'monthly' | 'yearly' | 'lifetime') => {
-    // TODO: RevenueCat purchase flow
-    // For now, activate premium directly (mock)
-    const expiresAt = plan === 'lifetime'
-      ? null
-      : Date.now() + (plan === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000;
-    await setPremium(plan, expiresAt);
-    onClose();
+    if (!rcConfigured) {
+      // Mock mode: activate directly for development
+      const expiresAt = plan === 'lifetime'
+        ? null
+        : Date.now() + (plan === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000;
+      await setPremium(plan, expiresAt);
+      onClose();
+      return;
+    }
+
+    const pkg = getPackageByPlan(plan);
+    if (!pkg) {
+      Alert.alert(t.common.error, premiumTexts.productNotFound || 'Product not available.');
+      return;
+    }
+
+    setIsPurchasing(true);
+    try {
+      const success = await purchasePackage(pkg);
+      if (success) {
+        onClose();
+      }
+    } catch (e: any) {
+      Alert.alert(
+        t.common.error,
+        premiumTexts.purchaseFailed || 'Purchase failed. Please try again.'
+      );
+    }
+    setIsPurchasing(false);
   };
+
+  // Default prices (shown when RevenueCat isn't configured or offerings haven't loaded)
+  const monthlyPrice = getPackagePrice('monthly') || '$5.99';
+  const yearlyPrice = getPackagePrice('yearly') || '$29.99';
+  const lifetimePrice = getPackagePrice('lifetime') || '$59.99';
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -51,7 +148,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
         <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Close button */}
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose} disabled={isPurchasing}>
               <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
 
@@ -87,17 +184,23 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
               ))}
             </View>
 
+            {/* Loading indicator for offerings */}
+            {isLoadingOfferings && (
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginBottom: spacing.md }} />
+            )}
+
             {/* Pricing */}
             <View style={styles.pricingSection}>
               <TouchableOpacity
                 style={[styles.planCard, styles.popularPlan]}
                 onPress={() => handlePurchase('yearly')}
+                disabled={isPurchasing}
               >
                 <View style={styles.popularBadge}>
                   <Text style={styles.popularText}>{premiumTexts.popular || 'Popular'}</Text>
                 </View>
                 <Text style={styles.planName}>{premiumTexts.yearly || 'Yearly'}</Text>
-                <Text style={styles.planPrice}>$29.99/{premiumTexts.year || 'year'}</Text>
+                <Text style={styles.planPrice}>{yearlyPrice}/{premiumTexts.year || 'year'}</Text>
                 <Text style={styles.planSave}>{premiumTexts.savePercent || 'Save 58%'}</Text>
               </TouchableOpacity>
 
@@ -105,25 +208,50 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                 <TouchableOpacity
                   style={[styles.planCard, styles.smallPlan, { backgroundColor: theme.colors.surfaceVariant }]}
                   onPress={() => handlePurchase('monthly')}
+                  disabled={isPurchasing}
                 >
-                  <Text style={[styles.planName, { fontSize: 14 }]}>{premiumTexts.monthly || 'Monthly'}</Text>
-                  <Text style={[styles.planPrice, { fontSize: 16 }]}>$5.99/{premiumTexts.month || 'mo'}</Text>
+                  <Text style={[styles.planName, { fontSize: 14, color: theme.colors.onSurface }]}>{premiumTexts.monthly || 'Monthly'}</Text>
+                  <Text style={[styles.planPrice, { fontSize: 16, color: theme.colors.onSurface }]}>{monthlyPrice}/{premiumTexts.month || 'mo'}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[styles.planCard, styles.smallPlan, { backgroundColor: theme.colors.surfaceVariant }]}
                   onPress={() => handlePurchase('lifetime')}
+                  disabled={isPurchasing}
                 >
-                  <Text style={[styles.planName, { fontSize: 14 }]}>{premiumTexts.lifetime || 'Lifetime'}</Text>
-                  <Text style={[styles.planPrice, { fontSize: 16 }]}>$59.99</Text>
+                  <Text style={[styles.planName, { fontSize: 14, color: theme.colors.onSurface }]}>{premiumTexts.lifetime || 'Lifetime'}</Text>
+                  <Text style={[styles.planPrice, { fontSize: 16, color: theme.colors.onSurface }]}>{lifetimePrice}</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
+            {/* Purchase loading */}
+            {isPurchasing && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={{ marginLeft: 8, color: colors.textSecondary, fontSize: 13 }}>
+                  {premiumTexts.processing || 'Processing...'}
+                </Text>
+              </View>
+            )}
+
             {/* Restore */}
-            <Button mode="text" onPress={handleRestore} style={{ marginTop: spacing.sm }}>
+            <Button
+              mode="text"
+              onPress={handleRestore}
+              loading={isRestoring}
+              disabled={isPurchasing || isRestoring}
+              style={{ marginTop: spacing.sm }}
+            >
               {premiumTexts.restore || 'Restore Purchases'}
             </Button>
+
+            {/* Dev mode indicator */}
+            {__DEV__ && !rcConfigured && (
+              <Text style={styles.devNote}>
+                DEV: RevenueCat not configured — mock purchases active
+              </Text>
+            )}
           </ScrollView>
         </View>
       </View>
@@ -231,5 +359,18 @@ const styles = StyleSheet.create({
   },
   smallPlan: {
     flex: 1,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  devNote: {
+    textAlign: 'center',
+    fontSize: 11,
+    color: colors.textTertiary,
+    marginTop: spacing.sm,
+    fontStyle: 'italic',
   },
 });
