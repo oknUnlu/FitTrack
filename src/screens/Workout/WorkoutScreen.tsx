@@ -141,7 +141,7 @@ export function WorkoutScreen() {
         contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text variant="headlineSmall" style={styles.title}>{t.workout.title}</Text>
+        <Text variant="headlineSmall" style={styles.title} accessibilityRole="header">{t.workout.title}</Text>
 
         {loading && (
           <View style={styles.centerState}>
@@ -166,6 +166,8 @@ export function WorkoutScreen() {
           style={styles.quickStartCard}
           onPress={() => navigation.navigate('ActiveWorkout')}
           activeOpacity={0.8}
+          accessibilityLabel="Start free workout"
+          accessibilityRole="button"
         >
           <View style={styles.quickStartIcon}>
             <MaterialCommunityIcons name="lightning-bolt" size={28} color="#fff" />

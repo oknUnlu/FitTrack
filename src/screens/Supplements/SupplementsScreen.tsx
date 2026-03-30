@@ -16,6 +16,8 @@ import {
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { generateId, todayString } from '../../utils/helpers';
+import { usePremiumStore } from '../../store/premiumStore';
+import { PaywallModal } from '../../components/PaywallModal';
 
 const TIME_ICONS: Record<string, string> = {
   morning: 'weather-sunny',
@@ -42,6 +44,9 @@ export function SupplementsScreen() {
   const [supplements, setSupplements] = useState<Supplement[]>([]);
   const [logs, setLogs] = useState<SupplementLog[]>([]);
   const [dialogVisible, setDialogVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
+  const FREE_SUPPLEMENT_LIMIT = 3;
 
   // Form
   const [name, setName] = useState('');
@@ -98,9 +103,28 @@ export function SupplementsScreen() {
       contentContainerStyle={{ padding: spacing.md, paddingTop: spacing.md, paddingBottom: 40 }}
     >
       <View style={styles.headerRow}>
-        <Button mode="contained" onPress={() => setDialogVisible(true)} icon="plus" compact>
-          {t.common.add}
-        </Button>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Button mode="contained" onPress={() => {
+            if (!isPremium && supplements.length >= FREE_SUPPLEMENT_LIMIT) {
+              setPaywallVisible(true);
+              return;
+            }
+            setDialogVisible(true);
+          }} icon="plus" compact>
+            {t.common.add}
+          </Button>
+          {!isPremium && supplements.length >= FREE_SUPPLEMENT_LIMIT && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,215,0,0.15)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, gap: 4 }}>
+              <MaterialCommunityIcons name="lock" size={12} color="#FFD700" />
+              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#FFD700' }}>PRO</Text>
+            </View>
+          )}
+          {!isPremium && supplements.length < FREE_SUPPLEMENT_LIMIT && (
+            <Text style={{ fontSize: 11, color: colors.textTertiary }}>
+              {supplements.length}/{FREE_SUPPLEMENT_LIMIT}
+            </Text>
+          )}
+        </View>
       </View>
 
       {/* Today progress */}
@@ -150,6 +174,8 @@ export function SupplementsScreen() {
           );
         })
       )}
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="supplements" />
 
       {/* Add Dialog */}
       <Portal>

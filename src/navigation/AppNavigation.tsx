@@ -23,6 +23,7 @@ import { SupplementsScreen } from '../screens/Supplements/SupplementsScreen';
 import { WellnessScreen } from '../screens/Wellness/WellnessScreen';
 import { HealthHubScreen } from '../screens/HealthHub/HealthHubScreen';
 import { SocialScreen } from '../screens/Social/SocialScreen';
+import { FastingScreen } from '../screens/Fasting/FastingScreen';
 import { useLanguage } from '../i18n';
 
 export type RootStackParamList = {
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   Wellness: undefined;
   HealthHub: undefined;
   Social: undefined;
+  Fasting: undefined;
   ActiveWorkout: { templateId?: string; templateName?: string; preloadedExerciseIds?: string[] } | undefined;
   SessionDetail: { sessionId: string; sessionName: string; date: string; durationMinutes: number; caloriesBurned: number };
 };
@@ -160,6 +162,11 @@ function AppStack() {
         options={{ headerShown: true, title: t.screenTitles.challenges, animation: 'slide_from_right' }}
       />
       <Stack.Screen
+        name="Fasting"
+        component={FastingScreen}
+        options={{ headerShown: true, title: (t as any).fasting?.title || 'Fasting Tracker', animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
         name="ActiveWorkout"
         component={ActiveWorkoutScreen}
         options={{ headerShown: false, animation: 'slide_from_bottom' }}
@@ -173,10 +180,34 @@ function AppStack() {
   );
 }
 
+const linking: any = {
+  prefixes: ['fittrack://', 'https://fittrack.app'],
+  config: {
+    screens: {
+      MainTabs: {
+        screens: {
+          Dashboard: 'home',
+          Calories: 'calories',
+          Workout: 'workout',
+          Progress: 'progress',
+          Profile: 'profile',
+        },
+      },
+      AICoach: 'coach',
+      Achievements: 'achievements',
+      Social: 'challenges',
+      Supplements: 'supplements',
+      Wellness: 'wellness',
+      HealthHub: 'health',
+      Fasting: 'fasting',
+    },
+  },
+};
+
 export function AppNavigation() {
   const isOnboarded = useUserStore((s) => s.isOnboarded);
   return (
-    <NavigationContainer key={isOnboarded ? 'onboarded' : 'onboarding'}>
+    <NavigationContainer key={isOnboarded ? 'onboarded' : 'onboarding'} linking={linking}>
       <AppStack />
     </NavigationContainer>
   );

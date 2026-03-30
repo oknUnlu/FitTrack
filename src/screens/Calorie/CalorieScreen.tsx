@@ -15,7 +15,7 @@ import { colors, spacing, borderRadius } from '../../theme/theme';
 import { todayString, MEAL_TYPES, formatCalories, generateId } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
 import { usePremiumStore } from '../../store/premiumStore';
-import { checkUsageLimit, recordFeatureUsage } from '../../services/premium/featureGate';
+import { checkUsageLimit, recordFeatureUsage, getRemainingUsage, getFeatureFreeLimit } from '../../services/premium/featureGate';
 import { PaywallModal } from '../../components/PaywallModal';
 
 // Web fallback: load foods JSON directly for search
@@ -61,6 +61,10 @@ export function CalorieScreen() {
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState('');
   const isPremium = usePremiumStore((s) => s.isPremium);
+  const [barcodeRemaining, setBarcodeRemaining] = useState<number | null>(null);
+  const [foodRecRemaining, setFoodRecRemaining] = useState<number | null>(null);
+  const barcodeFreeLimit = getFeatureFreeLimit('barcode_scanner') || 5;
+  const foodRecFreeLimit = getFeatureFreeLimit('food_recognition') || 3;
 
   const loadMeals = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -76,6 +80,19 @@ export function CalorieScreen() {
   }, [userId, date, webMeals]);
 
   useEffect(() => { loadMeals(); }, [loadMeals]);
+
+  const refreshRemainingUsage = useCallback(async () => {
+    if (!isPremium) {
+      const [barcodeRem, foodRem] = await Promise.all([
+        getRemainingUsage('barcode_scanner'),
+        getRemainingUsage('food_recognition'),
+      ]);
+      setBarcodeRemaining(barcodeRem);
+      setFoodRecRemaining(foodRem);
+    }
+  }, [isPremium]);
+
+  useEffect(() => { refreshRemainingUsage(); }, [refreshRemainingUsage]);
 
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
@@ -180,6 +197,7 @@ export function CalorieScreen() {
         setBarcodeVisible(false);
         setBarcodeLoading(false);
         await recordFeatureUsage('barcode_scanner');
+        refreshRemainingUsage();
         handleAddFood(food);
       } else {
         setBarcodeLoading(false);
@@ -209,6 +227,7 @@ export function CalorieScreen() {
       setAiResults(foods);
       setAiLoading(false);
       await recordFeatureUsage('food_recognition');
+      refreshRemainingUsage();
     } catch (e: any) {
       setAiLoading(false);
       Alert.alert(t.common.error, e.message || 'AI besin tanıma başarısız');
@@ -380,21 +399,39 @@ export function CalorieScreen() {
               />
               {Platform.OS !== 'web' && (
                 <>
-                  <TouchableOpacity
-                    style={styles.barcodeBtn}
-                    onPress={async () => {
-                      const canAccess = await checkBarcodeAccess();
-                      if (canAccess) { setSearchVisible(false); setBarcodeVisible(true); }
-                    }}
-                  >
-                    <MaterialCommunityIcons name="barcode-scan" size={24} color="#fff" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.barcodeBtn, { backgroundColor: colors.orange }]}
-                    onPress={() => { setSearchVisible(false); handlePhotoRecognition(); }}
-                  >
-                    <MaterialCommunityIcons name="camera" size={24} color="#fff" />
-                  </TouchableOpacity>
+                  <View style={{ alignItems: 'center' }}>
+                    <TouchableOpacity
+                      style={styles.barcodeBtn}
+                      onPress={async () => {
+                        const canAccess = await checkBarcodeAccess();
+                        if (canAccess) { setSearchVisible(false); setBarcodeVisible(true); }
+                      }}
+                      accessibilityLabel="Scan barcode"
+                      accessibilityRole="button"
+                    >
+                      <MaterialCommunityIcons name="barcode-scan" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    {!isPremium && barcodeRemaining !== null && (
+                      <Text style={{ fontSize: 9, color: barcodeRemaining > 0 ? colors.textTertiary : colors.orange, marginTop: 2 }}>
+                        {barcodeRemaining}/{barcodeFreeLimit}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={{ alignItems: 'center' }}>
+                    <TouchableOpacity
+                      style={[styles.barcodeBtn, { backgroundColor: colors.orange }]}
+                      onPress={() => { setSearchVisible(false); handlePhotoRecognition(); }}
+                      accessibilityLabel="Take photo for food recognition"
+                      accessibilityRole="button"
+                    >
+                      <MaterialCommunityIcons name="camera" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    {!isPremium && foodRecRemaining !== null && (
+                      <Text style={{ fontSize: 9, color: foodRecRemaining > 0 ? colors.textTertiary : colors.orange, marginTop: 2 }}>
+                        {foodRecRemaining}/{foodRecFreeLimit}
+                      </Text>
+                    )}
+                  </View>
                 </>
               )}
             </View>

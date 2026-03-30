@@ -17,6 +17,8 @@ import {
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { generateId, todayString } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
+import { usePremiumStore } from '../../store/premiumStore';
+import { PaywallModal } from '../../components/PaywallModal';
 
 export function SocialScreen() {
   const theme = useTheme();
@@ -29,6 +31,9 @@ export function SocialScreen() {
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
   const [updateValue, setUpdateValue] = useState('');
   const [tab, setTab] = useState<'active' | 'completed'>('active');
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const isPremium = usePremiumStore((s) => s.isPremium);
+  const FREE_CHALLENGE_LIMIT = 1;
 
   const loadData = useCallback(async () => {
     const data = await getChallenges();
@@ -41,6 +46,13 @@ export function SocialScreen() {
   const completed = getCompletedChallenges(challenges);
 
   const handleAddFromTemplate = async (template: typeof CHALLENGE_TEMPLATES[0]) => {
+    // Check free limit before adding
+    if (!isPremium && active.length >= FREE_CHALLENGE_LIMIT) {
+      setTemplateDialogVisible(false);
+      setPaywallVisible(true);
+      return;
+    }
+
     const today = new Date();
     const endDate = new Date(today);
     endDate.setDate(endDate.getDate() + 7);
@@ -99,9 +111,23 @@ export function SocialScreen() {
       contentContainerStyle={{ padding: spacing.md, paddingTop: spacing.md, paddingBottom: 40 }}
     >
       <View style={styles.headerRow}>
-        <Button mode="contained" onPress={() => setTemplateDialogVisible(true)} icon="plus" compact>
-          {t.social.new}
-        </Button>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Button mode="contained" onPress={() => {
+            if (!isPremium && active.length >= FREE_CHALLENGE_LIMIT) {
+              setPaywallVisible(true);
+              return;
+            }
+            setTemplateDialogVisible(true);
+          }} icon="plus" compact>
+            {t.social.new}
+          </Button>
+          {!isPremium && active.length >= FREE_CHALLENGE_LIMIT && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,215,0,0.15)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, gap: 4 }}>
+              <MaterialCommunityIcons name="lock" size={12} color="#FFD700" />
+              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#FFD700' }}>PRO</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Stats Summary */}
@@ -202,6 +228,8 @@ export function SocialScreen() {
           );
         })
       )}
+
+      <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="challenges" />
 
       {/* Template Dialog */}
       <Portal>

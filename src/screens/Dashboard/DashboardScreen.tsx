@@ -14,6 +14,7 @@ import { getProgressColor } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
 import { getAchievements, getUnlockedCount, getTotalCount, Achievement } from '../../services/achievements/achievementService';
 import { getRemainingMacroSuggestion, MealSuggestion } from '../../services/mealPlanner/mealPlanService';
+import { usePremiumStore } from '../../store/premiumStore';
 
 export function DashboardScreen() {
   const { summary, loading, error, addWater } = useDashboard();
@@ -23,6 +24,7 @@ export function DashboardScreen() {
   const sc = getSemanticColors(isDark);
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
+  const isPremium = usePremiumStore((s) => s.isPremium);
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
@@ -33,7 +35,7 @@ export function DashboardScreen() {
         {/* Header */}
         <View style={styles.headerRow}>
           <Logo size={44} />
-          <Text variant="headlineSmall" style={styles.headerText}>
+          <Text variant="headlineSmall" style={styles.headerText} accessibilityRole="header">
             {t.dashboard.greeting} 👋
           </Text>
         </View>
@@ -73,6 +75,16 @@ export function DashboardScreen() {
           onPress={() => navigation.navigate('Supplements')}
         />
 
+        {/* Fasting Card */}
+        <QuickNavCard
+          title={(t as any).fasting?.title || 'Fasting Tracker'}
+          subtitle={(t as any).fasting?.subtitle || 'Intermittent & Ramadan fasting'}
+          icon="moon-waning-crescent"
+          iconColor="#9C27B0"
+          bgColor="#F3E5F5"
+          onPress={() => navigation.navigate('Fasting')}
+        />
+
         {/* Wellness Card */}
         <QuickNavCard
           title={t.dashboardExtras.wellness}
@@ -81,6 +93,7 @@ export function DashboardScreen() {
           iconColor="#E91E63"
           bgColor="#FCE4EC"
           onPress={() => navigation.navigate('Wellness')}
+          showProBadge={!isPremium}
         />
 
         {/* Health Hub Card */}
@@ -91,6 +104,7 @@ export function DashboardScreen() {
           iconColor="#1976D2"
           bgColor="#E3F2FD"
           onPress={() => navigation.navigate('HealthHub')}
+          showProBadge={!isPremium}
         />
 
         {/* Challenges Card */}
@@ -107,7 +121,7 @@ export function DashboardScreen() {
         <AchievementsCard onPress={() => navigation.navigate('Achievements')} />
 
         {/* AI Coach Card */}
-        <AICoachCard onPress={() => navigation.navigate('AICoach')} />
+        <AICoachCard onPress={() => navigation.navigate('AICoach')} showProBadge={!isPremium} />
       </ScrollView>
 
     </View>
@@ -127,7 +141,7 @@ function CalorieRingCard({ summary }: { summary: DailySummary }) {
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Content style={{ alignItems: 'center' }}>
-        <Text variant="titleMedium" style={styles.cardTitle}>{t.dashboard.dailyCalories}</Text>
+        <Text variant="titleMedium" style={styles.cardTitle} accessibilityRole="header">{t.dashboard.dailyCalories}</Text>
 
         <View style={{ marginVertical: spacing.md }}>
           <ProgressRing
@@ -271,6 +285,8 @@ function WaterCard({ consumed, target, onAdd }: { consumed: number; target: numb
               style={styles.waterOptionBtn}
               onPress={() => handleAdd(opt.ml)}
               activeOpacity={0.7}
+              accessibilityLabel={`Add ${opt.ml}ml water`}
+              accessibilityRole="button"
             >
               <View style={styles.waterOptionIcon}>
                 <MaterialCommunityIcons name={opt.icon as any} size={24} color={colors.water} />
@@ -283,7 +299,7 @@ function WaterCard({ consumed, target, onAdd }: { consumed: number; target: numb
 
         {/* Undo button */}
         {lastAdded !== null && (
-          <TouchableOpacity style={styles.waterUndoBtn} onPress={handleUndo} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.waterUndoBtn} onPress={handleUndo} activeOpacity={0.7} accessibilityLabel="Undo last water addition" accessibilityRole="button">
             <MaterialCommunityIcons name="undo" size={16} color={colors.textTertiary} />
             <Text style={styles.waterUndoText}>{t.dashboard.waterUndoLast} ({lastAdded}ml)</Text>
           </TouchableOpacity>
@@ -416,7 +432,7 @@ function AchievementsCard({ onPress }: { onPress: () => void }) {
   }, []);
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} accessibilityLabel="View achievements" accessibilityRole="button">
       <Card style={[styles.card, { backgroundColor: colors.warningBg }]} mode="elevated">
         <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons name="trophy" size={32} color="#FF9800" />
@@ -434,16 +450,24 @@ function AchievementsCard({ onPress }: { onPress: () => void }) {
 // ═════════════════════════════════════════
 // QUICK NAV CARD (Generic)
 // ═════════════════════════════════════════
-function QuickNavCard({ title, subtitle, icon, iconColor, bgColor, onPress }: {
-  title: string; subtitle: string; icon: string; iconColor: string; bgColor: string; onPress: () => void;
+function QuickNavCard({ title, subtitle, icon, iconColor, bgColor, onPress, showProBadge }: {
+  title: string; subtitle: string; icon: string; iconColor: string; bgColor: string; onPress: () => void; showProBadge?: boolean;
 }) {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} accessibilityLabel={`Navigate to ${title}`} accessibilityRole="button">
       <Card style={[styles.card, { backgroundColor: bgColor }]} mode="elevated">
         <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons name={icon as any} size={32} color={iconColor} />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <Text style={{ fontWeight: 'bold' }}>{title}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontWeight: 'bold' }}>{title}</Text>
+              {showProBadge && (
+                <View style={styles.proBadge}>
+                  <MaterialCommunityIcons name="lock" size={10} color="#FFD700" />
+                  <Text style={styles.proBadgeText}>PRO</Text>
+                </View>
+              )}
+            </View>
             <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{subtitle}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
@@ -456,15 +480,23 @@ function QuickNavCard({ title, subtitle, icon, iconColor, bgColor, onPress }: {
 // ═════════════════════════════════════════
 // AI COACH MINI CARD
 // ═════════════════════════════════════════
-function AICoachCard({ onPress }: { onPress: () => void }) {
+function AICoachCard({ onPress, showProBadge }: { onPress: () => void; showProBadge?: boolean }) {
   const { t } = useLanguage();
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} accessibilityLabel="Open AI Fitness Coach" accessibilityRole="button">
       <Card style={[styles.card, { backgroundColor: colors.successBg }]} mode="elevated">
         <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialCommunityIcons name="robot" size={32} color={colors.primary} />
           <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <Text style={{ fontWeight: 'bold' }}>{t.dashboard.aiCoach}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontWeight: 'bold' }}>{t.dashboard.aiCoach}</Text>
+              {showProBadge && (
+                <View style={styles.proBadge}>
+                  <MaterialCommunityIcons name="lock" size={10} color="#FFD700" />
+                  <Text style={styles.proBadgeText}>PRO</Text>
+                </View>
+              )}
+            </View>
             <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>{t.dashboard.askAiCoach}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
@@ -583,4 +615,18 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   dayDot: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  proBadge: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(255,215,0,0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 8,
+    gap: 3,
+  },
+  proBadgeText: {
+    fontSize: 9,
+    fontWeight: 'bold' as const,
+    color: '#FFD700',
+  },
 });

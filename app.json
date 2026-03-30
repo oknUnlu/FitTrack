@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "FitTrack",
+    "name": "FitTrack - AI Fitness Koç",
     "slug": "fittrack",
     "version": "1.0.0",
-    "description": "Kalori takibi, antrenman programları, su takibi, AI koçluk ve vücut ölçümleri ile kişisel sağlık ve fitness asistanınız.",
+    "description": "Yapay zeka destekli kişisel fitness koçunuz. Barkodlu kalori sayacı, AI antrenman planları, su takibi, vücut ölçümleri ve sağlık entegrasyonu. HealthKit & Health Connect desteği ile tüm sağlık verileriniz tek uygulamada. 12 dilde kullanılabilir.",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",

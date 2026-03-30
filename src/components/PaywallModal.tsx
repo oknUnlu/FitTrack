@@ -148,7 +148,14 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
         <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Close button */}
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose} disabled={isPurchasing}>
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={onClose}
+              disabled={isPurchasing}
+              accessibilityLabel="Close premium modal"
+              accessibilityRole="button"
+              accessibilityHint="Dismisses the premium upgrade modal"
+            >
               <MaterialCommunityIcons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
 
@@ -195,6 +202,9 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                 style={[styles.planCard, styles.popularPlan]}
                 onPress={() => handlePurchase('yearly')}
                 disabled={isPurchasing}
+                accessibilityLabel={`Yearly plan, ${yearlyPrice} per year`}
+                accessibilityRole="button"
+                accessibilityHint="Purchase the yearly premium plan"
               >
                 <View style={styles.popularBadge}>
                   <Text style={styles.popularText}>{premiumTexts.popular || 'Popular'}</Text>

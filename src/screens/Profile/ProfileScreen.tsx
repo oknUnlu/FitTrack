@@ -19,6 +19,7 @@ import {
   scheduleWaterReminders,
   scheduleWorkoutReminder,
 } from '../../services/notifications/notificationService';
+import { getReferralCode, shareReferralInvite, getReferralCount } from '../../services/referral/referralService';
 
 const NOTIF_MEAL_KEY = 'pref_meal_reminder';
 const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
@@ -38,6 +39,8 @@ export function ProfileScreen() {
   const [waterReminder, setWaterReminder] = useState(false);
   const [langDialogVisible, setLangDialogVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
+  const [referralCount, setReferralCount] = useState(0);
   const isPremium = usePremiumStore((s) => s.isPremium);
   const premiumPlan = usePremiumStore((s) => s.plan);
   const premiumExpiresAt = usePremiumStore((s) => s.expiresAt);
@@ -62,6 +65,13 @@ export function ProfileScreen() {
         const u = await getUserById(userId);
         setUser(u);
       }
+      // Load referral data
+      const [code, count] = await Promise.all([
+        getReferralCode(),
+        getReferralCount(),
+      ]);
+      setReferralCode(code);
+      setReferralCount(count);
     } catch (e) {
       if (__DEV__) console.warn('ProfileScreen load failed:', e);
     }
@@ -85,6 +95,12 @@ export function ProfileScreen() {
     if (val) await requestNotificationPermission();
     setWaterReminder(val);
     await scheduleWaterReminders(val);
+  };
+
+  const handleShareReferral = async () => {
+    await shareReferralInvite(
+      'FitTrack ile fitness hedeflerine ulasmak cok kolay! AI destekli kocluk, kalori takibi ve daha fazlasi. Hemen dene!'
+    );
   };
 
   const currentLangName = LANGUAGES.find((l) => l.code === language)?.nativeName ?? language;
@@ -152,6 +168,8 @@ export function ProfileScreen() {
           style={[styles.card, { backgroundColor: 'rgba(255,215,0,0.08)' }]}
           mode="elevated"
           onPress={() => setPaywallVisible(true)}
+          accessibilityLabel="Upgrade to Premium, unlock all features"
+          accessibilityRole="button"
         >
           <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
             <MaterialCommunityIcons name="crown" size={32} color="#FFD700" />
@@ -167,6 +185,38 @@ export function ProfileScreen() {
           </Card.Content>
         </Card>
       )}
+
+      {/* Referral Card */}
+      <Card style={[styles.card, { backgroundColor: '#E8F5E9' }]} mode="elevated">
+        <Card.Content>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
+            <MaterialCommunityIcons name="gift" size={24} color={colors.primary} />
+            <Text style={{ fontWeight: 'bold', fontSize: 15, marginLeft: 8 }}>
+              {(t as any).referral?.title || 'Invite Friends'}
+            </Text>
+          </View>
+          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: spacing.sm }}>
+            {(t as any).referral?.desc || 'Share FitTrack and earn 7 days free premium for each friend!'}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+                <Text style={{ fontWeight: 'bold', fontSize: 13, letterSpacing: 1 }}>{referralCode}</Text>
+              </View>
+              <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{referralCount} {(t as any).referral?.invited || 'invited'}</Text>
+            </View>
+            <Button
+              mode="contained"
+              icon="share-variant"
+              compact
+              onPress={handleShareReferral}
+              accessibilityLabel="Share referral invite"
+            >
+              {(t as any).referral?.share || 'Share'}
+            </Button>
+          </View>
+        </Card.Content>
+      </Card>
 
       {/* Makro Hedefler */}
       {user && (

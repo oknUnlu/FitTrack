@@ -6,6 +6,7 @@ import { getWaterLogsByDateRange } from '../database/progressDao';
 import { getUserById } from '../database/userDao';
 import { calculateStreakDays } from '../../utils/activityUtils';
 import { todayString } from '../../utils/helpers';
+import { checkAndRequestReview } from '../review/reviewService';
 
 const ACHIEVEMENTS_KEY = 'fittrack_achievements';
 
@@ -156,19 +157,28 @@ export async function checkAchievements(data: {
   };
 
   let changed = false;
+  const newlyUnlocked: string[] = [];
   for (const a of achievements) {
     const newVal = updates[a.id];
     if (newVal !== undefined && newVal > a.current) {
+      const wasLocked = !a.unlocked;
       a.current = newVal;
-      if (!a.unlocked && a.current >= a.target) {
+      if (wasLocked && a.current >= a.target) {
         a.unlocked = true;
         a.unlockedAt = Date.now();
+        newlyUnlocked.push(a.id);
       }
       changed = true;
     }
   }
 
   if (changed) await saveAchievements(achievements);
+
+  // Trigger in-app review on positive milestones
+  for (const id of newlyUnlocked) {
+    checkAndRequestReview(id);
+  }
+
   return achievements;
 }
 

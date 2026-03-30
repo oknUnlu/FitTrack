@@ -164,7 +164,7 @@ export function ProgressScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.md, paddingBottom: 100 }}
     >
-      <Text variant="headlineSmall" style={styles.title}>{t.progress.title}</Text>
+      <Text variant="headlineSmall" style={styles.title} accessibilityRole="header" accessibilityLabel="Progress">{t.progress.title}</Text>
 
       <SegmentedButtons
         value={period}
@@ -178,9 +178,9 @@ export function ProgressScreen() {
         }}
         buttons={[
           { value: '7', label: t.progress.days7 },
-          { value: '30', label: isPremium ? t.progress.days30 : `${t.progress.days30} 🔒` },
-          { value: '90', label: isPremium ? t.progress.days90 : `${t.progress.days90} 🔒` },
-          { value: 'all', label: isPremium ? t.progress.all : `${t.progress.all} 🔒` },
+          { value: '30', label: isPremium ? t.progress.days30 : `${t.progress.days30} (PRO)` },
+          { value: '90', label: isPremium ? t.progress.days90 : `${t.progress.days90} (PRO)` },
+          { value: 'all', label: isPremium ? t.progress.all : `${t.progress.all} (PRO)` },
         ]}
         style={{ marginBottom: spacing.md }}
       />

@@ -206,6 +206,7 @@ export function AICoachScreen() {
             size={18}
             onPress={handleClearChat}
             style={{ margin: 0, padding: 0 }}
+            accessibilityLabel="Clear chat history"
           />
         )}
         <View style={{ flex: 1 }} />
@@ -290,6 +291,8 @@ export function AICoachScreen() {
           style={styles.textInput}
           onSubmitEditing={() => handleSend()}
           dense
+          accessibilityLabel="Message input"
+          accessibilityHint="Type a message to send to AI coach"
         />
         <IconButton
           icon="send"
@@ -297,6 +300,7 @@ export function AICoachScreen() {
           size={28}
           onPress={() => handleSend()}
           disabled={loading || !input.trim()}
+          accessibilityLabel="Send message"
         />
       </View>
     </KeyboardAvoidingView>

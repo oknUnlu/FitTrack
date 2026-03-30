@@ -53,22 +53,27 @@ export function OnboardingScreen() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const calculated = useMemo(() => {
-    const w = parseFloat(weight);
-    const h = parseFloat(height);
-    const a = parseInt(age);
+    const w = parseFloat(weight) || 0;
+    const h = parseFloat(height) || 0;
+    const a = parseInt(age) || 0;
     const g = gender;
     const al = activityLevel;
     const go = goal;
 
-    if (!w || !h || !a || !g || !al || !go) return null;
+    if (w <= 0 || h <= 0 || a <= 0 || !g || !al || !go) return null;
 
-    const bmr = calculateBMR(w, h, a, g);
-    const tdee = calculateTDEE(bmr, al);
-    const calorieTarget = calculateCalorieTarget(tdee, go);
-    const macros = calculateMacroTargets(calorieTarget, go);
-    const waterMl = calculateWaterNeeds(w, al);
+    try {
+      const bmr = calculateBMR(w, h, a, g);
+      const tdee = calculateTDEE(bmr, al);
+      const calorieTarget = calculateCalorieTarget(tdee, go);
+      const macros = calculateMacroTargets(calorieTarget, go);
+      const waterMl = calculateWaterNeeds(w, al);
 
-    return { tdee, calorieTarget, ...macros, waterMl };
+      return { tdee, calorieTarget, ...macros, waterMl };
+    } catch (e) {
+      if (__DEV__) console.warn('Calculation error:', e);
+      return null;
+    }
   }, [weight, height, age, gender, activityLevel, goal]);
 
   const animateTransition = (nextStep: number) => {
@@ -99,9 +104,19 @@ export function OnboardingScreen() {
       Alert.alert('', t.onboarding.fillAllFields);
       return;
     }
-    if (step === 4 && !goal) {
-      Alert.alert('', t.onboarding.fillAllFields);
-      return;
+    if (step === 4) {
+      if (!goal) {
+        Alert.alert('', t.onboarding.fillAllFields);
+        return;
+      }
+      // Comprehensive validation before showing results
+      const w = parseFloat(weight);
+      const h = parseFloat(height);
+      const a = parseInt(age);
+      if (!w || !h || !a || !gender || !activityLevel || !goal) {
+        Alert.alert('', t.onboarding.fillAllFields);
+        return;
+      }
     }
     animateTransition(step + 1);
   };
@@ -409,7 +424,21 @@ export function OnboardingScreen() {
   };
 
   const renderResult = () => {
-    if (!calculated) return null;
+    if (!calculated) {
+      return (
+        <View style={styles.formContainer}>
+          <View style={styles.resultHeader}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={48} color="#FF9800" />
+            <Text style={styles.resultTitle}>{t.onboarding.fillAllFields}</Text>
+            <Text style={styles.resultSubtitle}>{'Lütfen geri dönüp tüm bilgileri doldurun.'}</Text>
+          </View>
+          <TouchableOpacity style={[styles.primaryButton, { backgroundColor: '#FF9800' }]} onPress={goBack} activeOpacity={0.8}>
+            <MaterialCommunityIcons name="arrow-left" size={20} color="#fff" />
+            <Text style={styles.primaryButtonText}>{t.common.back || 'Geri'}</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
 
     const items = [
       { label: t.onboarding.dailyCalories, value: `${calculated.calorieTarget}`, unit: 'kcal', icon: 'fire', color: '#FF7043' },
