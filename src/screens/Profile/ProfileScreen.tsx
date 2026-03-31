@@ -148,7 +148,7 @@ export function ProfileScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
               <MaterialCommunityIcons name="crown" size={24} color="#FFD700" />
               <Text style={{ fontWeight: 'bold', fontSize: 16, marginLeft: 8 }}>
-                {(t as any).premium?.title || 'FitTrack Premium'}
+                {t.premium.title}
               </Text>
               <View style={{ marginLeft: 'auto', backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
                 <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
@@ -158,7 +158,7 @@ export function ProfileScreen() {
             </View>
             {premiumExpiresAt && (
               <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
-                {(t as any).premium?.expiresAt || 'Expires'}: {new Date(premiumExpiresAt).toLocaleDateString()}
+                {t.premium.expiresAt}: {new Date(premiumExpiresAt).toLocaleDateString()}
               </Text>
             )}
           </Card.Content>
@@ -175,10 +175,10 @@ export function ProfileScreen() {
             <MaterialCommunityIcons name="crown" size={32} color="#FFD700" />
             <View style={{ flex: 1, marginLeft: spacing.sm }}>
               <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
-                {(t as any).premium?.upgradeNow || 'Upgrade to Premium'}
+                {t.premium.upgradeNow}
               </Text>
               <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
-                {(t as any).premium?.subtitle || 'Unlock all features'}
+                {t.premium.subtitle}
               </Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textTertiary} />
@@ -192,18 +192,18 @@ export function ProfileScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
             <MaterialCommunityIcons name="gift" size={24} color={colors.primary} />
             <Text style={{ fontWeight: 'bold', fontSize: 15, marginLeft: 8 }}>
-              {(t as any).referral?.title || 'Invite Friends'}
+              {t.referral.title}
             </Text>
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: spacing.sm }}>
-            {(t as any).referral?.desc || 'Share FitTrack and earn 7 days free premium for each friend!'}
+            {t.referral.desc}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
                 <Text style={{ fontWeight: 'bold', fontSize: 13, letterSpacing: 1 }}>{referralCode}</Text>
               </View>
-              <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{referralCount} {(t as any).referral?.invited || 'invited'}</Text>
+              <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{referralCount} {t.referral.invited}</Text>
             </View>
             <Button
               mode="contained"
@@ -212,7 +212,7 @@ export function ProfileScreen() {
               onPress={handleShareReferral}
               accessibilityLabel="Share referral invite"
             >
-              {(t as any).referral?.share || 'Share'}
+              {t.referral.share}
             </Button>
           </View>
         </Card.Content>

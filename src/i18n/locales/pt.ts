@@ -527,6 +527,29 @@ const pt: Translations = {
     challenges: 'Desafios',
   },
 
+  fasting: {
+    title: 'Rastreador de jejum',
+    subtitle: 'Jejum intermitente e Ramadã',
+    enableDesc: 'Ative para rastrear seu jejum intermitente ou Ramadã.',
+    completed: 'Jejum concluído!',
+    remaining: 'restante até o iftar',
+    complete: 'Concluir jejum',
+    notStarted: 'Sem jejum hoje',
+    start: 'Iniciar jejum',
+    dayStreak: 'dias seguidos',
+    keepGoing: 'Continue assim!',
+    settings: 'Horários de jejum',
+    sahur: 'Fim do Sahur',
+    iftar: 'Iftar',
+  },
+
+  referral: {
+    title: 'Convidar amigos',
+    desc: 'Compartilhe o FitTrack e ganhe 7 dias Premium grátis por cada amigo!',
+    invited: 'convidado',
+    share: 'Compartilhar link de convite',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'Desbloqueie todos os recursos',
@@ -539,6 +562,11 @@ const pt: Translations = {
     month: 'mês',
     savePercent: 'Economize 58%',
     restore: 'Restaurar compras',
+    restoreSuccess: 'Premium restaurado com sucesso!',
+    restoreNotFound: 'Nenhuma compra anterior encontrada.',
+    restoreFailed: 'Restauração falhou. Por favor, tente novamente.',
+    purchaseFailed: 'Compra falhou. Por favor, tente novamente.',
+    processing: 'Processando...',
     aiCoachUnlimited: 'Mensagens ilimitadas do coach IA',
     foodRecognitionUnlimited: 'Reconhecimento ilimitado de alimentos por IA',
     barcodeUnlimited: 'Leitura ilimitada de código de barras',

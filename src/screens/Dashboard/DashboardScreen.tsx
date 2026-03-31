@@ -77,8 +77,8 @@ export function DashboardScreen() {
 
         {/* Fasting Card */}
         <QuickNavCard
-          title={(t as any).fasting?.title || 'Fasting Tracker'}
-          subtitle={(t as any).fasting?.subtitle || 'Intermittent & Ramadan fasting'}
+          title={t.fasting.title}
+          subtitle={t.fasting.subtitle}
           icon="moon-waning-crescent"
           iconColor="#9C27B0"
           bgColor="#F3E5F5"
@@ -570,11 +570,13 @@ const styles = StyleSheet.create({
   },
   waterOptionsRow: {
     flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
+    flexWrap: 'wrap' as const,
     gap: 8,
   },
   waterOptionBtn: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: 70,
     alignItems: 'center' as const,
     paddingVertical: 10,
     borderRadius: borderRadius.md,

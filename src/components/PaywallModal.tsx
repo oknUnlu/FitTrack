@@ -35,7 +35,6 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const { t } = useLanguage();
   const setPremium = usePremiumStore((s) => s.setPremium);
 
-  const premiumTexts = (t as any).premium || {};
   const rcConfigured = isRevenueCatConfigured();
 
   const [offerings, setOfferings] = useState<any>(null);
@@ -86,20 +85,20 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
       const restored = await restorePurchases();
       if (restored) {
         Alert.alert(
-          premiumTexts.restore || 'Restore',
-          premiumTexts.restoreSuccess || 'Premium restored successfully!',
+          t.premium.restore,
+          t.premium.restoreSuccess,
           [{ text: 'OK', onPress: onClose }]
         );
       } else {
         Alert.alert(
-          premiumTexts.restore || 'Restore',
-          premiumTexts.restoreNotFound || 'No previous purchases found.'
+          t.premium.restore,
+          t.premium.restoreNotFound
         );
       }
     } catch (e) {
       Alert.alert(
         t.common.error,
-        premiumTexts.restoreFailed || 'Restore failed. Please try again.'
+        t.premium.restoreFailed
       );
     }
     setIsRestoring(false);
@@ -118,7 +117,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
 
     const pkg = getPackageByPlan(plan);
     if (!pkg) {
-      Alert.alert(t.common.error, premiumTexts.productNotFound || 'Product not available.');
+      Alert.alert(t.common.error, t.common.errorOccurred);
       return;
     }
 
@@ -131,7 +130,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     } catch (e: any) {
       Alert.alert(
         t.common.error,
-        premiumTexts.purchaseFailed || 'Purchase failed. Please try again.'
+        t.premium.purchaseFailed
       );
     }
     setIsPurchasing(false);
@@ -162,9 +161,9 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
             {/* Header */}
             <View style={styles.header}>
               <MaterialCommunityIcons name="crown" size={48} color="#FFD700" />
-              <Text style={styles.title}>{premiumTexts.title || 'FitTrack Premium'}</Text>
+              <Text style={styles.title}>{t.premium.title}</Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                {premiumTexts.subtitle || 'Unlock all features'}
+                {t.premium.subtitle}
               </Text>
             </View>
 
@@ -173,7 +172,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
               <View style={[styles.featureBanner, { backgroundColor: colors.warningBg }]}>
                 <MaterialCommunityIcons name="lock" size={16} color={colors.orange} />
                 <Text style={{ marginLeft: 8, fontSize: 13, color: colors.orange, flex: 1 }}>
-                  {premiumTexts.featureLockedMsg || 'This feature requires Premium'}
+                  {t.premium.featureLockedMsg}
                 </Text>
               </View>
             )}
@@ -184,7 +183,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                 <View key={f.key} style={styles.featureRow}>
                   <MaterialCommunityIcons name={f.icon as any} size={22} color={colors.primary} />
                   <Text style={[styles.featureText, { color: theme.colors.onSurface }]}>
-                    {premiumTexts[f.key] || f.key}
+                    {(t.premium as any)[f.key] || f.key}
                   </Text>
                   <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
                 </View>
@@ -207,11 +206,11 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                 accessibilityHint="Purchase the yearly premium plan"
               >
                 <View style={styles.popularBadge}>
-                  <Text style={styles.popularText}>{premiumTexts.popular || 'Popular'}</Text>
+                  <Text style={styles.popularText}>{t.premium.popular}</Text>
                 </View>
-                <Text style={styles.planName}>{premiumTexts.yearly || 'Yearly'}</Text>
-                <Text style={styles.planPrice}>{yearlyPrice}/{premiumTexts.year || 'year'}</Text>
-                <Text style={styles.planSave}>{premiumTexts.savePercent || 'Save 58%'}</Text>
+                <Text style={styles.planName}>{t.premium.yearly}</Text>
+                <Text style={styles.planPrice}>{yearlyPrice}/{t.premium.year}</Text>
+                <Text style={styles.planSave}>{t.premium.savePercent}</Text>
               </TouchableOpacity>
 
               <View style={styles.planRow}>
@@ -220,8 +219,8 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                   onPress={() => handlePurchase('monthly')}
                   disabled={isPurchasing}
                 >
-                  <Text style={[styles.planName, { fontSize: 14, color: theme.colors.onSurface }]}>{premiumTexts.monthly || 'Monthly'}</Text>
-                  <Text style={[styles.planPrice, { fontSize: 16, color: theme.colors.onSurface }]}>{monthlyPrice}/{premiumTexts.month || 'mo'}</Text>
+                  <Text style={[styles.planName, { fontSize: 14, color: theme.colors.onSurface }]}>{t.premium.monthly}</Text>
+                  <Text style={[styles.planPrice, { fontSize: 16, color: theme.colors.onSurface }]}>{monthlyPrice}/{t.premium.month}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -229,7 +228,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                   onPress={() => handlePurchase('lifetime')}
                   disabled={isPurchasing}
                 >
-                  <Text style={[styles.planName, { fontSize: 14, color: theme.colors.onSurface }]}>{premiumTexts.lifetime || 'Lifetime'}</Text>
+                  <Text style={[styles.planName, { fontSize: 14, color: theme.colors.onSurface }]}>{t.premium.lifetime}</Text>
                   <Text style={[styles.planPrice, { fontSize: 16, color: theme.colors.onSurface }]}>{lifetimePrice}</Text>
                 </TouchableOpacity>
               </View>
@@ -240,7 +239,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
               <View style={styles.loadingRow}>
                 <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={{ marginLeft: 8, color: colors.textSecondary, fontSize: 13 }}>
-                  {premiumTexts.processing || 'Processing...'}
+                  {t.premium.processing}
                 </Text>
               </View>
             )}
@@ -253,7 +252,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
               disabled={isPurchasing || isRestoring}
               style={{ marginTop: spacing.sm }}
             >
-              {premiumTexts.restore || 'Restore Purchases'}
+              {t.premium.restore}
             </Button>
 
             {/* Dev mode indicator */}

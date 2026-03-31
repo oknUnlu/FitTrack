@@ -527,6 +527,29 @@ const ar: Translations = {
     challenges: 'التحديات',
   },
 
+  fasting: {
+    title: 'متتبع الصيام',
+    subtitle: 'الصيام المتقطع ورمضان',
+    enableDesc: 'فعّل لتتبع الصيام المتقطع أو رمضان.',
+    completed: 'اكتمل الصيام!',
+    remaining: 'متبقٍ حتى الإفطار',
+    complete: 'إتمام الصيام',
+    notStarted: 'لم تبدأ الصيام اليوم',
+    start: 'بدء الصيام',
+    dayStreak: 'أيام متتالية',
+    keepGoing: 'استمر!',
+    settings: 'أوقات الصيام',
+    sahur: 'نهاية السحور',
+    iftar: 'الإفطار',
+  },
+
+  referral: {
+    title: 'دعوة الأصدقاء',
+    desc: 'شارك FitTrack واحصل على 7 أيام Premium مجانية لكل صديق!',
+    invited: 'مدعو',
+    share: 'مشاركة رابط الدعوة',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'افتح جميع الميزات',
@@ -539,6 +562,11 @@ const ar: Translations = {
     month: 'شهر',
     savePercent: 'وفر 58%',
     restore: 'استعادة المشتريات',
+    restoreSuccess: 'تم استعادة Premium بنجاح!',
+    restoreNotFound: 'لم يتم العثور على مشتريات سابقة.',
+    restoreFailed: 'فشل الاستعادة. يرجى المحاولة مرة أخرى.',
+    purchaseFailed: 'فشل الشراء. يرجى المحاولة مرة أخرى.',
+    processing: 'جارٍ المعالجة...',
     aiCoachUnlimited: 'رسائل مدرب AI غير محدودة',
     foodRecognitionUnlimited: 'التعرف على الطعام بالذكاء الاصطناعي غير محدود',
     barcodeUnlimited: 'مسح الباركود غير محدود',

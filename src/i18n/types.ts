@@ -565,6 +565,31 @@ export interface Translations {
     challenges: string;
   };
 
+  // Fasting Tracker
+  fasting: {
+    title: string;
+    subtitle: string;
+    enableDesc: string;
+    completed: string;
+    remaining: string;
+    complete: string;
+    notStarted: string;
+    start: string;
+    dayStreak: string;
+    keepGoing: string;
+    settings: string;
+    sahur: string;
+    iftar: string;
+  };
+
+  // Referral
+  referral: {
+    title: string;
+    desc: string;
+    invited: string;
+    share: string;
+  };
+
   // Premium
   premium: {
     title: string;
@@ -578,6 +603,11 @@ export interface Translations {
     month: string;
     savePercent: string;
     restore: string;
+    restoreSuccess: string;
+    restoreNotFound: string;
+    restoreFailed: string;
+    purchaseFailed: string;
+    processing: string;
     aiCoachUnlimited: string;
     foodRecognitionUnlimited: string;
     barcodeUnlimited: string;

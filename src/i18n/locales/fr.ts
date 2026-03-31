@@ -527,6 +527,29 @@ const fr: Translations = {
     challenges: 'Défis',
   },
 
+  fasting: {
+    title: 'Suivi du jeûne',
+    subtitle: 'Jeûne intermittent & Ramadan',
+    enableDesc: 'Activez pour suivre votre jeûne intermittent ou le Ramadan.',
+    completed: 'Jeûne terminé !',
+    remaining: 'restant jusqu\'à l\'iftar',
+    complete: 'Terminer le jeûne',
+    notStarted: 'Pas de jeûne aujourd\'hui',
+    start: 'Commencer le jeûne',
+    dayStreak: 'jours consécutifs',
+    keepGoing: 'Continuez !',
+    settings: 'Horaires de jeûne',
+    sahur: 'Fin du Sahur',
+    iftar: 'Iftar',
+  },
+
+  referral: {
+    title: 'Inviter des amis',
+    desc: 'Partagez FitTrack et gagnez 7 jours Premium gratuits pour chaque ami !',
+    invited: 'invité',
+    share: 'Partager le lien d\'invitation',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'Débloquez toutes les fonctionnalités',
@@ -539,6 +562,11 @@ const fr: Translations = {
     month: 'mois',
     savePercent: 'Économisez 58%',
     restore: 'Restaurer les achats',
+    restoreSuccess: 'Premium restauré avec succès !',
+    restoreNotFound: 'Aucun achat précédent trouvé.',
+    restoreFailed: 'Restauration échouée. Veuillez réessayer.',
+    purchaseFailed: 'Achat échoué. Veuillez réessayer.',
+    processing: 'Traitement...',
     aiCoachUnlimited: 'Messages coach IA illimités',
     foodRecognitionUnlimited: 'Reconnaissance alimentaire IA illimitée',
     barcodeUnlimited: 'Scan de code-barres illimité',

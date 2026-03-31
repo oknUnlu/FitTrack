@@ -527,6 +527,29 @@ const de: Translations = {
     challenges: 'Herausforderungen',
   },
 
+  fasting: {
+    title: 'Fasten-Tracker',
+    subtitle: 'Intermittierendes Fasten & Ramadan',
+    enableDesc: 'Aktiviere zum Verfolgen deines intermittierenden Fastens oder Ramadan.',
+    completed: 'Fasten abgeschlossen!',
+    remaining: 'verbleibend bis Iftar',
+    complete: 'Fasten abschließen',
+    notStarted: 'Heute noch kein Fasten',
+    start: 'Fasten starten',
+    dayStreak: 'Tage in Folge',
+    keepGoing: 'Weiter so!',
+    settings: 'Fastenzeiten',
+    sahur: 'Sahur-Ende',
+    iftar: 'Iftar',
+  },
+
+  referral: {
+    title: 'Freunde einladen',
+    desc: 'Teile FitTrack und erhalte 7 Tage Premium gratis für jeden Freund!',
+    invited: 'eingeladen',
+    share: 'Einladungslink teilen',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'Alle Funktionen freischalten',
@@ -539,6 +562,11 @@ const de: Translations = {
     month: 'Monat',
     savePercent: '58% sparen',
     restore: 'Käufe wiederherstellen',
+    restoreSuccess: 'Premium erfolgreich wiederhergestellt!',
+    restoreNotFound: 'Keine früheren Käufe gefunden.',
+    restoreFailed: 'Wiederherstellung fehlgeschlagen. Bitte erneut versuchen.',
+    purchaseFailed: 'Kauf fehlgeschlagen. Bitte erneut versuchen.',
+    processing: 'Verarbeitung...',
     aiCoachUnlimited: 'Unbegrenzte AI-Coach-Nachrichten',
     foodRecognitionUnlimited: 'Unbegrenzte AI-Lebensmittelerkennung',
     barcodeUnlimited: 'Unbegrenztes Barcode-Scannen',

@@ -1,7 +1,7 @@
 [
   {
     "id": "ppl_split",
-    "name": "Push/Pull/Legs",
+    "name": "İtiş/Çekiş/Bacak",
     "description": "Altı günlük Push/Pull/Legs programı. Her kas grubu haftada iki kez çalışır. Orta seviye sporcular için idealdir.",
     "category": "equipment",
     "estimatedDuration": 60,
@@ -10,7 +10,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Push A",
+        "name": "İtiş A",
         "exercises": [
           {"exerciseId": "bench_press", "sets": 4, "reps": "8-10"},
           {"exerciseId": "incline_bench_press", "sets": 3, "reps": "8-12"},
@@ -22,7 +22,7 @@
       },
       {
         "day": 2,
-        "name": "Pull A",
+        "name": "Çekiş A",
         "exercises": [
           {"exerciseId": "deadlift", "sets": 4, "reps": "5-6"},
           {"exerciseId": "barbell_row", "sets": 4, "reps": "8-10"},
@@ -34,7 +34,7 @@
       },
       {
         "day": 3,
-        "name": "Legs A",
+        "name": "Bacak A",
         "exercises": [
           {"exerciseId": "squat", "sets": 4, "reps": "6-8"},
           {"exerciseId": "leg_press", "sets": 3, "reps": "10-12"},
@@ -46,7 +46,7 @@
       },
       {
         "day": 4,
-        "name": "Push B",
+        "name": "İtiş B",
         "exercises": [
           {"exerciseId": "overhead_press", "sets": 4, "reps": "6-8"},
           {"exerciseId": "dumbbell_fly", "sets": 3, "reps": "10-12"},
@@ -58,7 +58,7 @@
       },
       {
         "day": 5,
-        "name": "Pull B",
+        "name": "Çekiş B",
         "exercises": [
           {"exerciseId": "pull_up", "sets": 4, "reps": "6-10"},
           {"exerciseId": "seated_cable_row", "sets": 4, "reps": "10-12"},
@@ -70,7 +70,7 @@
       },
       {
         "day": 6,
-        "name": "Legs B",
+        "name": "Bacak B",
         "exercises": [
           {"exerciseId": "leg_press", "sets": 4, "reps": "8-10"},
           {"exerciseId": "lunge", "sets": 3, "reps": "10-12"},
@@ -85,7 +85,7 @@
   },
   {
     "id": "upper_lower",
-    "name": "Upper/Lower Split",
+    "name": "Üst/Alt Vücut",
     "description": "Dört günlük üst/alt vücut programı. Dengeli kas gelişimi sağlar. Orta seviye için uygundur.",
     "category": "equipment",
     "estimatedDuration": 55,
@@ -94,7 +94,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Upper A",
+        "name": "Üst Vücut A",
         "exercises": [
           {"exerciseId": "bench_press", "sets": 4, "reps": "6-8"},
           {"exerciseId": "barbell_row", "sets": 4, "reps": "6-8"},
@@ -106,7 +106,7 @@
       },
       {
         "day": 2,
-        "name": "Lower A",
+        "name": "Alt Vücut A",
         "exercises": [
           {"exerciseId": "squat", "sets": 4, "reps": "6-8"},
           {"exerciseId": "romanian_deadlift", "sets": 3, "reps": "8-10"},
@@ -118,7 +118,7 @@
       },
       {
         "day": 3,
-        "name": "Upper B",
+        "name": "Üst Vücut B",
         "exercises": [
           {"exerciseId": "incline_bench_press", "sets": 4, "reps": "8-10"},
           {"exerciseId": "pull_up", "sets": 4, "reps": "6-10"},
@@ -130,7 +130,7 @@
       },
       {
         "day": 4,
-        "name": "Lower B",
+        "name": "Alt Vücut B",
         "exercises": [
           {"exerciseId": "deadlift", "sets": 4, "reps": "5-6"},
           {"exerciseId": "lunge", "sets": 3, "reps": "10-12"},
@@ -145,7 +145,7 @@
   },
   {
     "id": "full_body",
-    "name": "Full Body",
+    "name": "Tam Vücut",
     "description": "Üç günlük tam vücut programı. Her antrenmanda tüm kas grupları çalışır. Başlangıç ve orta seviye için uygundur.",
     "category": "equipment",
     "estimatedDuration": 50,
@@ -154,7 +154,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Full Body A",
+        "name": "Tam Vücut A",
         "exercises": [
           {"exerciseId": "squat", "sets": 3, "reps": "8-10"},
           {"exerciseId": "bench_press", "sets": 3, "reps": "8-10"},
@@ -166,7 +166,7 @@
       },
       {
         "day": 2,
-        "name": "Full Body B",
+        "name": "Tam Vücut B",
         "exercises": [
           {"exerciseId": "deadlift", "sets": 3, "reps": "6-8"},
           {"exerciseId": "incline_bench_press", "sets": 3, "reps": "8-10"},
@@ -178,7 +178,7 @@
       },
       {
         "day": 3,
-        "name": "Full Body C",
+        "name": "Tam Vücut C",
         "exercises": [
           {"exerciseId": "leg_press", "sets": 3, "reps": "10-12"},
           {"exerciseId": "dumbbell_fly", "sets": 3, "reps": "10-12"},
@@ -193,7 +193,7 @@
   },
   {
     "id": "strength_5x5",
-    "name": "Strength 5x5",
+    "name": "Kuvvet 5x5",
     "description": "Üç günlük 5x5 kuvvet programı. Temel bileşik hareketlere odaklanır. Kuvvet kazanımı için idealdir.",
     "category": "equipment",
     "estimatedDuration": 45,
@@ -202,7 +202,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Workout A",
+        "name": "Antrenman A",
         "exercises": [
           {"exerciseId": "squat", "sets": 5, "reps": "5"},
           {"exerciseId": "bench_press", "sets": 5, "reps": "5"},
@@ -213,7 +213,7 @@
       },
       {
         "day": 2,
-        "name": "Workout B",
+        "name": "Antrenman B",
         "exercises": [
           {"exerciseId": "squat", "sets": 5, "reps": "5"},
           {"exerciseId": "overhead_press", "sets": 5, "reps": "5"},
@@ -224,7 +224,7 @@
       },
       {
         "day": 3,
-        "name": "Workout A",
+        "name": "Antrenman A",
         "exercises": [
           {"exerciseId": "squat", "sets": 5, "reps": "5"},
           {"exerciseId": "bench_press", "sets": 5, "reps": "5"},
@@ -238,7 +238,7 @@
   },
   {
     "id": "bodyweight",
-    "name": "Bodyweight Program",
+    "name": "Vücut Ağırlığı",
     "description": "Üç günlük vücut ağırlığı programı. Ekipman gerektirmez. Evde veya dışarıda yapılabilir. Her seviyeye uygundur.",
     "category": "bodyweight",
     "estimatedDuration": 40,
@@ -247,7 +247,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Upper Body",
+        "name": "Üst Vücut",
         "exercises": [
           {"exerciseId": "push_up", "sets": 4, "reps": "10-20"},
           {"exerciseId": "pull_up", "sets": 4, "reps": "5-10"},
@@ -258,7 +258,7 @@
       },
       {
         "day": 2,
-        "name": "Lower Body",
+        "name": "Alt Vücut",
         "exercises": [
           {"exerciseId": "lunge", "sets": 4, "reps": "12-15"},
           {"exerciseId": "hip_thrust", "sets": 4, "reps": "12-15"},
@@ -269,7 +269,7 @@
       },
       {
         "day": 3,
-        "name": "Full Body HIIT",
+        "name": "Tam Vücut HIIT",
         "exercises": [
           {"exerciseId": "burpee", "sets": 4, "reps": "10"},
           {"exerciseId": "push_up", "sets": 3, "reps": "15"},
@@ -284,7 +284,7 @@
   },
   {
     "id": "cardio_core",
-    "name": "Cardio & Core",
+    "name": "Kardiyo & Core",
     "description": "Üç günlük kardiyo ve core programı. Yağ yakımı ve karın kası gelişimi için tasarlanmıştır. Her seviyeye uygundur.",
     "category": "cardio",
     "estimatedDuration": 35,
@@ -293,7 +293,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Cardio Endurance",
+        "name": "Kardiyo Dayanıklılık",
         "exercises": [
           {"exerciseId": "treadmill_run", "sets": 1, "reps": "20-30 dk"},
           {"exerciseId": "cycling", "sets": 1, "reps": "15 dk"},
@@ -315,7 +315,7 @@
       },
       {
         "day": 3,
-        "name": "Low Impact Cardio",
+        "name": "Düşük Etkili Kardiyo",
         "exercises": [
           {"exerciseId": "elliptical", "sets": 1, "reps": "20 dk"},
           {"exerciseId": "rowing_machine", "sets": 1, "reps": "15 dk"},
@@ -329,7 +329,7 @@
   },
   {
     "id": "chest_back_focus",
-    "name": "Chest & Back",
+    "name": "Göğüs & Sırt",
     "description": "Dört günlük göğüs ve sırt odaklı program. Üst vücut hacmi ve kuvveti artırır.",
     "category": "equipment",
     "estimatedDuration": 55,
@@ -338,7 +338,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Chest Power",
+        "name": "Göğüs Güç",
         "exercises": [
           {"exerciseId": "bench_press", "sets": 4, "reps": "6-8"},
           {"exerciseId": "incline_bench_press", "sets": 4, "reps": "8-10"},
@@ -349,7 +349,7 @@
       },
       {
         "day": 2,
-        "name": "Back Power",
+        "name": "Sırt Güç",
         "exercises": [
           {"exerciseId": "deadlift", "sets": 4, "reps": "5-6"},
           {"exerciseId": "barbell_row", "sets": 4, "reps": "6-8"},
@@ -360,7 +360,7 @@
       },
       {
         "day": 3,
-        "name": "Chest Volume",
+        "name": "Göğüs Hacim",
         "exercises": [
           {"exerciseId": "incline_bench_press", "sets": 4, "reps": "8-10"},
           {"exerciseId": "dumbbell_fly", "sets": 4, "reps": "10-12"},
@@ -371,7 +371,7 @@
       },
       {
         "day": 4,
-        "name": "Back Volume",
+        "name": "Sırt Hacim",
         "exercises": [
           {"exerciseId": "lat_pulldown", "sets": 4, "reps": "10-12"},
           {"exerciseId": "dumbbell_row", "sets": 4, "reps": "10-12"},
@@ -385,7 +385,7 @@
   },
   {
     "id": "arm_day",
-    "name": "Arms & Shoulders",
+    "name": "Kol & Omuz",
     "description": "Üç günlük kol ve omuz odaklı program. Kol hacmi ve omuz genişliği artırır.",
     "category": "equipment",
     "estimatedDuration": 45,
@@ -394,7 +394,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Shoulders",
+        "name": "Omuzlar",
         "exercises": [
           {"exerciseId": "overhead_press", "sets": 4, "reps": "6-8"},
           {"exerciseId": "arnold_press", "sets": 3, "reps": "8-10"},
@@ -405,7 +405,7 @@
       },
       {
         "day": 2,
-        "name": "Biceps & Triceps",
+        "name": "Biseps & Triseps",
         "exercises": [
           {"exerciseId": "barbell_curl", "sets": 4, "reps": "8-10"},
           {"exerciseId": "hammer_curl", "sets": 3, "reps": "10-12"},
@@ -417,7 +417,7 @@
       },
       {
         "day": 3,
-        "name": "Mixed Arms",
+        "name": "Karma Kol",
         "exercises": [
           {"exerciseId": "overhead_press", "sets": 3, "reps": "8-10"},
           {"exerciseId": "lateral_raise", "sets": 3, "reps": "12-15"},
@@ -431,7 +431,7 @@
   },
   {
     "id": "leg_specialization",
-    "name": "Leg Specialization",
+    "name": "Bacak Odaklı",
     "description": "Dört günlük bacak odaklı program. Alt vücut kuvveti ve hacmi artırır. Kalça ve bacak kasları için idealdir.",
     "category": "equipment",
     "estimatedDuration": 55,
@@ -440,7 +440,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Quad Focus",
+        "name": "Ön Bacak Odak",
         "exercises": [
           {"exerciseId": "squat", "sets": 5, "reps": "5-6"},
           {"exerciseId": "leg_press", "sets": 4, "reps": "8-10"},
@@ -451,7 +451,7 @@
       },
       {
         "day": 2,
-        "name": "Hamstring & Glute",
+        "name": "Arka Bacak & Kalça",
         "exercises": [
           {"exerciseId": "romanian_deadlift", "sets": 4, "reps": "8-10"},
           {"exerciseId": "hip_thrust", "sets": 4, "reps": "8-12"},
@@ -462,7 +462,7 @@
       },
       {
         "day": 3,
-        "name": "Power Legs",
+        "name": "Güçlü Bacak",
         "exercises": [
           {"exerciseId": "squat", "sets": 4, "reps": "6-8"},
           {"exerciseId": "deadlift", "sets": 3, "reps": "5-6"},
@@ -473,7 +473,7 @@
       },
       {
         "day": 4,
-        "name": "Volume Legs",
+        "name": "Hacim Bacak",
         "exercises": [
           {"exerciseId": "leg_extension", "sets": 4, "reps": "12-15"},
           {"exerciseId": "leg_curl", "sets": 4, "reps": "12-15"},
@@ -487,7 +487,7 @@
   },
   {
     "id": "home_hiit",
-    "name": "Home HIIT",
+    "name": "Evde HIIT",
     "description": "Üç günlük evde yapılabilecek yüksek yoğunluklu interval programı. Ekipman gerektirmez, yağ yakımı için mükemmeldir.",
     "category": "bodyweight",
     "estimatedDuration": 30,
@@ -496,7 +496,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Upper HIIT",
+        "name": "Üst Vücut HIIT",
         "exercises": [
           {"exerciseId": "push_up", "sets": 4, "reps": "15"},
           {"exerciseId": "burpee", "sets": 4, "reps": "10"},
@@ -507,7 +507,7 @@
       },
       {
         "day": 2,
-        "name": "Lower HIIT",
+        "name": "Alt Vücut HIIT",
         "exercises": [
           {"exerciseId": "lunge", "sets": 4, "reps": "15"},
           {"exerciseId": "hip_thrust", "sets": 4, "reps": "15"},
@@ -518,7 +518,7 @@
       },
       {
         "day": 3,
-        "name": "Full Body Burn",
+        "name": "Tam Vücut Yakım",
         "exercises": [
           {"exerciseId": "burpee", "sets": 5, "reps": "10"},
           {"exerciseId": "push_up", "sets": 4, "reps": "12"},
@@ -533,7 +533,7 @@
   },
   {
     "id": "calisthenics",
-    "name": "Calisthenics",
+    "name": "Kalistenik",
     "description": "Dört günlük kalistenik program. Vücut ağırlığıyla güç ve kontrol geliştirir. Orta seviye sporcular için uygundur.",
     "category": "bodyweight",
     "estimatedDuration": 45,
@@ -542,7 +542,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Push",
+        "name": "İtiş",
         "exercises": [
           {"exerciseId": "push_up", "sets": 5, "reps": "12-20"},
           {"exerciseId": "dip", "sets": 4, "reps": "8-12"},
@@ -553,7 +553,7 @@
       },
       {
         "day": 2,
-        "name": "Pull",
+        "name": "Çekiş",
         "exercises": [
           {"exerciseId": "pull_up", "sets": 5, "reps": "5-10"},
           {"exerciseId": "dumbbell_row", "sets": 4, "reps": "10-12"},
@@ -564,7 +564,7 @@
       },
       {
         "day": 3,
-        "name": "Legs",
+        "name": "Bacak",
         "exercises": [
           {"exerciseId": "lunge", "sets": 4, "reps": "15"},
           {"exerciseId": "hip_thrust", "sets": 4, "reps": "15"},
@@ -575,7 +575,7 @@
       },
       {
         "day": 4,
-        "name": "Full Body",
+        "name": "Tam Vücut",
         "exercises": [
           {"exerciseId": "burpee", "sets": 4, "reps": "10"},
           {"exerciseId": "push_up", "sets": 4, "reps": "15"},
@@ -590,7 +590,7 @@
   },
   {
     "id": "fat_burn",
-    "name": "Fat Burn Program",
+    "name": "Yağ Yakım Programı",
     "description": "Dört günlük yağ yakım programı. Kardiyo ve vücut ağırlığı hareketlerini birleştirir. Kilo vermek isteyenler için idealdir.",
     "category": "cardio",
     "estimatedDuration": 40,
@@ -599,7 +599,7 @@
     "days": [
       {
         "day": 1,
-        "name": "Steady Cardio",
+        "name": "Sabit Kardiyo",
         "exercises": [
           {"exerciseId": "treadmill_run", "sets": 1, "reps": "25-30 dk"},
           {"exerciseId": "cycling", "sets": 1, "reps": "15 dk"},
@@ -609,7 +609,7 @@
       },
       {
         "day": 2,
-        "name": "HIIT Cardio",
+        "name": "HIIT Kardiyo",
         "exercises": [
           {"exerciseId": "jump_rope", "sets": 5, "reps": "60s"},
           {"exerciseId": "burpee", "sets": 4, "reps": "10"},
@@ -620,7 +620,7 @@
       },
       {
         "day": 3,
-        "name": "Active Recovery",
+        "name": "Aktif Toparlanma",
         "exercises": [
           {"exerciseId": "elliptical", "sets": 1, "reps": "20 dk"},
           {"exerciseId": "rowing_machine", "sets": 1, "reps": "10 dk"},
@@ -630,7 +630,7 @@
       },
       {
         "day": 4,
-        "name": "Metabolic",
+        "name": "Metabolik",
         "exercises": [
           {"exerciseId": "burpee", "sets": 4, "reps": "12"},
           {"exerciseId": "lunge", "sets": 4, "reps": "15"},

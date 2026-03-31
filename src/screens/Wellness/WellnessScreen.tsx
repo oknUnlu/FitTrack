@@ -369,7 +369,7 @@ export function WellnessScreen() {
                 <View style={{ alignItems: 'center', paddingVertical: spacing.md }}>
                   <MaterialCommunityIcons name="crown" size={32} color="#FFD700" />
                   <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 4 }}>
-                    {(t as any).premium?.upgradeNow || 'Upgrade to Premium'}
+                    {t.premium.upgradeNow}
                   </Text>
                 </View>
               )}

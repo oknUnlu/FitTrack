@@ -22,7 +22,7 @@ export function HealthHubScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const today = todayString();
-  const healthTexts = (t as any).healthHub || {};
+  const healthTexts = t.healthHub;
 
   const DATA_TYPES: { key: HealthDataPoint['type']; label: string; icon: string; color: string; unit: string; placeholder: string }[] = [
     { key: 'steps', label: healthTexts.steps, icon: 'walk', color: colors.primary, unit: healthTexts.stepsUnit, placeholder: '10000' },

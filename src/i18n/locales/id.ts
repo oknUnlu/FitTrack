@@ -527,6 +527,29 @@ const id: Translations = {
     challenges: 'Tantangan',
   },
 
+  fasting: {
+    title: 'Pelacak Puasa',
+    subtitle: 'Puasa intermiten & Ramadan',
+    enableDesc: 'Aktifkan untuk melacak puasa intermiten atau Ramadan Anda.',
+    completed: 'Puasa Selesai!',
+    remaining: 'tersisa hingga buka puasa',
+    complete: 'Selesaikan Puasa',
+    notStarted: 'Belum ada puasa hari ini',
+    start: 'Mulai Puasa',
+    dayStreak: 'hari berturut-turut',
+    keepGoing: 'Terus lakukan!',
+    settings: 'Waktu Puasa',
+    sahur: 'Akhir Sahur',
+    iftar: 'Buka Puasa',
+  },
+
+  referral: {
+    title: 'Undang Teman',
+    desc: 'Bagikan FitTrack dan dapatkan 7 hari Premium gratis untuk setiap teman!',
+    invited: 'diundang',
+    share: 'Bagikan Tautan Undangan',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'Buka semua fitur',
@@ -539,6 +562,11 @@ const id: Translations = {
     month: 'bulan',
     savePercent: 'Hemat 58%',
     restore: 'Pulihkan Pembelian',
+    restoreSuccess: 'Premium berhasil dipulihkan!',
+    restoreNotFound: 'Tidak ada pembelian sebelumnya.',
+    restoreFailed: 'Pemulihan gagal. Silakan coba lagi.',
+    purchaseFailed: 'Pembelian gagal. Silakan coba lagi.',
+    processing: 'Memproses...',
     aiCoachUnlimited: 'Pesan AI Coach tanpa batas',
     foodRecognitionUnlimited: 'Pengenalan makanan AI tanpa batas',
     barcodeUnlimited: 'Pemindaian barcode tanpa batas',

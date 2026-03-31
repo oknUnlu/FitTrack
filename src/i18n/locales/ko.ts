@@ -527,6 +527,29 @@ const ko: Translations = {
     challenges: '챌린지',
   },
 
+  fasting: {
+    title: '단식 트래커',
+    subtitle: '간헐적 단식 & 라마단',
+    enableDesc: '간헐적 단식 또는 라마단을 추적하려면 활성화하세요.',
+    completed: '단식 완료!',
+    remaining: '이프타르까지 남은 시간',
+    complete: '단식 완료하기',
+    notStarted: '오늘 아직 단식 없음',
+    start: '단식 시작',
+    dayStreak: '일 연속',
+    keepGoing: '계속 하세요!',
+    settings: '단식 시간',
+    sahur: '사후르 종료',
+    iftar: '이프타르',
+  },
+
+  referral: {
+    title: '친구 초대',
+    desc: 'FitTrack을 공유하고 친구 한 명당 7일 무료 프리미엄 획득!',
+    invited: '초대됨',
+    share: '초대 링크 공유',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: '모든 기능 잠금 해제',
@@ -539,6 +562,11 @@ const ko: Translations = {
     month: '월',
     savePercent: '58% 절약',
     restore: '구매 복원',
+    restoreSuccess: '프리미엄이 성공적으로 복원되었습니다!',
+    restoreNotFound: '이전 구매를 찾을 수 없습니다.',
+    restoreFailed: '복원 실패. 다시 시도해 주세요.',
+    purchaseFailed: '구매 실패. 다시 시도해 주세요.',
+    processing: '처리 중...',
     aiCoachUnlimited: '무제한 AI 코치 메시지',
     foodRecognitionUnlimited: '무제한 AI 음식 인식',
     barcodeUnlimited: '무제한 바코드 스캔',

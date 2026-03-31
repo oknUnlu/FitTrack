@@ -100,7 +100,7 @@ export function FastingScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <MaterialCommunityIcons name="moon-waning-crescent" size={24} color="#9C27B0" />
             <Text style={{ fontWeight: 'bold', marginLeft: 8 }}>
-              {(t as any).fasting?.title || 'Fasting Tracker'}
+              {t.fasting.title}
             </Text>
           </View>
           <Switch value={settings.enabled} onValueChange={handleToggleFasting} />
@@ -112,7 +112,7 @@ export function FastingScreen() {
           <Card.Content style={{ alignItems: 'center', padding: spacing.lg }}>
             <MaterialCommunityIcons name="moon-waning-crescent" size={48} color={colors.textDisabled} />
             <Text style={{ color: colors.textTertiary, marginTop: 8, textAlign: 'center' }}>
-              {(t as any).fasting?.enableDesc || 'Enable fasting tracker to start tracking your intermittent fasting or Ramadan fasting.'}
+              {t.fasting.enableDesc}
             </Text>
           </Card.Content>
         </Card>
@@ -125,7 +125,7 @@ export function FastingScreen() {
                 <>
                   <MaterialCommunityIcons name="check-circle" size={56} color={colors.primary} />
                   <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: spacing.sm, color: colors.primary }}>
-                    {(t as any).fasting?.completed || 'Fasting Completed!'}
+                    {t.fasting.completed}
                   </Text>
                   <Text style={{ color: colors.textTertiary, marginTop: 4 }}>
                     {todayLog?.startTime} - {todayLog?.endTime}
@@ -138,7 +138,7 @@ export function FastingScreen() {
                     {formatFastingDuration(remainingMinutes)}
                   </Text>
                   <Text style={{ color: colors.textTertiary, marginTop: 4 }}>
-                    {(t as any).fasting?.remaining || 'remaining until iftar'}
+                    {t.fasting.remaining}
                   </Text>
                   <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 8 }}>
                     {todayLog?.startTime} → {todayLog?.endTime}
@@ -151,7 +151,7 @@ export function FastingScreen() {
                       icon="check"
                       accessibilityLabel="Complete fasting"
                     >
-                      {(t as any).fasting?.complete || 'Complete Fasting'}
+                      {t.fasting.complete}
                     </Button>
                   )}
                 </>
@@ -159,7 +159,7 @@ export function FastingScreen() {
                 <>
                   <MaterialCommunityIcons name="food-off" size={56} color="#9C27B0" />
                   <Text style={{ fontWeight: 'bold', fontSize: 16, marginTop: spacing.sm }}>
-                    {(t as any).fasting?.notStarted || 'No fasting today yet'}
+                    {t.fasting.notStarted}
                   </Text>
                   <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 4 }}>
                     {settings.defaultStartTime} - {settings.defaultEndTime}
@@ -171,7 +171,7 @@ export function FastingScreen() {
                     icon="play"
                     accessibilityLabel="Start fasting"
                   >
-                    {(t as any).fasting?.start || 'Start Fasting'}
+                    {t.fasting.start}
                   </Button>
                 </>
               )}
@@ -185,10 +185,10 @@ export function FastingScreen() {
                 <Text style={{ fontSize: 24 }}>🔥</Text>
                 <View style={{ marginLeft: spacing.sm }}>
                   <Text style={{ fontWeight: 'bold', fontSize: 18 }}>
-                    {streak} {(t as any).fasting?.dayStreak || 'day streak'}
+                    {streak} {t.fasting.dayStreak}
                   </Text>
                   <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
-                    {(t as any).fasting?.keepGoing || 'Keep going!'}
+                    {t.fasting.keepGoing}
                   </Text>
                 </View>
               </View>
@@ -200,13 +200,13 @@ export function FastingScreen() {
           <Card style={styles.card} mode="elevated">
             <Card.Content>
               <Text style={{ fontWeight: 'bold', marginBottom: spacing.sm }}>
-                {(t as any).fasting?.settings || 'Fasting Times'}
+                {t.fasting.settings}
               </Text>
               <View style={styles.timeRow}>
                 <View style={styles.timeItem}>
                   <MaterialCommunityIcons name="weather-night" size={20} color="#5C6BC0" />
                   <Text style={{ fontSize: 12, color: colors.textTertiary, marginTop: 2 }}>
-                    {(t as any).fasting?.sahur || 'Sahur End'}
+                    {t.fasting.sahur}
                   </Text>
                   <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{settings.defaultStartTime}</Text>
                 </View>
@@ -214,7 +214,7 @@ export function FastingScreen() {
                 <View style={styles.timeItem}>
                   <MaterialCommunityIcons name="weather-sunset" size={20} color="#FF9800" />
                   <Text style={{ fontSize: 12, color: colors.textTertiary, marginTop: 2 }}>
-                    {(t as any).fasting?.iftar || 'Iftar'}
+                    {t.fasting.iftar}
                   </Text>
                   <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{settings.defaultEndTime}</Text>
                 </View>

@@ -43,9 +43,9 @@ export function AICoachScreen() {
   ];
 
   const planOptions: { type: PlanType; label: string; icon: string }[] = [
-    { type: 'workout', label: 'Antrenman Plani', icon: 'dumbbell' },
-    { type: 'nutrition', label: 'Beslenme Plani', icon: 'food-apple' },
-    { type: 'weekly', label: 'Haftalik Plan', icon: 'calendar-week' },
+    { type: 'workout', label: 'Antrenman Planı', icon: 'dumbbell' },
+    { type: 'nutrition', label: 'Beslenme Planı', icon: 'food-apple' },
+    { type: 'weekly', label: 'Haftalık Plan', icon: 'calendar-week' },
   ];
 
   useEffect(() => {
@@ -150,9 +150,9 @@ export function AICoachScreen() {
     setLoading(true);
 
     const planLabels: Record<PlanType, string> = {
-      workout: 'Antrenman plani olustur',
-      nutrition: 'Beslenme plani olustur',
-      weekly: 'Haftalik plan olustur',
+      workout: 'Antrenman planı oluştur',
+      nutrition: 'Beslenme planı oluştur',
+      weekly: 'Haftalık plan oluştur',
     };
 
     const userMsg: ConversationMessage = {
@@ -234,7 +234,7 @@ export function AICoachScreen() {
             ))}
           </View>
 
-          <Text style={{ fontWeight: 'bold', marginBottom: spacing.sm }}>Kisisellestirilmis Plan</Text>
+          <Text style={{ fontWeight: 'bold', marginBottom: spacing.sm }}>Kişiselleştirilmiş Plan</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {planOptions.map((plan) => (
               <Button

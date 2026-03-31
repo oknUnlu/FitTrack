@@ -527,6 +527,29 @@ const hi: Translations = {
     challenges: 'चैलेंज',
   },
 
+  fasting: {
+    title: 'उपवास ट्रैकर',
+    subtitle: 'इंटरमिटेंट फास्टिंग & रमज़ान',
+    enableDesc: 'इंटरमिटेंट फास्टिंग या रमज़ान उपवास ट्रैक करने के लिए चालू करें।',
+    completed: 'उपवास पूरा!',
+    remaining: 'इफ्तार तक बचा हुआ',
+    complete: 'उपवास पूरा करें',
+    notStarted: 'आज अभी उपवास नहीं',
+    start: 'उपवास शुरू करें',
+    dayStreak: 'दिन लगातार',
+    keepGoing: 'जारी रखें!',
+    settings: 'उपवास का समय',
+    sahur: 'सहरी समाप्ति',
+    iftar: 'इफ्तार',
+  },
+
+  referral: {
+    title: 'दोस्तों को आमंत्रित करें',
+    desc: 'FitTrack शेयर करें और हर दोस्त के लिए 7 दिन फ्री Premium पाएं!',
+    invited: 'आमंत्रित',
+    share: 'आमंत्रण लिंक शेयर करें',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'सभी सुविधाएं अनलॉक करें',
@@ -539,6 +562,11 @@ const hi: Translations = {
     month: 'माह',
     savePercent: '58% बचाएं',
     restore: 'खरीदारी पुनर्स्थापित करें',
+    restoreSuccess: 'Premium सफलतापूर्वक पुनर्स्थापित!',
+    restoreNotFound: 'कोई पिछली खरीदारी नहीं मिली।',
+    restoreFailed: 'पुनर्स्थापना विफल। कृपया पुनः प्रयास करें।',
+    purchaseFailed: 'खरीदारी विफल। कृपया पुनः प्रयास करें।',
+    processing: 'प्रसंस्करण...',
     aiCoachUnlimited: 'असीमित AI कोच संदेश',
     foodRecognitionUnlimited: 'असीमित AI भोजन पहचान',
     barcodeUnlimited: 'असीमित बारकोड स्कैनिंग',

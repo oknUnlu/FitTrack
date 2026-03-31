@@ -527,6 +527,29 @@ const it: Translations = {
     challenges: 'Sfide',
   },
 
+  fasting: {
+    title: 'Tracker digiuno',
+    subtitle: 'Digiuno intermittente e Ramadan',
+    enableDesc: 'Attiva per tracciare il digiuno intermittente o il Ramadan.',
+    completed: 'Digiuno completato!',
+    remaining: 'rimasto fino all\'iftar',
+    complete: 'Completa digiuno',
+    notStarted: 'Nessun digiuno oggi',
+    start: 'Inizia digiuno',
+    dayStreak: 'giorni consecutivi',
+    keepGoing: 'Continua così!',
+    settings: 'Orari di digiuno',
+    sahur: 'Fine Sahur',
+    iftar: 'Iftar',
+  },
+
+  referral: {
+    title: 'Invita amici',
+    desc: 'Condividi FitTrack e guadagna 7 giorni Premium gratis per ogni amico!',
+    invited: 'invitato',
+    share: 'Condividi link invito',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'Sblocca tutte le funzionalità',
@@ -539,6 +562,11 @@ const it: Translations = {
     month: 'mese',
     savePercent: 'Risparmia il 58%',
     restore: 'Ripristina acquisti',
+    restoreSuccess: 'Premium ripristinato con successo!',
+    restoreNotFound: 'Nessun acquisto precedente trovato.',
+    restoreFailed: 'Ripristino non riuscito. Riprova.',
+    purchaseFailed: 'Acquisto non riuscito. Riprova.',
+    processing: 'Elaborazione...',
     aiCoachUnlimited: 'Messaggi coach IA illimitati',
     foodRecognitionUnlimited: 'Riconoscimento alimenti IA illimitato',
     barcodeUnlimited: 'Scansione codice a barre illimitata',

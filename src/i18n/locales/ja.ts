@@ -527,6 +527,29 @@ const ja: Translations = {
     challenges: 'チャレンジ',
   },
 
+  fasting: {
+    title: '断食トラッカー',
+    subtitle: '断食・ラマダン追跡',
+    enableDesc: '断食やラマダンを追跡するために有効にしてください。',
+    completed: '断食完了！',
+    remaining: 'イフタールまで残り',
+    complete: '断食を完了',
+    notStarted: '今日はまだ断食していません',
+    start: '断食開始',
+    dayStreak: '日連続',
+    keepGoing: '続けよう！',
+    settings: '断食時間',
+    sahur: 'スフールの終わり',
+    iftar: 'イフタール',
+  },
+
+  referral: {
+    title: '友達を招待',
+    desc: 'FitTrackをシェアして、友達一人ごとに7日間無料Premiumをゲット！',
+    invited: '招待済み',
+    share: '招待リンクをシェア',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'すべての機能をアンロック',
@@ -539,6 +562,11 @@ const ja: Translations = {
     month: '月',
     savePercent: '58%お得',
     restore: '購入を復元',
+    restoreSuccess: 'Premiumが正常に復元されました！',
+    restoreNotFound: '以前の購入が見つかりません。',
+    restoreFailed: '復元に失敗しました。もう一度お試しください。',
+    purchaseFailed: '購入に失敗しました。もう一度お試しください。',
+    processing: '処理中...',
     aiCoachUnlimited: '無制限AIコーチメッセージ',
     foodRecognitionUnlimited: '無制限AI食品認識',
     barcodeUnlimited: '無制限バーコードスキャン',

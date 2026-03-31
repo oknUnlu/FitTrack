@@ -527,6 +527,29 @@ const es: Translations = {
     challenges: 'Desafíos',
   },
 
+  fasting: {
+    title: 'Seguimiento de ayuno',
+    subtitle: 'Ayuno intermitente y Ramadán',
+    enableDesc: 'Activa para registrar tu ayuno intermitente o Ramadán.',
+    completed: '¡Ayuno completado!',
+    remaining: 'restante hasta iftar',
+    complete: 'Completar ayuno',
+    notStarted: 'Sin ayuno hoy',
+    start: 'Iniciar ayuno',
+    dayStreak: 'días seguidos',
+    keepGoing: '¡Sigue adelante!',
+    settings: 'Horarios de ayuno',
+    sahur: 'Fin de sahur',
+    iftar: 'Iftar',
+  },
+
+  referral: {
+    title: 'Invitar amigos',
+    desc: '¡Comparte FitTrack y gana 7 días Premium gratis por cada amigo!',
+    invited: 'invitado',
+    share: 'Compartir enlace de invitación',
+  },
+
   premium: {
     title: 'FitTrack Premium',
     subtitle: 'Desbloquea todas las funciones',
@@ -539,6 +562,11 @@ const es: Translations = {
     month: 'mes',
     savePercent: 'Ahorra 58%',
     restore: 'Restaurar compras',
+    restoreSuccess: '¡Premium restaurado con éxito!',
+    restoreNotFound: 'No se encontraron compras anteriores.',
+    restoreFailed: 'Error al restaurar. Por favor, inténtelo de nuevo.',
+    purchaseFailed: 'Error en la compra. Por favor, inténtelo de nuevo.',
+    processing: 'Procesando...',
     aiCoachUnlimited: 'Mensajes ilimitados del coach IA',
     foodRecognitionUnlimited: 'Reconocimiento de alimentos IA ilimitado',
     barcodeUnlimited: 'Escaneo de código de barras ilimitado',
