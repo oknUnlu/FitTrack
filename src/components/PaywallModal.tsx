@@ -22,7 +22,6 @@ interface PaywallModalProps {
 const PREMIUM_FEATURES = [
   { icon: 'robot', key: 'aiCoachUnlimited' },
   { icon: 'camera', key: 'foodRecognitionUnlimited' },
-  { icon: 'barcode-scan', key: 'barcodeUnlimited' },
   { icon: 'chart-timeline-variant', key: 'progressFull' },
   { icon: 'download', key: 'dataExport' },
   { icon: 'dumbbell', key: 'advancedPrograms' },

@@ -15,6 +15,7 @@ import { useLanguage } from '../../i18n';
 import { getAchievements, getUnlockedCount, getTotalCount, Achievement } from '../../services/achievements/achievementService';
 import { getRemainingMacroSuggestion, MealSuggestion } from '../../services/mealPlanner/mealPlanService';
 import { usePremiumStore } from '../../store/premiumStore';
+import { AdBanner } from '../../components/AdBanner';
 
 export function DashboardScreen() {
   const { summary, loading, error, addWater } = useDashboard();
@@ -122,6 +123,9 @@ export function DashboardScreen() {
 
         {/* AI Coach Card */}
         <AICoachCard onPress={() => navigation.navigate('AICoach')} showProBadge={!isPremium} />
+
+        {/* Reklam Banner */}
+        <AdBanner screen="dashboard" />
       </ScrollView>
 
     </View>

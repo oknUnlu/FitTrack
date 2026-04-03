@@ -14,6 +14,7 @@ import { useLanguage } from '../../i18n';
 import { usePremiumStore } from '../../store/premiumStore';
 import { isProgressRangeAvailable } from '../../services/premium/featureGate';
 import { PaywallModal } from '../../components/PaywallModal';
+import { AdBanner } from '../../components/AdBanner';
 
 type FilterRange = '7d' | '30d';
 
@@ -214,6 +215,9 @@ export function NutritionSummaryScreen() {
               </View>
             </Card.Content>
           </Card>
+
+          {/* Reklam Banner */}
+          <AdBanner screen="nutrition" />
         </>
       )}
     </ScrollView>

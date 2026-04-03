@@ -19,7 +19,6 @@ import {
   scheduleWaterReminders,
   scheduleWorkoutReminder,
 } from '../../services/notifications/notificationService';
-import { getReferralCode, shareReferralInvite, getReferralCount } from '../../services/referral/referralService';
 
 const NOTIF_MEAL_KEY = 'pref_meal_reminder';
 const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
@@ -39,8 +38,6 @@ export function ProfileScreen() {
   const [waterReminder, setWaterReminder] = useState(false);
   const [langDialogVisible, setLangDialogVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
-  const [referralCode, setReferralCode] = useState('');
-  const [referralCount, setReferralCount] = useState(0);
   const isPremium = usePremiumStore((s) => s.isPremium);
   const premiumPlan = usePremiumStore((s) => s.plan);
   const premiumExpiresAt = usePremiumStore((s) => s.expiresAt);
@@ -65,13 +62,6 @@ export function ProfileScreen() {
         const u = await getUserById(userId);
         setUser(u);
       }
-      // Load referral data
-      const [code, count] = await Promise.all([
-        getReferralCode(),
-        getReferralCount(),
-      ]);
-      setReferralCode(code);
-      setReferralCount(count);
     } catch (e) {
       if (__DEV__) console.warn('ProfileScreen load failed:', e);
     }
@@ -97,12 +87,6 @@ export function ProfileScreen() {
     await scheduleWaterReminders(val);
   };
 
-  const handleShareReferral = async () => {
-    await shareReferralInvite(
-      'FitTrack ile fitness hedeflerine ulasmak cok kolay! AI destekli kocluk, kalori takibi ve daha fazlasi. Hemen dene!'
-    );
-  };
-
   const currentLangName = LANGUAGES.find((l) => l.code === language)?.nativeName ?? language;
 
   const insets = useSafeAreaInsets();
@@ -116,48 +100,46 @@ export function ProfileScreen() {
 
       {/* User Card */}
       <Card style={styles.card} mode="elevated">
-        <Card.Content style={{ alignItems: 'center', padding: spacing.lg }}>
-          <View style={styles.avatar}>
-            <MaterialCommunityIcons name="account" size={48} color="#fff" />
+        <Card.Content style={styles.userCardContent}>
+          <View style={styles.userTopRow}>
+            <View style={styles.avatar}>
+              <MaterialCommunityIcons name="account" size={28} color="#fff" />
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>
+                {user?.name ?? t.profile.user}
+              </Text>
+              {user && (
+                <Text style={styles.userStats}>
+                  {user.age} {t.profile.age} • {user.height} {t.common.cm} • {user.weight} {t.common.kg}
+                </Text>
+              )}
+            </View>
           </View>
-          <Text variant="titleMedium" style={{ fontWeight: 'bold', marginTop: spacing.sm }}>
-            {user?.name ?? t.profile.user}
-          </Text>
-          {user && (
-            <Text style={{ color: colors.textTertiary, marginTop: 4 }}>
-              {user.age} {t.profile.age} • {user.height} {t.common.cm} • {user.weight} {t.common.kg}
-            </Text>
-          )}
-        </Card.Content>
 
-        {user && (
-          <Card.Content style={{ paddingTop: 0, paddingBottom: spacing.md }}>
+          {user && (
             <View style={styles.infoRow}>
               <InfoChip icon="bullseye-arrow" label={GOAL_LABELS[user.goal] ?? user.goal} />
               <InfoChip icon="run-fast" label={ACTIVITY_LABELS[user.activityLevel] ?? user.activityLevel} />
               <InfoChip icon="fire" label={`${user.tdee} ${t.common.kcal} TDEE`} />
             </View>
-          </Card.Content>
-        )}
+          )}
+        </Card.Content>
       </Card>
 
       {/* Premium Section */}
       {isPremium ? (
         <Card style={[styles.card, { borderColor: '#FFD700', borderWidth: 1 }]} mode="elevated">
           <Card.Content>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
-              <MaterialCommunityIcons name="crown" size={24} color="#FFD700" />
-              <Text style={{ fontWeight: 'bold', fontSize: 16, marginLeft: 8 }}>
-                {t.premium.title}
-              </Text>
-              <View style={{ marginLeft: 'auto', backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
-                  {premiumPlan.toUpperCase()}
-                </Text>
+            <View style={styles.premiumRow}>
+              <MaterialCommunityIcons name="crown" size={20} color="#FFD700" />
+              <Text style={styles.premiumTitle}>{t.premium.title}</Text>
+              <View style={styles.premiumPlanBadge}>
+                <Text style={styles.premiumPlanText}>{premiumPlan.toUpperCase()}</Text>
               </View>
             </View>
             {premiumExpiresAt && (
-              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+              <Text style={styles.premiumExpiry}>
                 {t.premium.expiresAt}: {new Date(premiumExpiresAt).toLocaleDateString()}
               </Text>
             )}
@@ -171,52 +153,16 @@ export function ProfileScreen() {
           accessibilityLabel="Upgrade to Premium, unlock all features"
           accessibilityRole="button"
         >
-          <Card.Content style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <MaterialCommunityIcons name="crown" size={32} color="#FFD700" />
-            <View style={{ flex: 1, marginLeft: spacing.sm }}>
-              <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
-                {t.premium.upgradeNow}
-              </Text>
-              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
-                {t.premium.subtitle}
-              </Text>
+          <Card.Content style={styles.premiumUpgradeRow}>
+            <MaterialCommunityIcons name="crown" size={28} color="#FFD700" />
+            <View style={styles.premiumUpgradeText}>
+              <Text style={styles.premiumUpgradeTitle}>{t.premium.upgradeNow}</Text>
+              <Text style={styles.premiumUpgradeSubtitle}>{t.premium.subtitle}</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textTertiary} />
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textTertiary} />
           </Card.Content>
         </Card>
       )}
-
-      {/* Referral Card */}
-      <Card style={[styles.card, { backgroundColor: '#E8F5E9' }]} mode="elevated">
-        <Card.Content>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
-            <MaterialCommunityIcons name="gift" size={24} color={colors.primary} />
-            <Text style={{ fontWeight: 'bold', fontSize: 15, marginLeft: 8 }}>
-              {t.referral.title}
-            </Text>
-          </View>
-          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: spacing.sm }}>
-            {t.referral.desc}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 13, letterSpacing: 1 }}>{referralCode}</Text>
-              </View>
-              <Text style={{ color: colors.textTertiary, fontSize: 11 }}>{referralCount} {t.referral.invited}</Text>
-            </View>
-            <Button
-              mode="contained"
-              icon="share-variant"
-              compact
-              onPress={handleShareReferral}
-              accessibilityLabel="Share referral invite"
-            >
-              {t.referral.share}
-            </Button>
-          </View>
-        </Card.Content>
-      </Card>
 
       {/* Makro Hedefler */}
       {user && (
@@ -281,6 +227,18 @@ export function ProfileScreen() {
             description={workoutReminder ? t.profile.on : t.profile.off}
             left={(props) => <List.Icon {...props} icon="bell-ring" />}
             right={() => <Switch value={workoutReminder} onValueChange={toggleWorkoutReminder} />}
+          />
+        </List.Section>
+      </Card>
+
+      {/* Privacy Policy */}
+      <Card style={styles.card} mode="elevated">
+        <List.Section>
+          <List.Item
+            title={t.privacy.title}
+            left={(props) => <List.Icon {...props} icon="shield-lock" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => (navigation as any).navigate('Privacy')}
           />
         </List.Section>
       </Card>
@@ -362,18 +320,38 @@ const MacroItem = React.memo(function MacroItem({ label, value, color }: { label
 const styles = StyleSheet.create({
   container: { flex: 1 },
   title: { fontWeight: 'bold', marginBottom: spacing.md },
-  card: { borderRadius: borderRadius.lg, marginBottom: spacing.md },
+  card: { borderRadius: borderRadius.lg, marginBottom: spacing.sm },
+
+  // User Card
+  userCardContent: { padding: spacing.md },
+  userTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
   avatar: {
-    width: 80, height: 80, borderRadius: 40,
+    width: 48, height: 48, borderRadius: 24,
     backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center',
   },
-  sectionLabel: { fontWeight: 'bold', fontSize: 14, marginBottom: spacing.sm, color: colors.textSecondary },
-  infoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  userInfo: { flex: 1, marginLeft: spacing.sm },
+  userName: { fontWeight: 'bold', fontSize: 16 },
+  userStats: { color: colors.textTertiary, fontSize: 12, marginTop: 2 },
+  infoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: colors.successBg, paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.successBg, paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 10,
   },
-  chipText: { fontSize: 12, color: colors.textPrimary },
-  macroRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.sm },
+  chipText: { fontSize: 11, color: colors.textPrimary },
+
+  // Premium
+  premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  premiumTitle: { fontWeight: 'bold', fontSize: 15, flex: 1 },
+  premiumPlanBadge: { backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  premiumPlanText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  premiumExpiry: { color: colors.textTertiary, fontSize: 11, marginTop: spacing.xs },
+  premiumUpgradeRow: { flexDirection: 'row', alignItems: 'center' },
+  premiumUpgradeText: { flex: 1, marginLeft: spacing.sm },
+  premiumUpgradeTitle: { fontWeight: 'bold', fontSize: 15 },
+  premiumUpgradeSubtitle: { color: colors.textTertiary, fontSize: 12 },
+
+  // Macro Goals
+  sectionLabel: { fontWeight: 'bold', fontSize: 13, marginBottom: spacing.sm, color: colors.textSecondary },
+  macroRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.xs },
 });

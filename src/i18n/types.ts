@@ -103,6 +103,7 @@ export interface Translations {
     lunch: string;
     dinner: string;
     snack: string;
+    aiRecognition: string;
   };
 
   // Workout Screen
@@ -367,6 +368,16 @@ export interface Translations {
     notFound: string;
     found: string;
     scanBarcode: string;
+    manualEntryTitle: string;
+    productName: string;
+    caloriesPer100g: string;
+    proteinPer100g: string;
+    carbsPer100g: string;
+    fatPer100g: string;
+    submit: string;
+    productAdded: string;
+    communityVerified: string;
+    fillAllFields: string;
   };
 
   // Onboarding
@@ -623,6 +634,43 @@ export interface Translations {
     currentPlan: string;
     expiresAt: string;
     managePlan: string;
+  };
+
+  // Privacy Policy
+  privacy: {
+    title: string;
+    lastUpdated: string;
+    dataCollection: string;
+    dataCollectionDesc: string;
+    personalData: string;
+    personalDataDesc: string;
+    healthData: string;
+    healthDataDesc: string;
+    nutritionData: string;
+    nutritionDataDesc: string;
+    fitnessData: string;
+    fitnessDataDesc: string;
+    photoData: string;
+    photoDataDesc: string;
+    aiDataTitle: string;
+    aiDataDesc: string;
+    aiTrainingWarning: string;
+    thirdPartyTitle: string;
+    geminiDesc: string;
+    openFoodFactsDesc: string;
+    healthKitDesc: string;
+    localStorage: string;
+    localStorageDesc: string;
+    dataSecurity: string;
+    dataSecurityDesc: string;
+    userRights: string;
+    userRightsDesc: string;
+    dataRetention: string;
+    dataRetentionDesc: string;
+    contact: string;
+    contactDesc: string;
+    consentTitle: string;
+    consentDesc: string;
   };
 
   // Days of week (abbreviated)

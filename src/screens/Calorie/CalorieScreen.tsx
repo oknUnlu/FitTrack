@@ -1,21 +1,22 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { View, ScrollView, StyleSheet, FlatList, TouchableOpacity, Platform, Alert } from 'react-native';
-import { Text, Card, FAB, Searchbar, Chip, useTheme, IconButton, Button, Divider } from 'react-native-paper';
+import { View, ScrollView, StyleSheet, FlatList, TouchableOpacity, Platform, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { Text, Card, Searchbar, useTheme, Dialog, Portal, TextInput, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '../../store/userStore';
 import { useMealStore } from '../../store/mealStore';
+import { getUserById, User } from '../../services/database/userDao';
 import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../services/database/mealDao';
-import { searchFoodItems, FoodItem } from '../../services/database/foodDao';
+import { searchFoodItems, FoodItem, getFoodByBarcode } from '../../services/database/foodDao';
 import { getProductByBarcode } from '../../services/api/openFoodFacts';
+import { insertBarcodeSubmission, checkAndPromoteBarcode, getVerifiedProductFromCloud } from '../../services/database/barcodeDao';
 import { BarcodeScanner } from '../../components/BarcodeScanner';
 import { recognizeFoodFromImage, RecognizedFood } from '../../services/ai/foodRecognition';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, borderRadius } from '../../theme/theme';
-import { todayString, MEAL_TYPES, formatCalories, generateId } from '../../utils/helpers';
+import { todayString, MEAL_TYPES, generateId } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
 import { usePremiumStore } from '../../store/premiumStore';
-import { checkUsageLimit, recordFeatureUsage, getRemainingUsage, getFeatureFreeLimit } from '../../services/premium/featureGate';
 import { PaywallModal } from '../../components/PaywallModal';
 
 // Web fallback: load foods JSON directly for search
@@ -42,11 +43,25 @@ const MEAL_TYPE_KEYS: Record<string, 'breakfast' | 'lunch' | 'dinner' | 'snack'>
   snack: 'snack',
 };
 
+const MEAL_COLORS: Record<string, string> = {
+  breakfast: '#FF9800',
+  lunch: '#4CAF50',
+  dinner: '#5C6BC0',
+  snack: '#AB47BC',
+};
+
+const MEAL_CALORIE_RATIOS: Record<string, number> = {
+  breakfast: 0.25,
+  lunch: 0.35,
+  dinner: 0.30,
+  snack: 0.10,
+};
+
 export function CalorieScreen() {
   const userId = useUserStore((s) => s.userId);
   const { meals: webMeals, addMeal: addWebMeal, removeMeal: removeWebMeal } = useMealStore();
   const theme = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [date, setDate] = useState(todayString());
   const [meals, setMeals] = useState<MealLog[]>([]);
   const [searchVisible, setSearchVisible] = useState(false);
@@ -61,10 +76,15 @@ export function CalorieScreen() {
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState('');
   const isPremium = usePremiumStore((s) => s.isPremium);
-  const [barcodeRemaining, setBarcodeRemaining] = useState<number | null>(null);
-  const [foodRecRemaining, setFoodRecRemaining] = useState<number | null>(null);
-  const barcodeFreeLimit = getFeatureFreeLimit('barcode_scanner') || 5;
-  const foodRecFreeLimit = getFeatureFreeLimit('food_recognition') || 3;
+  const [user, setUser] = useState<User | null>(null);
+  const [manualEntryVisible, setManualEntryVisible] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState('');
+  const [manualName, setManualName] = useState('');
+  const [manualCalories, setManualCalories] = useState('');
+  const [manualProtein, setManualProtein] = useState('');
+  const [manualCarbs, setManualCarbs] = useState('');
+  const [manualFat, setManualFat] = useState('');
+
 
   const loadMeals = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -72,27 +92,19 @@ export function CalorieScreen() {
       return;
     }
     try {
-      const data = await getMealLogsByDate(userId, date);
+      const [data, u] = await Promise.all([
+        getMealLogsByDate(userId, date),
+        user ? Promise.resolve(user) : getUserById(userId),
+      ]);
       setMeals(data);
+      if (u && !user) setUser(u);
     } catch (e) {
       if (__DEV__) console.warn('loadMeals failed:', e);
     }
-  }, [userId, date, webMeals]);
+  }, [userId, date, webMeals, user]);
 
   useEffect(() => { loadMeals(); }, [loadMeals]);
 
-  const refreshRemainingUsage = useCallback(async () => {
-    if (!isPremium) {
-      const [barcodeRem, foodRem] = await Promise.all([
-        getRemainingUsage('barcode_scanner'),
-        getRemainingUsage('food_recognition'),
-      ]);
-      setBarcodeRemaining(barcodeRem);
-      setFoodRecRemaining(foodRem);
-    }
-  }, [isPremium]);
-
-  useEffect(() => { refreshRemainingUsage(); }, [refreshRemainingUsage]);
 
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
@@ -150,31 +162,39 @@ export function CalorieScreen() {
     }
   }, [loadMeals]);
 
-  const checkBarcodeAccess = useCallback(async (): Promise<boolean> => {
+  const checkPremiumAccess = useCallback((feature: string): boolean => {
     if (isPremium) return true;
-    const usage = await checkUsageLimit('barcode_scanner');
-    if (!usage.allowed) {
-      setPaywallFeature('barcode_scanner');
-      setPaywallVisible(true);
-      return false;
-    }
-    return true;
-  }, [isPremium]);
-
-  const checkFoodRecognitionAccess = useCallback(async (): Promise<boolean> => {
-    if (isPremium) return true;
-    const usage = await checkUsageLimit('food_recognition');
-    if (!usage.allowed) {
-      setPaywallFeature('food_recognition');
-      setPaywallVisible(true);
-      return false;
-    }
-    return true;
+    setPaywallFeature(feature);
+    setPaywallVisible(true);
+    return false;
   }, [isPremium]);
 
   const handleBarcodeScan = useCallback(async (barcode: string) => {
     setBarcodeLoading(true);
     try {
+      // 1. Check local DB first (community-verified or previously saved)
+      if (Platform.OS !== 'web') {
+        const localFood = await getFoodByBarcode(barcode);
+        if (localFood) {
+          setBarcodeVisible(false);
+          setBarcodeLoading(false);
+          handleAddFood(localFood);
+          return;
+        }
+      }
+
+      // 2. Check Firestore verified products (community data)
+      if (Platform.OS !== 'web') {
+        const cloudFood = await getVerifiedProductFromCloud(barcode);
+        if (cloudFood) {
+          setBarcodeVisible(false);
+          setBarcodeLoading(false);
+          handleAddFood(cloudFood);
+          return;
+        }
+      }
+
+      // 3. Check Open Food Facts API
       const product = await getProductByBarcode(barcode);
       if (product) {
         const food: FoodItem = {
@@ -196,23 +216,79 @@ export function CalorieScreen() {
         };
         setBarcodeVisible(false);
         setBarcodeLoading(false);
-        await recordFeatureUsage('barcode_scanner');
-        refreshRemainingUsage();
         handleAddFood(food);
       } else {
+        // 3. Not found anywhere → show manual entry form
         setBarcodeLoading(false);
-        Alert.alert('', t.barcode.notFound);
+        setBarcodeVisible(false);
+        setScannedBarcode(barcode);
+        setManualName('');
+        setManualCalories('');
+        setManualProtein('');
+        setManualCarbs('');
+        setManualFat('');
+        setManualEntryVisible(true);
       }
     } catch (e) {
       setBarcodeLoading(false);
-      Alert.alert(t.common.error, t.barcode.notFound);
+      setBarcodeVisible(false);
+      setScannedBarcode(barcode);
+      setManualName('');
+      setManualCalories('');
+      setManualProtein('');
+      setManualCarbs('');
+      setManualFat('');
+      setManualEntryVisible(true);
     }
   }, [activeMealType, handleAddFood, t]);
 
+  const handleManualBarcodeSubmit = useCallback(async () => {
+    const name = manualName.trim();
+    const cal = parseFloat(manualCalories);
+    const pro = parseFloat(manualProtein);
+    const carb = parseFloat(manualCarbs);
+    const fat = parseFloat(manualFat);
+
+    if (!name || isNaN(cal) || isNaN(pro) || isNaN(carb) || isNaN(fat)) {
+      Alert.alert('', t.barcode.fillAllFields);
+      return;
+    }
+
+    // Use immediately as meal entry
+    const food: FoodItem = {
+      id: `manual_${scannedBarcode}_${Date.now()}`,
+      name,
+      nameTr: name,
+      calories: cal,
+      protein: pro,
+      carbs: carb,
+      fat,
+      fiber: null,
+      sugar: null,
+      barcode: scannedBarcode,
+      servingSize: 100,
+      servingUnit: 'g',
+      isCustom: true,
+      isFavorite: false,
+      source: 'manual',
+    };
+
+    setManualEntryVisible(false);
+    handleAddFood(food);
+
+    // Save submission and check verification in background
+    if (Platform.OS !== 'web') {
+      try {
+        await insertBarcodeSubmission(scannedBarcode, name, cal, pro, carb, fat);
+        await checkAndPromoteBarcode(scannedBarcode);
+      } catch (e) {
+        if (__DEV__) console.warn('Barcode submission failed:', e);
+      }
+    }
+  }, [scannedBarcode, manualName, manualCalories, manualProtein, manualCarbs, manualFat, handleAddFood, t]);
+
   const handlePhotoRecognition = useCallback(async () => {
-    // Check premium usage limit
-    const canAccess = await checkFoodRecognitionAccess();
-    if (!canAccess) return;
+    if (!checkPremiumAccess('food_recognition')) return;
 
     try {
       const result = await ImagePicker.launchCameraAsync({
@@ -226,11 +302,9 @@ export function CalorieScreen() {
       const foods = await recognizeFoodFromImage(result.assets[0].uri);
       setAiResults(foods);
       setAiLoading(false);
-      await recordFeatureUsage('food_recognition');
-      refreshRemainingUsage();
     } catch (e: any) {
       setAiLoading(false);
-      Alert.alert(t.common.error, e.message || 'AI besin tanıma başarısız');
+      Alert.alert(t.common.error, e.message || t.calorie.aiRecognition);
     }
   }, [t]);
 
@@ -257,72 +331,128 @@ export function CalorieScreen() {
     setAiResults([]);
   }, [handleAddFood]);
 
-  const totalCalories = useMemo(() => meals.reduce((s, m) => s + m.caloriesConsumed, 0), [meals]);
+  const dailyTarget = user?.tdee ?? 2000;
 
   const getMealLabel = (key: string): string => {
     const labelKey = MEAL_TYPE_KEYS[key];
     return labelKey ? t.calorie[labelKey] : key;
   };
 
+  const displayDate = useMemo(() => {
+    const d = new Date(date + 'T00:00:00');
+    const formatted = d.toLocaleDateString(language, { weekday: 'long', day: 'numeric', month: 'long' });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }, [date, language]);
+
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
       {/* Date Header */}
-      <View style={styles.dateRow}>
-        <IconButton icon="chevron-left" onPress={() => {
-          const d = new Date(date);
-          d.setDate(d.getDate() - 1);
-          setDate(d.toISOString().split('T')[0]);
-        }} />
-        <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{date}</Text>
-        <IconButton icon="chevron-right" onPress={() => {
-          const d = new Date(date);
-          d.setDate(d.getDate() + 1);
-          setDate(d.toISOString().split('T')[0]);
-        }} />
+      <View style={styles.dateHeader}>
+        <TouchableOpacity
+          style={styles.dateNavBtn}
+          onPress={() => {
+            const d = new Date(date);
+            d.setDate(d.getDate() - 1);
+            setDate(d.toISOString().split('T')[0]);
+          }}
+          activeOpacity={0.6}
+        >
+          <MaterialCommunityIcons name="chevron-left" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <View style={styles.dateDisplay}>
+          <Text style={styles.dateText}>{displayDate}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.dateNavBtn}
+          onPress={() => {
+            const d = new Date(date);
+            d.setDate(d.getDate() + 1);
+            setDate(d.toISOString().split('T')[0]);
+          }}
+          activeOpacity={0.6}
+        >
+          <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
-      {/* Total */}
-      <Text style={styles.totalText}>{t.calorie.total}: {formatCalories(totalCalories)}</Text>
-
-      {/* Meal sections */}
+      {/* Meal Sections */}
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {MEAL_TYPES.map((mt) => {
           const sectionMeals = meals.filter((m) => m.mealType === mt.key);
           const sectionCal = sectionMeals.reduce((s, m) => s + m.caloriesConsumed, 0);
+          const mealColor = MEAL_COLORS[mt.key] || colors.primary;
+          const mealTarget = Math.round(dailyTarget * (MEAL_CALORIE_RATIOS[mt.key] ?? 0.25));
+          const mealProgress = mealTarget > 0 ? Math.min(sectionCal / mealTarget, 1) : 0;
+          const isOver = sectionCal > mealTarget;
 
           return (
             <Card key={mt.key} style={styles.mealCard} mode="elevated">
-              <Card.Content>
-                <View style={styles.rowBetween}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <MaterialCommunityIcons name={mt.icon as any} size={20} color={colors.primary} />
-                    <Text variant="titleSmall" style={{ fontWeight: 'bold', marginLeft: 8 }}>{getMealLabel(mt.key)}</Text>
+              <View style={[styles.mealAccent, { backgroundColor: mealColor }]} />
+              <Card.Content style={styles.mealContent}>
+                {/* Meal Header */}
+                <View style={styles.mealHeader}>
+                  <View style={[styles.mealIconWrap, { backgroundColor: `${mealColor}15` }]}>
+                    <MaterialCommunityIcons name={mt.icon as any} size={20} color={mealColor} />
                   </View>
-                  <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{Math.round(sectionCal)} {t.common.kcal}</Text>
+                  <Text style={styles.mealTitle}>{getMealLabel(mt.key)}</Text>
+                  <View style={[styles.mealCalBadge, { backgroundColor: `${mealColor}10` }]}>
+                    <Text style={[styles.mealCalText, { color: isOver ? colors.red : mealColor }]}>
+                      {Math.round(sectionCal)} / {mealTarget} {t.common.kcal}
+                    </Text>
+                  </View>
                 </View>
 
-                {sectionMeals.map((m) => (
-                  <View key={m.id} style={styles.mealItem}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14 }}>{m.foodItemId}</Text>
-                      <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
-                        {Math.round(m.caloriesConsumed)} {t.common.kcal} · P:{Math.round(m.proteinConsumed)}g · K:{Math.round(m.carbsConsumed)}g · Y:{Math.round(m.fatConsumed)}g
-                      </Text>
+                {/* Progress Bar */}
+                <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarFill, {
+                    width: `${Math.round(mealProgress * 100)}%`,
+                    backgroundColor: isOver ? colors.red : mealColor,
+                  }]} />
+                </View>
+
+                {/* Food Items */}
+                {sectionMeals.map((m, i) => (
+                  <View
+                    key={m.id}
+                    style={[styles.foodItem, i === sectionMeals.length - 1 && { borderBottomWidth: 0 }]}
+                  >
+                    <View style={styles.foodInfo}>
+                      <Text style={styles.foodName} numberOfLines={1}>{m.foodItemId}</Text>
+                      <View style={styles.foodMacroRow}>
+                        <Text style={[styles.macroTag, { color: colors.protein }]}>
+                          P:{Math.round(m.proteinConsumed)}g
+                        </Text>
+                        <Text style={styles.macroDivider}>&middot;</Text>
+                        <Text style={[styles.macroTag, { color: colors.carbs }]}>
+                          K:{Math.round(m.carbsConsumed)}g
+                        </Text>
+                        <Text style={styles.macroDivider}>&middot;</Text>
+                        <Text style={[styles.macroTag, { color: colors.fat }]}>
+                          Y:{Math.round(m.fatConsumed)}g
+                        </Text>
+                      </View>
                     </View>
-                    <IconButton icon="delete-outline" size={18} onPress={() => handleDelete(m.id)} />
+                    <View style={styles.foodCalWrap}>
+                      <Text style={styles.foodCalValue}>{Math.round(m.caloriesConsumed)}</Text>
+                      <Text style={styles.foodCalLabel}>{t.common.kcal}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => handleDelete(m.id)} style={styles.deleteBtn} activeOpacity={0.6}>
+                      <MaterialCommunityIcons name="close" size={16} color={colors.textTertiary} />
+                    </TouchableOpacity>
                   </View>
                 ))}
 
-                <Button
-                  mode="text"
-                  icon="plus"
+                {/* Add Food Button */}
+                <TouchableOpacity
+                  style={[styles.addFoodBtn, { borderColor: `${mealColor}30` }]}
                   onPress={() => { setActiveMealType(mt.key); setSearchVisible(true); }}
-                  compact
+                  activeOpacity={0.7}
                 >
-                  {t.calorie.addFood}
-                </Button>
+                  <MaterialCommunityIcons name="plus" size={18} color={mealColor} />
+                  <Text style={[styles.addFoodText, { color: mealColor }]}>{t.calorie.addFood}</Text>
+                </TouchableOpacity>
               </Card.Content>
             </Card>
           );
@@ -331,46 +461,70 @@ export function CalorieScreen() {
 
       {/* AI Food Recognition Modal */}
       {aiModalVisible && (
-        <View style={styles.searchOverlay}>
-          <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.rowBetween}>
-              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                {'AI Besin Tanıma'}
-              </Text>
-              <IconButton icon="close" onPress={() => { setAiModalVisible(false); setAiResults([]); }} />
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior="padding"
+        >
+          <TouchableWithoutFeedback onPress={() => { setAiModalVisible(false); setAiResults([]); }}>
+            <View style={styles.modalBackdrop} />
+          </TouchableWithoutFeedback>
+          <View style={[styles.modalSheet, { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom || spacing.md }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleRow}>
+                <View style={[styles.modalTitleIcon, { backgroundColor: `${colors.orange}15` }]}>
+                  <MaterialCommunityIcons name="brain" size={20} color={colors.orange} />
+                </View>
+                <Text style={styles.modalTitle}>{t.calorie.aiRecognition}</Text>
+              </View>
+              <TouchableOpacity onPress={() => { setAiModalVisible(false); setAiResults([]); }} style={styles.modalCloseBtn}>
+                <MaterialCommunityIcons name="close" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
             </View>
+
             {aiLoading ? (
-              <View style={{ alignItems: 'center', padding: 40 }}>
-                <Text style={{ color: colors.textTertiary }}>{t.common.loading}</Text>
+              <View style={styles.modalLoadingWrap}>
+                <MaterialCommunityIcons name="food-variant" size={40} color={colors.orange} />
+                <Text style={styles.modalLoadingText}>{t.common.loading}</Text>
               </View>
             ) : aiResults.length === 0 ? (
-              <Text style={{ textAlign: 'center', color: colors.textTertiary, padding: 20 }}>{t.calorie.noResults}</Text>
+              <Text style={styles.modalEmptyText}>{t.calorie.noResults}</Text>
             ) : (
               <FlatList
                 data={aiResults}
                 keyExtractor={(_, i) => `ai_${i}`}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
                 renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleAddAiFood(item)} style={styles.searchItem}>
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={{ fontWeight: '600' }}>{item.name}</Text>
-                        <View style={{ backgroundColor: item.confidence === 'high' ? colors.successBg : item.confidence === 'medium' ? colors.warningBg : colors.errorBg, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
-                          <Text style={{ fontSize: 9, color: item.confidence === 'high' ? '#2E7D32' : item.confidence === 'medium' ? '#E65100' : '#C62828' }}>
+                  <TouchableOpacity onPress={() => handleAddAiFood(item)} style={styles.searchResultItem} activeOpacity={0.7}>
+                    <View style={styles.searchResultInfo}>
+                      <View style={styles.searchResultNameRow}>
+                        <Text style={styles.searchResultName}>{item.name}</Text>
+                        <View style={[
+                          styles.confidenceBadge,
+                          { backgroundColor: item.confidence === 'high' ? colors.successBg : item.confidence === 'medium' ? colors.warningBg : colors.errorBg },
+                        ]}>
+                          <Text style={[
+                            styles.confidenceText,
+                            { color: item.confidence === 'high' ? '#2E7D32' : item.confidence === 'medium' ? '#E65100' : '#C62828' },
+                          ]}>
                             {item.confidence}
                           </Text>
                         </View>
                       </View>
-                      <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
-                        {item.calories} {t.common.kcal} · P:{item.protein}g · K:{item.carbs}g · Y:{item.fat}g
+                      <Text style={styles.searchResultMacro}>
+                        {item.calories} {t.common.kcal} &middot; P:{item.protein}g &middot; K:{item.carbs}g &middot; Y:{item.fat}g
                       </Text>
                     </View>
-                    <MaterialCommunityIcons name="plus-circle" size={24} color={colors.primary} />
+                    <View style={styles.addCircle}>
+                      <MaterialCommunityIcons name="plus" size={18} color="#fff" />
+                    </View>
                   </TouchableOpacity>
                 )}
               />
             )}
           </View>
-        </View>
+        </KeyboardAvoidingView>
       )}
 
       {/* Barcode Scanner */}
@@ -384,78 +538,145 @@ export function CalorieScreen() {
 
       {/* Search Modal */}
       {searchVisible && (
-        <View style={styles.searchOverlay}>
-          <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.rowBetween}>
-              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>{t.calorie.searchFood}</Text>
-              <IconButton icon="close" onPress={() => setSearchVisible(false)} />
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior="padding"
+        >
+          <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setSearchVisible(false); }}>
+            <View style={styles.modalBackdrop} />
+          </TouchableWithoutFeedback>
+          <View style={[styles.modalSheet, { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom || spacing.md }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t.calorie.searchFood}</Text>
+              <TouchableOpacity onPress={() => { Keyboard.dismiss(); setSearchVisible(false); }} style={styles.modalCloseBtn}>
+                <MaterialCommunityIcons name="close" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: spacing.sm }}>
-              <Searchbar
-                placeholder={t.calorie.searchPlaceholder}
-                value={searchQuery}
-                onChangeText={handleSearch}
-                style={{ flex: 1 }}
-              />
-              {Platform.OS !== 'web' && (
-                <>
-                  <View style={{ alignItems: 'center' }}>
-                    <TouchableOpacity
-                      style={styles.barcodeBtn}
-                      onPress={async () => {
-                        const canAccess = await checkBarcodeAccess();
-                        if (canAccess) { setSearchVisible(false); setBarcodeVisible(true); }
-                      }}
-                      accessibilityLabel="Scan barcode"
-                      accessibilityRole="button"
-                    >
-                      <MaterialCommunityIcons name="barcode-scan" size={24} color="#fff" />
-                    </TouchableOpacity>
-                    {!isPremium && barcodeRemaining !== null && (
-                      <Text style={{ fontSize: 9, color: barcodeRemaining > 0 ? colors.textTertiary : colors.orange, marginTop: 2 }}>
-                        {barcodeRemaining}/{barcodeFreeLimit}
-                      </Text>
-                    )}
+
+            {/* Search Bar + Action Buttons */}
+            <Searchbar
+              placeholder={t.calorie.searchPlaceholder}
+              value={searchQuery}
+              onChangeText={handleSearch}
+              style={styles.searchBar}
+              inputStyle={styles.searchBarInput}
+            />
+
+            {Platform.OS !== 'web' && (
+              <View style={styles.actionBtnRow}>
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => {
+                    Keyboard.dismiss(); setSearchVisible(false); setBarcodeVisible(true);
+                  }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Scan barcode"
+                  accessibilityRole="button"
+                >
+                  <View style={[styles.actionBtnIcon, { backgroundColor: colors.primary }]}>
+                    <MaterialCommunityIcons name="barcode-scan" size={22} color="#fff" />
                   </View>
-                  <View style={{ alignItems: 'center' }}>
-                    <TouchableOpacity
-                      style={[styles.barcodeBtn, { backgroundColor: colors.orange }]}
-                      onPress={() => { setSearchVisible(false); handlePhotoRecognition(); }}
-                      accessibilityLabel="Take photo for food recognition"
-                      accessibilityRole="button"
-                    >
-                      <MaterialCommunityIcons name="camera" size={24} color="#fff" />
-                    </TouchableOpacity>
-                    {!isPremium && foodRecRemaining !== null && (
-                      <Text style={{ fontSize: 9, color: foodRecRemaining > 0 ? colors.textTertiary : colors.orange, marginTop: 2 }}>
-                        {foodRecRemaining}/{foodRecFreeLimit}
-                      </Text>
-                    )}
+                  <Text style={styles.actionBtnLabel}>{t.barcode.scanBarcode}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => { Keyboard.dismiss(); setSearchVisible(false); handlePhotoRecognition(); }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Take photo for food recognition"
+                  accessibilityRole="button"
+                >
+                  <View style={[styles.actionBtnIcon, { backgroundColor: colors.orange }]}>
+                    <MaterialCommunityIcons name="camera" size={22} color="#fff" />
                   </View>
-                </>
-              )}
-            </View>
+                  <Text style={styles.actionBtnLabel}>{t.calorie.aiRecognition}</Text>
+                  {!isPremium && (
+                    <MaterialCommunityIcons name="lock" size={12} color={colors.textTertiary} style={{ marginTop: 2 }} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Search Results */}
             <FlatList
               data={searchResults}
               keyExtractor={(item) => item.id}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => handleAddFood(item)} style={styles.searchItem}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: '600' }}>{item.nameTr || item.name}</Text>
-                    <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
-                      {item.calories} {t.common.kcal}/100g · P:{item.protein}g · K:{item.carbs}g · Y:{item.fat}g
+                <TouchableOpacity onPress={() => handleAddFood(item)} style={styles.searchResultItem} activeOpacity={0.7}>
+                  <View style={styles.searchResultInfo}>
+                    <Text style={styles.searchResultName}>{item.nameTr || item.name}</Text>
+                    <Text style={styles.searchResultMacro}>
+                      {item.calories} {t.common.kcal}/100g &middot; P:{item.protein}g &middot; K:{item.carbs}g &middot; Y:{item.fat}g
                     </Text>
                   </View>
-                  <MaterialCommunityIcons name="plus-circle" size={24} color={colors.primary} />
+                  <View style={styles.addCircle}>
+                    <MaterialCommunityIcons name="plus" size={18} color="#fff" />
+                  </View>
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
-                searchQuery.length >= 2 ? <Text style={{ textAlign: 'center', color: colors.textTertiary }}>{t.calorie.noResults}</Text> : null
+                searchQuery.length >= 2 ? <Text style={styles.modalEmptyText}>{t.calorie.noResults}</Text> : null
               }
             />
           </View>
-        </View>
+        </KeyboardAvoidingView>
       )}
+
+      {/* Manual Barcode Entry Dialog */}
+      <Portal>
+        <Dialog visible={manualEntryVisible} onDismiss={() => setManualEntryVisible(false)}>
+          <Dialog.Title>{t.barcode.manualEntryTitle}</Dialog.Title>
+          <Dialog.Content style={{ gap: 8 }}>
+            <TextInput
+              label={t.barcode.productName}
+              value={manualName}
+              onChangeText={setManualName}
+              mode="outlined"
+              dense
+            />
+            <TextInput
+              label={t.barcode.caloriesPer100g}
+              value={manualCalories}
+              onChangeText={setManualCalories}
+              keyboardType="numeric"
+              mode="outlined"
+              dense
+            />
+            <TextInput
+              label={t.barcode.proteinPer100g}
+              value={manualProtein}
+              onChangeText={setManualProtein}
+              keyboardType="numeric"
+              mode="outlined"
+              dense
+            />
+            <TextInput
+              label={t.barcode.carbsPer100g}
+              value={manualCarbs}
+              onChangeText={setManualCarbs}
+              keyboardType="numeric"
+              mode="outlined"
+              dense
+            />
+            <TextInput
+              label={t.barcode.fatPer100g}
+              value={manualFat}
+              onChangeText={setManualFat}
+              keyboardType="numeric"
+              mode="outlined"
+              dense
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setManualEntryVisible(false)}>{t.common.cancel}</Button>
+            <Button mode="contained" onPress={handleManualBarcodeSubmit}>{t.barcode.submit}</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
       <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature={paywallFeature} />
     </View>
   );
@@ -463,13 +684,308 @@ export function CalorieScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  dateRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: spacing.sm },
-  totalText: { textAlign: 'center', fontSize: 14, color: colors.textTertiary, marginBottom: spacing.sm },
-  mealCard: { borderRadius: borderRadius.lg, marginHorizontal: spacing.md, marginBottom: spacing.sm },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  mealItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: colors.divider },
-  searchOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  searchContainer: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: spacing.md, maxHeight: '80%' },
-  searchItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 0.5, borderBottomColor: colors.divider },
-  barcodeBtn: { width: 48, height: 48, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
+
+  // Date Header
+  dateHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  dateNavBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.04)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateDisplay: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+
+  // Meal Card
+  mealCard: {
+    borderRadius: borderRadius.lg,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    overflow: 'hidden',
+  },
+  mealAccent: {
+    height: 3,
+  },
+  mealContent: {
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  mealIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mealTitle: {
+    flex: 1,
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginLeft: spacing.sm,
+    color: colors.textPrimary,
+  },
+  mealCalBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  mealCalText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // Progress Bar
+  progressBarBg: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.divider,
+    marginBottom: spacing.sm,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+
+  // Food Item
+  foodItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.divider,
+  },
+  foodInfo: {
+    flex: 1,
+  },
+  foodName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  foodMacroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  macroTag: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  macroDivider: {
+    fontSize: 11,
+    color: colors.textDisabled,
+  },
+  foodCalWrap: {
+    alignItems: 'flex-end',
+    marginRight: 4,
+    minWidth: 44,
+  },
+  foodCalValue: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
+  foodCalLabel: {
+    fontSize: 9,
+    color: colors.textTertiary,
+  },
+  deleteBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 2,
+  },
+
+  // Add Food Button
+  addFoodBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: borderRadius.sm,
+    gap: 6,
+  },
+  addFoodText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // Modal / Bottom Sheet
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    maxHeight: '85%',
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  modalTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalTitleIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    fontSize: 17,
+    color: colors.textPrimary,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalLoadingWrap: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    gap: 12,
+  },
+  modalLoadingText: {
+    color: colors.textTertiary,
+    fontSize: 13,
+  },
+  modalEmptyText: {
+    textAlign: 'center',
+    color: colors.textTertiary,
+    paddingVertical: spacing.lg,
+    fontSize: 13,
+  },
+
+  // Search
+  searchBar: {
+    borderRadius: borderRadius.md,
+    elevation: 0,
+    marginBottom: spacing.sm,
+  },
+  searchBarInput: {
+    fontSize: 14,
+  },
+  actionBtnRow: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xs,
+  },
+  actionBtn: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionBtnIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionBtnLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500',
+    maxWidth: 80,
+    textAlign: 'center',
+  },
+
+  // Search Results
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.divider,
+    gap: spacing.sm,
+  },
+  searchResultInfo: {
+    flex: 1,
+  },
+  searchResultNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  searchResultName: {
+    fontWeight: '600',
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  searchResultMacro: {
+    color: colors.textTertiary,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  addCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confidenceBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  confidenceText: {
+    fontSize: 9,
+    fontWeight: '600',
+  },
 });

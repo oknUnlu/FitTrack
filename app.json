@@ -62,6 +62,10 @@
       ["expo-health-connect", {
         "requestPermissionsOnStart": false
       }],
+      ["react-native-google-mobile-ads", {
+        "androidAppId": "ca-app-pub-3850996093825148~5620803043",
+        "iosAppId": "ca-app-pub-3850996093825148~5620803043"
+      }],
       ["expo-build-properties", {
         "android": {
           "compileSdkVersion": 35,

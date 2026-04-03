@@ -15,6 +15,7 @@ import { lightTheme, darkTheme } from './src/theme/theme';
 import { initDatabase, seedDatabase } from './src/services/database/database';
 import { getDeviceToken } from './src/services/api/apiClient';
 import { configureRevenueCat, checkSubscriptionStatus } from './src/services/premium/revenueCat';
+import { initializeAds, loadInterstitial } from './src/services/ads/adService';
 
 // Splash screen'i uygulama hazır olana kadar görünür tut
 SplashScreen.preventAutoHideAsync();
@@ -53,6 +54,13 @@ export default function App() {
         await checkSubscriptionStatus();
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: RevenueCat init failed:', e);
+      }
+      // Initialize AdMob
+      try {
+        await initializeAds();
+        await loadInterstitial();
+      } catch (e) {
+        if (__DEV__) console.warn('FitTrack: AdMob init failed:', e);
       }
       await SplashScreen.hideAsync();
     };

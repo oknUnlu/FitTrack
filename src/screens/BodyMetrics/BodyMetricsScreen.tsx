@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, Image, Alert, Platform } from 'react-native';
-import { Text, Card, useTheme, TextInput, Button, Portal, Dialog, IconButton } from 'react-native-paper';
+import { Text, Card, useTheme, TextInput, Button, Portal, Dialog } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -114,19 +114,34 @@ export function BodyMetricsScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.md }}
+      contentContainerStyle={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.xl }}
     >
-      <View style={styles.headerRow}>
-        <Button mode="contained" onPress={() => setDialogVisible(true)} icon="plus" compact>
-          {t.common.add}
-        </Button>
-      </View>
+      {/* Add Button */}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setDialogVisible(true)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.addButtonIcon}>
+          <MaterialCommunityIcons name="plus" size={20} color="#fff" />
+        </View>
+        <Text style={styles.addButtonText}>{t.bodyMetrics.addMeasurement}</Text>
+      </TouchableOpacity>
 
       {/* Latest metrics summary */}
       {latestMetric && (
-        <Card style={styles.card} mode="elevated">
-          <Card.Content>
-            <Text style={styles.cardTitle}>{t.bodyMetrics.latest} - {latestMetric.date}</Text>
+        <Card style={styles.summaryCard} mode="elevated">
+          <View style={styles.summaryAccent} />
+          <Card.Content style={styles.summaryContent}>
+            <View style={styles.summaryHeader}>
+              <View style={styles.summaryTitleRow}>
+                <MaterialCommunityIcons name="chart-line" size={18} color={colors.primary} />
+                <Text style={styles.summaryTitle}>{t.bodyMetrics.latest}</Text>
+              </View>
+              <View style={styles.dateBadge}>
+                <Text style={styles.dateBadgeText}>{latestMetric.date}</Text>
+              </View>
+            </View>
             <View style={styles.metricsGrid}>
               <MetricItem label={t.common.kg} value={`${latestMetric.weight}`} diff={getDiff(latestMetric.weight, previousMetric?.weight ?? null)} icon="scale-bathroom" color={colors.primary} />
               {latestMetric.bodyFat !== null && (
@@ -151,20 +166,29 @@ export function BodyMetricsScreen() {
 
       {/* Photo comparison */}
       {photosWithImages.length >= 2 && (
-        <Card style={styles.card} mode="elevated">
+        <Card style={styles.photoCard} mode="elevated">
           <Card.Content>
-            <Text style={styles.cardTitle}>{t.bodyMetrics.photoCompare}</Text>
+            <View style={styles.photoCardHeader}>
+              <MaterialCommunityIcons name="image-multiple" size={18} color={colors.secondary} />
+              <Text style={styles.photoCardTitle}>{t.bodyMetrics.photoCompare}</Text>
+            </View>
             <View style={styles.photoCompareRow}>
               <View style={styles.photoColumn}>
-                <Text style={styles.photoDate}>{photosWithImages[photosWithImages.length - 1].date}</Text>
+                <View style={styles.photoDateChip}>
+                  <Text style={styles.photoDateText}>{photosWithImages[photosWithImages.length - 1].date}</Text>
+                </View>
                 <Image
                   source={{ uri: photosWithImages[photosWithImages.length - 1].progressPhotoPath! }}
                   style={styles.comparePhoto}
                 />
               </View>
-              <MaterialCommunityIcons name="arrow-right" size={24} color="#999" />
+              <View style={styles.arrowWrap}>
+                <MaterialCommunityIcons name="arrow-right" size={20} color={colors.primary} />
+              </View>
               <View style={styles.photoColumn}>
-                <Text style={styles.photoDate}>{photosWithImages[0].date}</Text>
+                <View style={[styles.photoDateChip, { backgroundColor: colors.successBg }]}>
+                  <Text style={[styles.photoDateText, { color: colors.primary }]}>{photosWithImages[0].date}</Text>
+                </View>
                 <Image
                   source={{ uri: photosWithImages[0].progressPhotoPath! }}
                   style={styles.comparePhoto}
@@ -176,23 +200,46 @@ export function BodyMetricsScreen() {
       )}
 
       {/* History */}
-      <Text style={styles.sectionTitle}>{t.bodyMetrics.history}</Text>
+      <View style={styles.historyHeader}>
+        <MaterialCommunityIcons name="history" size={18} color={colors.textSecondary} />
+        <Text style={styles.historyTitle}>{t.bodyMetrics.history}</Text>
+      </View>
+
       {metrics.length === 0 && (
-        <View style={styles.emptyState}>
-          <MaterialCommunityIcons name="tape-measure" size={48} color={colors.textDisabled} />
-          <Text style={{ color: colors.textTertiary, marginTop: 8 }}>{t.bodyMetrics.noData}</Text>
-        </View>
+        <Card style={styles.emptyCard} mode="elevated">
+          <Card.Content style={styles.emptyContent}>
+            <View style={styles.emptyIconWrap}>
+              <MaterialCommunityIcons name="tape-measure" size={36} color={colors.textDisabled} />
+            </View>
+            <Text style={styles.emptyText}>{t.bodyMetrics.noData}</Text>
+          </Card.Content>
+        </Card>
       )}
-      {metrics.map((m) => (
+
+      {metrics.map((m, index) => (
         <Card key={m.id} style={styles.historyCard} mode="elevated">
           <Card.Content style={styles.historyRow}>
-            <View>
-              <Text style={{ fontWeight: 'bold' }}>{m.date}</Text>
-              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
-                {m.weight} kg
-                {m.bodyFat !== null ? ` · ${m.bodyFat}%` : ''}
-                {m.waistCm !== null ? ` · Bel: ${m.waistCm}cm` : ''}
-              </Text>
+            <View style={[styles.historyDot, { backgroundColor: index === 0 ? colors.primary : colors.border }]} />
+            <View style={styles.historyInfo}>
+              <Text style={styles.historyDate}>{m.date}</Text>
+              <View style={styles.historyMetrics}>
+                <View style={styles.historyMetricChip}>
+                  <MaterialCommunityIcons name="scale-bathroom" size={12} color={colors.primary} />
+                  <Text style={styles.historyMetricText}>{m.weight} kg</Text>
+                </View>
+                {m.bodyFat !== null && (
+                  <View style={styles.historyMetricChip}>
+                    <MaterialCommunityIcons name="percent" size={12} color={colors.orange} />
+                    <Text style={styles.historyMetricText}>{m.bodyFat}%</Text>
+                  </View>
+                )}
+                {m.waistCm !== null && (
+                  <View style={styles.historyMetricChip}>
+                    <MaterialCommunityIcons name="tape-measure" size={12} color={colors.secondary} />
+                    <Text style={styles.historyMetricText}>{m.waistCm} cm</Text>
+                  </View>
+                )}
+              </View>
             </View>
             {m.progressPhotoPath && (
               <Image source={{ uri: m.progressPhotoPath }} style={styles.thumbPhoto} />
@@ -203,7 +250,7 @@ export function BodyMetricsScreen() {
 
       {/* Add measurement dialog */}
       <Portal>
-        <Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)} style={{ maxHeight: '85%' }}>
+        <Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)} style={styles.dialog}>
           <Dialog.Title>{t.bodyMetrics.addMeasurement}</Dialog.Title>
           <Dialog.ScrollArea>
             <ScrollView contentContainerStyle={{ padding: spacing.sm }}>
@@ -216,12 +263,14 @@ export function BodyMetricsScreen() {
               <TextInput label={`${t.bodyMetrics.thigh} (cm)`} value={thigh} onChangeText={setThigh} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="55" />
 
               <View style={styles.photoButtons}>
-                <Button mode="outlined" icon="camera" onPress={takePhoto} compact style={{ flex: 1 }}>
-                  {t.bodyMetrics.takePhoto}
-                </Button>
-                <Button mode="outlined" icon="image" onPress={pickPhoto} compact style={{ flex: 1 }}>
-                  {t.bodyMetrics.pickPhoto}
-                </Button>
+                <TouchableOpacity style={styles.photoBtnAction} onPress={takePhoto} activeOpacity={0.7}>
+                  <MaterialCommunityIcons name="camera" size={20} color={colors.primary} />
+                  <Text style={styles.photoBtnText}>{t.bodyMetrics.takePhoto}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.photoBtnAction} onPress={pickPhoto} activeOpacity={0.7}>
+                  <MaterialCommunityIcons name="image" size={20} color={colors.primary} />
+                  <Text style={styles.photoBtnText}>{t.bodyMetrics.pickPhoto}</Text>
+                </TouchableOpacity>
               </View>
 
               {photoPath && (
@@ -244,12 +293,16 @@ const MetricItem = React.memo(function MetricItem({ label, value, diff, icon, co
   const diffSign = diff !== null && diff > 0 ? '+' : '';
 
   return (
-    <View style={styles.metricItem}>
-      <MaterialCommunityIcons name={icon as any} size={20} color={color} />
-      <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{value}</Text>
-      <Text style={{ fontSize: 11, color: colors.textTertiary }}>{label}</Text>
+    <View style={[styles.metricItem, { backgroundColor: `${color}08` }]}>
+      <View style={[styles.metricIconWrap, { backgroundColor: `${color}15` }]}>
+        <MaterialCommunityIcons name={icon as any} size={18} color={color} />
+      </View>
+      <Text style={styles.metricValue}>{value}</Text>
+      <Text style={styles.metricLabel}>{label}</Text>
       {diff !== null && (
-        <Text style={{ fontSize: 10, color: diffColor }}>{diffSign}{diff}</Text>
+        <View style={[styles.diffBadge, { backgroundColor: diffColor === colors.calorieGreen ? colors.successBg : diffColor === colors.red ? colors.errorBg : colors.surfaceVariant }]}>
+          <Text style={[styles.diffText, { color: diffColor }]}>{diffSign}{diff}</Text>
+        </View>
       )}
     </View>
   );
@@ -257,22 +310,281 @@ const MetricItem = React.memo(function MetricItem({ label, value, diff, icon, co
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
-  title: { fontWeight: 'bold' },
-  card: { borderRadius: borderRadius.lg, marginBottom: spacing.md },
-  cardTitle: { fontWeight: 'bold', fontSize: 15, marginBottom: spacing.sm },
-  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  metricItem: { alignItems: 'center', width: '30%' as any, paddingVertical: spacing.sm },
-  sectionTitle: { fontWeight: 'bold', fontSize: 16, marginBottom: spacing.sm, marginTop: spacing.sm },
-  historyCard: { borderRadius: borderRadius.md, marginBottom: 8 },
-  historyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  emptyState: { alignItems: 'center', paddingVertical: spacing.xl },
-  input: { marginBottom: 8, backgroundColor: colors.surface },
-  photoButtons: { flexDirection: 'row', gap: 8, marginVertical: spacing.sm },
-  previewPhoto: { width: '100%', height: 200, borderRadius: borderRadius.md, marginTop: spacing.sm },
-  photoCompareRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  photoColumn: { alignItems: 'center', flex: 1 },
-  photoDate: { fontSize: 12, color: colors.textTertiary, marginBottom: 4 },
-  comparePhoto: { width: '90%', aspectRatio: 3 / 4, borderRadius: borderRadius.md },
-  thumbPhoto: { width: 48, height: 64, borderRadius: 8 },
+
+  // Add Button
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    gap: 10,
+  },
+  addButtonIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+
+  // Summary Card
+  summaryCard: {
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+  },
+  summaryAccent: {
+    height: 3,
+    backgroundColor: colors.primary,
+  },
+  summaryContent: {
+    paddingTop: spacing.sm,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  summaryTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  summaryTitle: {
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  dateBadge: {
+    backgroundColor: colors.infoBg,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  dateBadgeText: {
+    fontSize: 11,
+    color: colors.secondary,
+    fontWeight: '600',
+  },
+
+  // Metrics Grid
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  metricItem: {
+    alignItems: 'center',
+    flexGrow: 1,
+    flexBasis: '28%' as any,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderRadius: borderRadius.md,
+  },
+  metricIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  metricValue: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: colors.textPrimary,
+  },
+  metricLabel: {
+    fontSize: 10,
+    color: colors.textTertiary,
+    marginTop: 1,
+  },
+  diffBadge: {
+    marginTop: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  diffText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+
+  // Photo Compare Card
+  photoCard: {
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+  },
+  photoCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: spacing.sm,
+  },
+  photoCardTitle: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  photoCompareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  photoColumn: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  photoDateChip: {
+    backgroundColor: colors.warningBg,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 6,
+  },
+  photoDateText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.orange,
+  },
+  comparePhoto: {
+    width: '88%',
+    aspectRatio: 3 / 4,
+    borderRadius: borderRadius.md,
+  },
+  arrowWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.successBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // History Section
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  historyTitle: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: colors.textSecondary,
+  },
+  historyCard: {
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  historyDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  historyInfo: {
+    flex: 1,
+  },
+  historyDate: {
+    fontWeight: '600',
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginBottom: 3,
+  },
+  historyMetrics: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  historyMetricChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: colors.surfaceVariant,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  historyMetricText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  thumbPhoto: {
+    width: 44,
+    height: 58,
+    borderRadius: 8,
+  },
+
+  // Empty State
+  emptyCard: {
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+  },
+  emptyContent: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  emptyText: {
+    color: colors.textTertiary,
+    fontSize: 13,
+  },
+
+  // Dialog
+  dialog: {
+    maxHeight: '85%',
+  },
+  input: {
+    marginBottom: 8,
+    backgroundColor: colors.surface,
+  },
+  photoButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginVertical: spacing.sm,
+  },
+  photoBtnAction: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
+  },
+  photoBtnText: {
+    fontSize: 13,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  previewPhoto: {
+    width: '100%',
+    height: 200,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+  },
 });

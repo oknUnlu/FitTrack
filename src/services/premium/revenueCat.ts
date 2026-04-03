@@ -15,9 +15,9 @@ function getRC(): any {
   return Purchases;
 }
 
-// RevenueCat API keys — set these after creating your RevenueCat project
-const RC_API_KEY_IOS = '';    // e.g., 'appl_xxxxx'
-const RC_API_KEY_ANDROID = ''; // e.g., 'goog_xxxxx'
+// RevenueCat API keys
+const RC_API_KEY_IOS = 'test_neaZQKbwoUMUdsECbtmpqSvWAMj';
+const RC_API_KEY_ANDROID = 'test_neaZQKbwoUMUdsECbtmpqSvWAMj';
 
 // RevenueCat product identifiers (must match your App Store / Play Store products)
 export const PRODUCT_IDS = {

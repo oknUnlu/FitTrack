@@ -24,6 +24,7 @@ import { WellnessScreen } from '../screens/Wellness/WellnessScreen';
 import { HealthHubScreen } from '../screens/HealthHub/HealthHubScreen';
 import { SocialScreen } from '../screens/Social/SocialScreen';
 import { FastingScreen } from '../screens/Fasting/FastingScreen';
+import { PrivacyPolicyScreen } from '../screens/Privacy/PrivacyPolicyScreen';
 import { useLanguage } from '../i18n';
 
 export type RootStackParamList = {
@@ -38,6 +39,7 @@ export type RootStackParamList = {
   HealthHub: undefined;
   Social: undefined;
   Fasting: undefined;
+  Privacy: undefined;
   ActiveWorkout: { templateId?: string; templateName?: string; preloadedExerciseIds?: string[] } | undefined;
   SessionDetail: { sessionId: string; sessionName: string; date: string; durationMinutes: number; caloriesBurned: number };
 };
@@ -167,6 +169,11 @@ function AppStack() {
         options={{ headerShown: true, title: (t as any).fasting?.title || 'Fasting Tracker', animation: 'slide_from_right' }}
       />
       <Stack.Screen
+        name="Privacy"
+        component={PrivacyPolicyScreen}
+        options={{ headerShown: true, title: t.privacy.title, animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
         name="ActiveWorkout"
         component={ActiveWorkoutScreen}
         options={{ headerShown: false, animation: 'slide_from_bottom' }}
@@ -200,6 +207,7 @@ const linking: any = {
       Wellness: 'wellness',
       HealthHub: 'health',
       Fasting: 'fasting',
+      Privacy: 'privacy',
     },
   },
 };

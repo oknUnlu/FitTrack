@@ -11,9 +11,12 @@ import {
   getBuiltInTemplates,
   getTotalCompletedWorkouts,
   getSessionsByDateRange,
+  getAllExercises,
   WorkoutSession,
   WorkoutTemplate,
+  Exercise,
 } from '../../services/database/workoutDao';
+import { ExercisePreviewRow } from '../../components/ExerciseGuide';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { todayString } from '../../utils/helpers';
@@ -58,6 +61,8 @@ export function WorkoutScreen() {
   const [error, setError] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null);
+  const [exerciseMap, setExerciseMap] = useState<Map<string, Exercise>>(new Map());
+  const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [paywallVisible, setPaywallVisible] = useState(false);
   const isPremium = usePremiumStore((s) => s.isPremium);
   const maxFreePrograms = getAvailableProgramCount();
@@ -73,14 +78,16 @@ export function WorkoutScreen() {
       setError(false);
       const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
       const today = todayString();
-      const [sessionsData, templatesData, totalCount, weekSessions] = await Promise.all([
+      const [sessionsData, templatesData, totalCount, weekSessions, allExercises] = await Promise.all([
         getRecentSessions(userId),
         getBuiltInTemplates(),
         getTotalCompletedWorkouts(userId),
         getSessionsByDateRange(userId, weekStart, today),
+        getAllExercises(),
       ]);
       setSessions(sessionsData);
       setTemplates(templatesData);
+      setExerciseMap(new Map(allExercises.map((e) => [e.id, e])));
       setTotalWorkouts(totalCount);
       const completed = weekSessions.filter((s) => s.completedAt !== null);
       setWeekStats({
@@ -231,6 +238,7 @@ export function WorkoutScreen() {
                 style={[styles.templateCard, { backgroundColor: theme.colors.surface, opacity: isLocked ? 0.7 : 1 }]}
                 onPress={() => {
                   if (isLocked) { setPaywallVisible(true); return; }
+                  setExpandedDay(null);
                   setSelectedTemplate(tmpl);
                 }}
                 activeOpacity={0.8}
@@ -361,25 +369,61 @@ export function WorkoutScreen() {
 
               {/* Day List */}
               <Text style={styles.selectDayLabel}>{t.workout.selectDay}</Text>
-              {(selectedTemplate.days as any[]).map((day: any, idx: number) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={[styles.dayCard, { backgroundColor: theme.colors.surfaceVariant }]}
-                  onPress={() => handleStartDay(selectedTemplate, idx)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.dayNumber}>
-                    <Text style={styles.dayNumberText}>{idx + 1}</Text>
+              {(selectedTemplate.days as any[]).map((day: any, idx: number) => {
+                const isExpanded = expandedDay === idx;
+                const dayExercises = (day.exercises ?? []) as { exerciseId: string; sets: number; reps: string }[];
+                return (
+                  <View key={idx} style={{ marginBottom: 8 }}>
+                    <TouchableOpacity
+                      style={[styles.dayCard, { backgroundColor: theme.colors.surfaceVariant }]}
+                      onPress={() => handleStartDay(selectedTemplate, idx)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.dayNumber}>
+                        <Text style={styles.dayNumberText}>{idx + 1}</Text>
+                      </View>
+                      <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                        <Text style={styles.dayName}>{day.name}</Text>
+                        <Text style={styles.dayExerciseCount}>
+                          {dayExercises.length} {t.workout.exercises}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => setExpandedDay(isExpanded ? null : idx)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={styles.dayInfoBtn}
+                      >
+                        <MaterialCommunityIcons
+                          name={isExpanded ? 'chevron-up' : 'format-list-bulleted'}
+                          size={20}
+                          color={colors.textTertiary}
+                        />
+                      </TouchableOpacity>
+                      <MaterialCommunityIcons name="play-circle" size={28} color={colors.primary} />
+                    </TouchableOpacity>
+
+                    {/* Egzersiz Listesi */}
+                    {isExpanded && dayExercises.length > 0 && (
+                      <View style={[styles.dayExerciseList, { backgroundColor: theme.colors.surface, borderColor: theme.colors.surfaceVariant }]}>
+                        {dayExercises.map((de, exIdx) => {
+                          const exDetail = exerciseMap.get(de.exerciseId);
+                          if (!exDetail) return null;
+                          return (
+                            <View key={de.exerciseId + exIdx}>
+                              <View style={styles.dayExerciseRow}>
+                                <ExercisePreviewRow exercise={exDetail} />
+                                <View style={styles.dayExerciseSets}>
+                                  <Text style={styles.dayExerciseSetText}>{de.sets}x{de.reps}</Text>
+                                </View>
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    )}
                   </View>
-                  <View style={{ flex: 1, marginLeft: spacing.sm }}>
-                    <Text style={styles.dayName}>{day.name}</Text>
-                    <Text style={styles.dayExerciseCount}>
-                      {day.exercises?.length ?? 0} {t.workout.exercises}
-                    </Text>
-                  </View>
-                  <MaterialCommunityIcons name="play-circle" size={28} color={colors.primary} />
-                </TouchableOpacity>
-              ))}
+                );
+              })}
 
               <Button
                 mode="text"
@@ -674,5 +718,32 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textTertiary,
     marginTop: 2,
+  },
+  dayInfoBtn: {
+    padding: 4,
+    marginRight: 8,
+  },
+  dayExerciseList: {
+    marginTop: -4,
+    marginHorizontal: 4,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  dayExerciseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dayExerciseSets: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: `${colors.primary}12`,
+  },
+  dayExerciseSetText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
   },
 });

@@ -35,8 +35,8 @@ export function getProgressColor(progress: number): string {
 export const MEAL_TYPES = [
   { key: 'breakfast' as const, label: 'Kahvalti', icon: 'coffee' },
   { key: 'lunch' as const, label: 'Ogle Yemegi', icon: 'food' },
-  { key: 'dinner' as const, label: 'Aksam Yemegi', icon: 'food-variant' },
   { key: 'snack' as const, label: 'Ara Ogun', icon: 'food-apple' },
+  { key: 'dinner' as const, label: 'Aksam Yemegi', icon: 'food-variant' },
 ];
 
 export const DAYS_TR = ['Pt', 'Sa', 'Ca', 'Pe', 'Cu', 'Ct', 'Pz'];

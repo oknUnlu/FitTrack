@@ -4,6 +4,7 @@ import { Text, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ViewShot from 'react-native-view-shot';
 import { colors, spacing, borderRadius } from '../theme/theme';
+import { useLanguage } from '../i18n';
 
 interface ShareCardProps {
   type: 'workout' | 'achievement' | 'streak' | 'challenge';
@@ -21,12 +22,14 @@ interface ShareCardProps {
  */
 export function ShareCard({ type, title, subtitle, value, icon, color, onShare }: ShareCardProps) {
   const viewShotRef = useRef<ViewShot>(null);
+  const { t } = useLanguage();
+
+  const shareMessage = `${title}: ${value} - ${subtitle}\n\nFitTrack ile takip ediyorum!`;
 
   const handleShare = useCallback(async () => {
     try {
       if (Platform.OS === 'web') {
-        // Web: just share text
-        await Share.share({ message: `${title}: ${value} - ${subtitle}\n\nFitTrack ile takip ediyorum!` });
+        await Share.share({ message: shareMessage });
         onShare?.();
         return;
       }
@@ -36,19 +39,18 @@ export function ShareCard({ type, title, subtitle, value, icon, color, onShare }
       if (uri) {
         await Share.share(
           Platform.OS === 'ios'
-            ? { url: uri, message: 'FitTrack ile fitness hedeflerime ulasiyorum!' }
-            : { message: `${title}: ${value}\n\nFitTrack ile takip ediyorum!` }
+            ? { url: uri, message: shareMessage }
+            : { message: shareMessage }
         );
       } else {
-        // Fallback to text share
-        await Share.share({ message: `${title}: ${value} - ${subtitle}\n\nFitTrack ile takip ediyorum!` });
+        await Share.share({ message: shareMessage });
       }
 
       onShare?.();
     } catch (e) {
       if (__DEV__) console.warn('Share failed:', e);
     }
-  }, [title, value, subtitle, onShare]);
+  }, [title, value, subtitle, onShare, shareMessage]);
 
   const bgGradientStart = `${color}15`;
 
@@ -88,7 +90,7 @@ export function ShareCard({ type, title, subtitle, value, icon, color, onShare }
         accessibilityLabel={`Share ${title}`}
         accessibilityRole="button"
       >
-        Share
+        {t.social.share}
       </Button>
     </View>
   );

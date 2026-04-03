@@ -15,6 +15,7 @@ import { useLanguage } from '../../i18n';
 import { usePremiumStore } from '../../store/premiumStore';
 import { isProgressRangeAvailable } from '../../services/premium/featureGate';
 import { PaywallModal } from '../../components/PaywallModal';
+import { AdBanner } from '../../components/AdBanner';
 
 const screenWidth = Dimensions.get('window').width - spacing.md * 2;
 
@@ -272,6 +273,9 @@ export function ProgressScreen() {
           )}
         </Card.Content>
       </Card>
+
+      {/* Reklam Banner */}
+      <AdBanner screen="progress" />
       </>)}
     </ScrollView>
   );
