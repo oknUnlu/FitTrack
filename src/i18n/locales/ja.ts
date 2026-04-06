@@ -586,6 +586,7 @@ const ja: Translations = {
     advancedPrograms: 'すべてのトレーニングプログラム',
     wellnessDetail: '詳細なウェルネス分析',
     healthHubFull: 'すべての健康指標',
+    adFree: '広告なしの利用',
     limitReached: '1日の上限に達しました',
     upgradeNow: 'Premiumにアップグレード',
     freeLimit: '無料: {limit}回/日',

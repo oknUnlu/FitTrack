@@ -27,11 +27,12 @@ const PREMIUM_FEATURES = [
   { icon: 'dumbbell', key: 'advancedPrograms' },
   { icon: 'heart-pulse', key: 'wellnessDetail' },
   { icon: 'watch', key: 'healthHubFull' },
+  { icon: 'advertisements-off', key: 'adFree' },
 ];
 
 export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const theme = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const setPremium = usePremiumStore((s) => s.setPremium);
 
   const rcConfigured = isRevenueCatConfigured();
@@ -59,7 +60,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     setIsLoadingOfferings(false);
   };
 
-  const getPackageByPlan = (plan: 'monthly' | 'yearly' | 'lifetime') => {
+  const getPackageByPlan = (plan: 'monthly' | 'yearly') => {
     if (!offerings?.availablePackages) return null;
     const productId = PRODUCT_IDS[plan];
     return offerings.availablePackages.find(
@@ -67,7 +68,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     ) || null;
   };
 
-  const getPackagePrice = (plan: 'monthly' | 'yearly' | 'lifetime'): string | null => {
+  const getPackagePrice = (plan: 'monthly' | 'yearly'): string | null => {
     const pkg = getPackageByPlan(plan);
     return pkg?.product?.priceString || null;
   };
@@ -103,12 +104,10 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     setIsRestoring(false);
   };
 
-  const handlePurchase = async (plan: 'monthly' | 'yearly' | 'lifetime') => {
+  const handlePurchase = async (plan: 'monthly' | 'yearly') => {
     if (!rcConfigured) {
       // Mock mode: activate directly for development
-      const expiresAt = plan === 'lifetime'
-        ? null
-        : Date.now() + (plan === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000;
+      const expiresAt = Date.now() + (plan === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000;
       await setPremium(plan, expiresAt);
       onClose();
       return;
@@ -136,9 +135,9 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   };
 
   // Default prices (shown when RevenueCat isn't configured or offerings haven't loaded)
-  const monthlyPrice = getPackagePrice('monthly') || '$5.99';
-  const yearlyPrice = getPackagePrice('yearly') || '$29.99';
-  const lifetimePrice = getPackagePrice('lifetime') || '$59.99';
+  const isTR = language === 'tr';
+  const monthlyPrice = getPackagePrice('monthly') || (isTR ? '₺59,99' : '$4.99');
+  const yearlyPrice = getPackagePrice('yearly') || (isTR ? '₺299,99' : '$24.99');
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -212,25 +211,14 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                 <Text style={styles.planSave}>{t.premium.savePercent}</Text>
               </TouchableOpacity>
 
-              <View style={styles.planRow}>
-                <TouchableOpacity
-                  style={[styles.planCard, styles.smallPlan, { backgroundColor: theme.colors.surfaceVariant }]}
-                  onPress={() => handlePurchase('monthly')}
-                  disabled={isPurchasing}
-                >
-                  <Text style={[styles.planName, { fontSize: 14, color: theme.colors.onSurface }]}>{t.premium.monthly}</Text>
-                  <Text style={[styles.planPrice, { fontSize: 16, color: theme.colors.onSurface }]}>{monthlyPrice}/{t.premium.month}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.planCard, styles.smallPlan, { backgroundColor: theme.colors.surfaceVariant }]}
-                  onPress={() => handlePurchase('lifetime')}
-                  disabled={isPurchasing}
-                >
-                  <Text style={[styles.planName, { fontSize: 14, color: theme.colors.onSurface }]}>{t.premium.lifetime}</Text>
-                  <Text style={[styles.planPrice, { fontSize: 16, color: theme.colors.onSurface }]}>{lifetimePrice}</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[styles.planCard, { backgroundColor: theme.colors.surfaceVariant }]}
+                onPress={() => handlePurchase('monthly')}
+                disabled={isPurchasing}
+              >
+                <Text style={[styles.planName, { color: theme.colors.onSurface }]}>{t.premium.monthly}</Text>
+                <Text style={[styles.planPrice, { color: theme.colors.onSurface }]}>{monthlyPrice}/{t.premium.month}</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Purchase loading */}
@@ -360,13 +348,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
-  },
-  planRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  smallPlan: {
-    flex: 1,
   },
   loadingRow: {
     flexDirection: 'row',

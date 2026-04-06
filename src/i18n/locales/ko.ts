@@ -586,6 +586,7 @@ const ko: Translations = {
     advancedPrograms: '모든 운동 프로그램',
     wellnessDetail: '상세 웰니스 분석',
     healthHubFull: '모든 건강 지표',
+    adFree: '광고 없는 사용',
     limitReached: '일일 한도 도달',
     upgradeNow: 'Premium으로 업그레이드',
     freeLimit: '무료: {limit}회/일',

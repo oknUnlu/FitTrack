@@ -586,6 +586,7 @@ const hi: Translations = {
     advancedPrograms: 'सभी वर्कआउट कार्यक्रम',
     wellnessDetail: 'विस्तृत वेलनेस विश्लेषण',
     healthHubFull: 'सभी स्वास्थ्य मेट्रिक्स',
+    adFree: 'विज्ञापन मुक्त उपयोग',
     limitReached: 'दैनिक सीमा पूरी हुई',
     upgradeNow: 'Premium में अपग्रेड करें',
     freeLimit: 'मुफ्त: {limit}/दिन',

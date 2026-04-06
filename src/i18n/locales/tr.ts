@@ -586,6 +586,7 @@ const tr: Translations = {
     advancedPrograms: 'Tüm antrenman programları',
     wellnessDetail: 'Detaylı sağlıklı yaşam analizi',
     healthHubFull: 'Tüm sağlık metrikleri',
+    adFree: 'Reklamsız kullanım',
     limitReached: 'Günlük limit doldu',
     upgradeNow: 'Premium\'a Geç',
     freeLimit: 'Ücretsiz: günde {limit} hak',

@@ -586,6 +586,7 @@ const ar: Translations = {
     advancedPrograms: 'جميع برامج التمرين',
     wellnessDetail: 'تحليل العافية المفصل',
     healthHubFull: 'جميع مقاييس الصحة',
+    adFree: 'استخدام بدون إعلانات',
     limitReached: 'تم الوصول للحد اليومي',
     upgradeNow: 'ترقية إلى Premium',
     freeLimit: 'مجاني: {limit}/يوم',

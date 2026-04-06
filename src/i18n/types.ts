@@ -627,6 +627,7 @@ export interface Translations {
     advancedPrograms: string;
     wellnessDetail: string;
     healthHubFull: string;
+    adFree: string;
     limitReached: string;
     upgradeNow: string;
     freeLimit: string;

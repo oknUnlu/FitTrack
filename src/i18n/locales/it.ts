@@ -586,6 +586,7 @@ const it: Translations = {
     advancedPrograms: 'Tutti i programmi di allenamento',
     wellnessDetail: 'Analisi benessere dettagliata',
     healthHubFull: 'Tutte le metriche di salute',
+    adFree: 'Utilizzo senza pubblicità',
     limitReached: 'Limite giornaliero raggiunto',
     upgradeNow: 'Passa a Premium',
     freeLimit: 'Gratis: {limit}/giorno',

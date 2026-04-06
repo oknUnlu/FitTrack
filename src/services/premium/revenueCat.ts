@@ -23,7 +23,6 @@ const RC_API_KEY_ANDROID = 'test_neaZQKbwoUMUdsECbtmpqSvWAMj';
 export const PRODUCT_IDS = {
   monthly: 'fittrack_premium_monthly',
   yearly: 'fittrack_premium_yearly',
-  lifetime: 'fittrack_premium_lifetime',
 } as const;
 
 // Entitlement identifier in RevenueCat dashboard
@@ -165,15 +164,13 @@ function checkAndUpdatePremiumStatus(customerInfo: any): boolean {
     let plan: PremiumPlan = 'monthly';
     const productId = entitlement.productIdentifier || '';
 
-    if (productId.includes('lifetime')) {
-      plan = 'lifetime';
-    } else if (productId.includes('yearly') || productId.includes('annual')) {
+    if (productId.includes('yearly') || productId.includes('annual')) {
       plan = 'yearly';
     } else {
       plan = 'monthly';
     }
 
-    // Get expiration date (null for lifetime)
+    // Get expiration date
     const expiresAt = entitlement.expirationDate
       ? new Date(entitlement.expirationDate).getTime()
       : null;

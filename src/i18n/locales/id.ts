@@ -586,6 +586,7 @@ const id: Translations = {
     advancedPrograms: 'Semua program latihan',
     wellnessDetail: 'Analisis kesehatan detail',
     healthHubFull: 'Semua metrik kesehatan',
+    adFree: 'Penggunaan tanpa iklan',
     limitReached: 'Batas harian tercapai',
     upgradeNow: 'Upgrade ke Premium',
     freeLimit: 'Gratis: {limit}/hari',
