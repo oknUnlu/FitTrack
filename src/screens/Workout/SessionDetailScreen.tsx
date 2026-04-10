@@ -14,7 +14,8 @@ export function SessionDetailScreen() {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
-  const { sessionId, sessionName, date, durationMinutes, caloriesBurned } = route.params;
+  const params = route.params as any ?? {};
+  const { sessionId, sessionName, date, durationMinutes, caloriesBurned } = params;
 
   const [sets, setSets] = useState<ExerciseSet[]>([]);
   const [exerciseMap, setExerciseMap] = useState<Map<string, Exercise>>(new Map());

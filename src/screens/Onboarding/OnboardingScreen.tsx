@@ -150,7 +150,7 @@ export function OnboardingScreen() {
       setOnboarded(true);
     } catch (e) {
       if (__DEV__) console.warn('Onboarding save failed:', e);
-      setOnboarded(true);
+      Alert.alert(t.common.error, t.common.errorOccurred);
     }
   };
 

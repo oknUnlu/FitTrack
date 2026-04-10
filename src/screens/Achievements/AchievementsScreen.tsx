@@ -79,6 +79,9 @@ export function AchievementsScreen() {
               onPress={() => setActiveFilter(f.key)}
               style={[styles.chip, active && styles.chipActive]}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+              accessibilityState={{ selected: active }}
             >
               <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
             </TouchableOpacity>

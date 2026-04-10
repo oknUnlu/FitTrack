@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, ScrollView, FlatList, StyleSheet, Platform } from 'react-native';
 import { Text, Card, Chip, useTheme, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -119,32 +119,37 @@ export function WorkoutHistoryScreen() {
           </Card.Content>
         </Card>
       ) : (
-        sessions.map((s) => (
-          <Card
-            key={s.id}
-            style={styles.sessionCard}
-            mode="elevated"
-            onPress={() => navigation.navigate('SessionDetail', {
-              sessionId: s.id,
-              sessionName: s.name,
-              date: s.date,
-              durationMinutes: s.durationMinutes,
-              caloriesBurned: s.caloriesBurned,
-            })}
-          >
-            <Card.Content style={styles.sessionRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{s.name}</Text>
-                <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 2 }}>{s.date}</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontWeight: '600' }}>{s.durationMinutes} {t.common.min}</Text>
-                <Text style={{ color: colors.orange, fontSize: 12, marginTop: 2 }}>{s.caloriesBurned} {t.common.kcal}</Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textDisabled} style={{ marginLeft: spacing.sm }} />
-            </Card.Content>
-          </Card>
-        ))
+        <FlatList
+          data={sessions}
+          keyExtractor={(s) => s.id}
+          scrollEnabled={false}
+          initialNumToRender={15}
+          renderItem={({ item: s }) => (
+            <Card
+              style={styles.sessionCard}
+              mode="elevated"
+              onPress={() => navigation.navigate('SessionDetail', {
+                sessionId: s.id,
+                sessionName: s.name,
+                date: s.date,
+                durationMinutes: s.durationMinutes,
+                caloriesBurned: s.caloriesBurned,
+              })}
+            >
+              <Card.Content style={styles.sessionRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: 'bold', fontSize: 15 }}>{s.name}</Text>
+                  <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 2 }}>{s.date}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={{ fontWeight: '600' }}>{s.durationMinutes} {t.common.min}</Text>
+                  <Text style={{ color: colors.orange, fontSize: 12, marginTop: 2 }}>{s.caloriesBurned} {t.common.kcal}</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textDisabled} style={{ marginLeft: spacing.sm }} />
+              </Card.Content>
+            </Card>
+          )}
+        />
       )}
     </ScrollView>
   );

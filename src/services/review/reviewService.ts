@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const REVIEW_REQUESTED_KEY = 'fittrack_review_requested';
 const REVIEW_LAST_PROMPT_KEY = 'fittrack_review_last_prompt';
 const MIN_DAYS_BETWEEN_PROMPTS = 60;
+const REVIEW_PROMPT_DELAY_MS = 2_000; // Delay to let achievement animation finish
 
 /**
  * Milestone IDs that should trigger a review prompt.
@@ -81,6 +82,6 @@ export async function checkAndRequestReview(achievementId: string): Promise<void
     // Small delay so the achievement toast/animation can show first
     setTimeout(() => {
       requestInAppReview();
-    }, 2000);
+    }, REVIEW_PROMPT_DELAY_MS);
   }
 }

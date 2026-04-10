@@ -28,6 +28,7 @@ export function NutritionSummaryScreen() {
   const [allMeals, setAllMeals] = useState<MealLog[]>([]);
   const [filter, setFilter] = useState<FilterRange>('7d');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
   const isPremium = usePremiumStore((s) => s.isPremium);
 
@@ -36,6 +37,7 @@ export function NutritionSummaryScreen() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(false);
       // Load user targets from DB
       if (Platform.OS !== 'web') {
         const user = await getUserById(userId);
@@ -57,6 +59,7 @@ export function NutritionSummaryScreen() {
       setAllMeals(meals);
     } catch (e) {
       if (__DEV__) console.warn('NutritionSummary load failed:', e);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -142,6 +145,11 @@ export function NutritionSummaryScreen() {
       {loading ? (
         <View style={styles.emptyState}>
           <Text style={{ color: colors.textTertiary }}>{t.common.loading}</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={48} color="#F44336" />
+          <Text style={{ color: colors.textTertiary, marginTop: spacing.sm }}>{t.common.errorOccurred}</Text>
         </View>
       ) : (
         <>

@@ -126,12 +126,12 @@ export function HealthHubScreen() {
 
   const handleDisconnect = () => {
     Alert.alert(
-      healthTexts.disconnect || 'Bağlantıyı Kes',
-      healthTexts.disconnectConfirm || `${serviceName} bağlantısı kesilecek. Verileriniz korunacak.`,
+      healthTexts.disconnect,
+      healthTexts.disconnectConfirm,
       [
         { text: t.common.cancel, style: 'cancel' },
         {
-          text: healthTexts.disconnect || 'Bağlantıyı Kes',
+          text: healthTexts.disconnect,
           style: 'destructive',
           onPress: async () => {
             await disconnectHealth();
@@ -198,16 +198,16 @@ export function HealthHubScreen() {
             />
             <View style={{ flex: 1, marginLeft: spacing.md }}>
               <Text style={{ fontWeight: 'bold' }}>
-                {config.isConnected ? serviceName : (healthTexts.deviceConnection || 'Cihaz Bağlantısı')}
+                {config.isConnected ? serviceName : healthTexts.deviceConnection}
               </Text>
               <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
                 {config.isConnected
                   ? config.lastSyncDate
-                    ? `${healthTexts.lastSync || 'Son senkronizasyon'}: ${formatLastSync(config.lastSyncDate)}`
-                    : (healthTexts.connected || 'Bağlı')
+                    ? `${healthTexts.lastSync}: ${formatLastSync(config.lastSyncDate)}`
+                    : healthTexts.connected
                   : isNativeAvailable
-                    ? (healthTexts.tapToConnect || `${serviceName} bağlantısı için dokunun`)
-                    : (healthTexts.manualInput || 'Manuel veri girişi aktif')
+                    ? healthTexts.tapToConnect
+                    : healthTexts.manualInput
                 }
               </Text>
             </View>
@@ -223,7 +223,7 @@ export function HealthHubScreen() {
                 )}
                 <View style={[styles.statusBadge, { backgroundColor: colors.primary }]}>
                   <Text style={{ color: colors.textOnPrimary, fontSize: 10, fontWeight: 'bold' }}>
-                    {healthTexts.connected || 'Bağlı'}
+                    {healthTexts.connected}
                   </Text>
                 </View>
               </View>
@@ -237,12 +237,12 @@ export function HealthHubScreen() {
                 buttonColor={colors.primary}
                 style={{ borderRadius: 20 }}
               >
-                {healthTexts.connect || 'Bağlan'}
+                {healthTexts.connect}
               </Button>
             ) : (
               <View style={[styles.statusBadge, { backgroundColor: colors.textTertiary }]}>
                 <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>
-                  {healthTexts.manual || 'Manuel'}
+                  {healthTexts.manual}
                 </Text>
               </View>
             )}
@@ -252,7 +252,7 @@ export function HealthHubScreen() {
           {config.isConnected && (
             <TouchableOpacity onPress={handleDisconnect} style={{ marginTop: spacing.sm }}>
               <Text style={{ color: colors.textTertiary, fontSize: 12, textDecorationLine: 'underline' }}>
-                {healthTexts.disconnect || 'Bağlantıyı kes'}
+                {healthTexts.disconnect}
               </Text>
             </TouchableOpacity>
           )}
@@ -263,8 +263,8 @@ export function HealthHubScreen() {
               <MaterialCommunityIcons name="alert-circle" size={14} color={colors.red} />
               <Text style={{ color: colors.red, fontSize: 12, marginLeft: 4 }}>
                 {connectionError === 'permission_denied'
-                  ? (healthTexts.permissionDenied || 'İzin reddedildi. Ayarlardan izin verin.')
-                  : (healthTexts.connectionFailed || 'Bağlantı başarısız. Tekrar deneyin.')}
+                  ? healthTexts.permissionDenied
+                  : healthTexts.connectionFailed}
               </Text>
             </View>
           )}
@@ -349,10 +349,10 @@ export function HealthHubScreen() {
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
             {config.isConnected
-              ? (healthTexts.infoTextConnected || `${serviceName} ile senkronize ediliyor. Manuel düzenleme de yapabilirsiniz.`)
+              ? healthTexts.infoTextConnected
               : isNativeAvailable
-                ? (healthTexts.infoTextAvailable || `${serviceName} cihazınızda mevcut. Bağlanarak otomatik senkronizasyon yapabilirsiniz.`)
-                : (healthTexts.infoText || 'Sağlık verilerinizi manuel olarak girebilirsiniz.')
+                ? healthTexts.infoTextAvailable
+                : healthTexts.infoText
             }
           </Text>
         </Card.Content>

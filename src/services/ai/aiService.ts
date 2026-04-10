@@ -3,9 +3,9 @@ import { AIResponse, ConversationMessage } from './types';
 import { sendToGemini, generatePlan } from './geminiCloud';
 import { getFallbackResponse } from './fallbackAI';
 import { insertConversation, getConversations } from '../database/aiDao';
-import { getTodayRequestCount, getMaxDailyRequests } from './rateLimiter';
+import { getTodayUsage, getDailyLimit } from './rateLimiter';
 
-export { getTodayRequestCount, getMaxDailyRequests };
+export { getTodayUsage, getDailyLimit };
 
 export async function sendMessage(
   userId: string,

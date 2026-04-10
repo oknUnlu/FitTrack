@@ -19,6 +19,7 @@ import {
   scheduleWaterReminders,
   scheduleWorkoutReminder,
 } from '../../services/notifications/notificationService';
+import { validatePromoCode } from '../../services/api/promoService';
 
 const NOTIF_MEAL_KEY = 'pref_meal_reminder';
 const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
@@ -38,10 +39,13 @@ export function ProfileScreen() {
   const [waterReminder, setWaterReminder] = useState(false);
   const [langDialogVisible, setLangDialogVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
+  const [promoDialogVisible, setPromoDialogVisible] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
   const isPremium = usePremiumStore((s) => s.isPremium);
   const premiumPlan = usePremiumStore((s) => s.plan);
   const premiumExpiresAt = usePremiumStore((s) => s.expiresAt);
-  const clearPremium = usePremiumStore((s) => s.clearPremium);
+  const setPremium = usePremiumStore((s) => s.setPremium);
 
   const GOAL_LABELS: Record<string, string> = {
     lose: t.profile.loseWeight, gain: t.profile.gainWeight, muscle: t.profile.buildMuscle, maintain: t.profile.maintainWeight,
@@ -87,9 +91,37 @@ export function ProfileScreen() {
     await scheduleWaterReminders(val);
   };
 
+  const handlePromoSubmit = async () => {
+    const code = promoCode.trim();
+    if (!code) return;
+
+    setPromoLoading(true);
+    try {
+      const result = await validatePromoCode(code);
+      if (result.success) {
+        await setPremium('promo', result.expiresAt);
+        setPromoDialogVisible(false);
+        setPromoCode('');
+        Alert.alert(t.common.success, t.premium.promoActivated);
+      }
+    } catch (error: any) {
+      const msg = error.message || '';
+      if (msg.includes('Invalid') || msg.includes('404')) {
+        Alert.alert(t.common.error, t.premium.promoInvalid);
+      } else if (msg.includes('expired') || msg.includes('410')) {
+        Alert.alert(t.common.error, t.premium.promoExpired);
+      } else {
+        Alert.alert(t.common.error, t.premium.promoError);
+      }
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
   const currentLangName = LANGUAGES.find((l) => l.code === language)?.nativeName ?? language;
 
   const insets = useSafeAreaInsets();
+
 
   return (
     <ScrollView
@@ -146,22 +178,35 @@ export function ProfileScreen() {
           </Card.Content>
         </Card>
       ) : (
-        <Card
-          style={[styles.card, { backgroundColor: 'rgba(255,215,0,0.08)' }]}
-          mode="elevated"
-          onPress={() => setPaywallVisible(true)}
-          accessibilityLabel="Upgrade to Premium, unlock all features"
-          accessibilityRole="button"
-        >
-          <Card.Content style={styles.premiumUpgradeRow}>
-            <MaterialCommunityIcons name="crown" size={28} color="#FFD700" />
-            <View style={styles.premiumUpgradeText}>
-              <Text style={styles.premiumUpgradeTitle}>{t.premium.upgradeNow}</Text>
-              <Text style={styles.premiumUpgradeSubtitle}>{t.premium.subtitle}</Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textTertiary} />
-          </Card.Content>
-        </Card>
+        <>
+          <Card
+            style={[styles.card, { backgroundColor: 'rgba(255,215,0,0.08)' }]}
+            mode="elevated"
+            onPress={() => setPaywallVisible(true)}
+            accessibilityLabel="Upgrade to Premium, unlock all features"
+            accessibilityRole="button"
+          >
+            <Card.Content style={styles.premiumUpgradeRow}>
+              <MaterialCommunityIcons name="crown" size={28} color="#FFD700" />
+              <View style={styles.premiumUpgradeText}>
+                <Text style={styles.premiumUpgradeTitle}>{t.premium.upgradeNow}</Text>
+                <Text style={styles.premiumUpgradeSubtitle}>{t.premium.subtitle}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textTertiary} />
+            </Card.Content>
+          </Card>
+          <Card style={styles.card} mode="elevated">
+            <List.Section>
+              <List.Item
+                title={t.premium.promoCode}
+                description={t.premium.enterPromoCode}
+                left={(props) => <List.Icon {...props} icon="ticket-percent" />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => setPromoDialogVisible(true)}
+              />
+            </List.Section>
+          </Card>
+        </>
       )}
 
       {/* Makro Hedefler */}
@@ -290,6 +335,34 @@ export function ProfileScreen() {
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setLangDialogVisible(false)}>{t.common.cancel}</Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        {/* Promo Code Dialog */}
+        <Dialog visible={promoDialogVisible} onDismiss={() => { setPromoDialogVisible(false); setPromoCode(''); }}>
+          <Dialog.Title>{t.premium.enterPromoCode}</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              mode="outlined"
+              placeholder={t.premium.promoPlaceholder}
+              value={promoCode}
+              onChangeText={setPromoCode}
+              autoCapitalize="characters"
+              maxLength={30}
+              disabled={promoLoading}
+              style={{ marginTop: 4 }}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => { setPromoDialogVisible(false); setPromoCode(''); }}>{t.common.cancel}</Button>
+            <Button
+              mode="contained"
+              onPress={handlePromoSubmit}
+              loading={promoLoading}
+              disabled={promoLoading || !promoCode.trim()}
+            >
+              {t.premium.activate}
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

@@ -94,7 +94,9 @@ export function SocialScreen() {
     const text = `🏆 FitTrack Challenge\n\n${challenge.title}\n${challenge.description}\n\nİlerleme: ${challenge.currentValue}/${challenge.targetValue} ${challenge.unit} (${progress}%)\n${challenge.isCompleted ? '✅ Tamamlandı!' : '🔥 Devam ediyor...'}\n\n#FitTrack #Challenge`;
     try {
       await Share.share({ message: text });
-    } catch {}
+    } catch (e) {
+      if (__DEV__) console.warn('Share failed:', e);
+    }
   };
 
   const openUpdateDialog = (ch: Challenge) => {

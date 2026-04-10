@@ -79,17 +79,25 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
   },
 
   startSession: async (session) => {
-    await insertSession(session);
-    set({ activeSession: session });
+    try {
+      await insertSession(session);
+      set({ activeSession: session });
+    } catch (e) {
+      if (__DEV__) console.warn('Failed to start session:', e);
+    }
   },
 
   completeSession: async (session) => {
-    const completed = { ...session, completedAt: Date.now() };
-    await updateSession(completed);
-    set((state) => ({
-      activeSession: null,
-      sessions: [completed, ...state.sessions],
-    }));
+    try {
+      const completed = { ...session, completedAt: Date.now() };
+      await updateSession(completed);
+      set((state) => ({
+        activeSession: null,
+        sessions: [completed, ...state.sessions],
+      }));
+    } catch (e) {
+      if (__DEV__) console.warn('Failed to complete session:', e);
+    }
   },
 
   loadSetsForSession: async (sessionId) => {
@@ -102,10 +110,14 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
   },
 
   addSet: async (exerciseSet) => {
-    await insertSet(exerciseSet);
-    set((state) => ({
-      currentSets: [...state.currentSets, exerciseSet],
-    }));
+    try {
+      await insertSet(exerciseSet);
+      set((state) => ({
+        currentSets: [...state.currentSets, exerciseSet],
+      }));
+    } catch (e) {
+      if (__DEV__) console.warn('Failed to add set:', e);
+    }
   },
 
   loadExercises: async () => {

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, Animated } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, Animated, Keyboard } from 'react-native';
 import { Text, useTheme, TextInput, Button, Portal, Dialog, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,18 +64,23 @@ export function SupplementsScreen() {
   const [timeOfDay, setTimeOfDay] = useState<string>('morning');
 
   const loadData = useCallback(async () => {
-    const [sups, todayLogs] = await Promise.all([
-      getSupplements(),
-      getSupplementLogs(today),
-    ]);
-    setSupplements(sups);
-    setLogs(todayLogs);
+    try {
+      const [sups, todayLogs] = await Promise.all([
+        getSupplements(),
+        getSupplementLogs(today),
+      ]);
+      setSupplements(sups);
+      setLogs(todayLogs);
+    } catch (e) {
+      if (__DEV__) console.warn('Supplements load failed:', e);
+    }
   }, [today]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   const handleAdd = async () => {
     if (!name.trim()) return;
+    Keyboard.dismiss();
     await addSupplement({
       id: generateId(),
       name: name.trim(),
@@ -314,6 +319,7 @@ export function SupplementsScreen() {
                 mode="outlined"
                 style={styles.input}
                 dense
+                maxLength={50}
                 placeholder="Vitamin D3"
                 left={<TextInput.Icon icon="pill" />}
               />
@@ -324,6 +330,7 @@ export function SupplementsScreen() {
                 mode="outlined"
                 style={styles.input}
                 dense
+                maxLength={30}
                 placeholder="1000 IU"
                 left={<TextInput.Icon icon="scale" />}
               />

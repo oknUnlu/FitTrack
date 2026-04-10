@@ -5,7 +5,7 @@ const PREMIUM_KEY = 'fittrack_premium';
 const TRIAL_KEY = 'fittrack_trial';
 const REFERRAL_REWARD_KEY = 'fittrack_referral_reward_until';
 
-export type PremiumPlan = 'free' | 'monthly' | 'yearly' | 'trial' | 'referral';
+export type PremiumPlan = 'free' | 'monthly' | 'quarterly' | 'yearly' | 'trial' | 'referral' | 'promo';
 
 interface PremiumState {
   isPremium: boolean;

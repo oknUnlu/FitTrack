@@ -18,6 +18,8 @@ import { todayString, MEAL_TYPES, generateId } from '../../utils/helpers';
 import { useLanguage } from '../../i18n';
 import { usePremiumStore } from '../../store/premiumStore';
 import { PaywallModal } from '../../components/PaywallModal';
+import { checkDailyLimit } from '../../services/premium/featureGate';
+import { incrementUsage, getRemainingUsage } from '../../services/ai/rateLimiter';
 
 // Web fallback: load foods JSON directly for search
 const foodsJsonData: any[] = require('../../assets/data/foods_tr.json');
@@ -125,6 +127,7 @@ export function CalorieScreen() {
   }, []);
 
   const handleAddFood = useCallback(async (food: FoodItem) => {
+    Keyboard.dismiss();
     try {
       const meal: MealLog = {
         id: generateId(), userId, date, mealType: activeMealType as any,
@@ -249,7 +252,7 @@ export function CalorieScreen() {
     const carb = parseFloat(manualCarbs);
     const fat = parseFloat(manualFat);
 
-    if (!name || isNaN(cal) || isNaN(pro) || isNaN(carb) || isNaN(fat)) {
+    if (!name || isNaN(cal) || isNaN(pro) || isNaN(carb) || isNaN(fat) || cal < 0 || pro < 0 || carb < 0 || fat < 0) {
       Alert.alert('', t.barcode.fillAllFields);
       return;
     }
@@ -290,6 +293,12 @@ export function CalorieScreen() {
   const handlePhotoRecognition = useCallback(async () => {
     if (!checkPremiumAccess('food_recognition')) return;
 
+    const { allowed } = await checkDailyLimit('food_recognition');
+    if (!allowed) {
+      Alert.alert(t.premium.limitReached, t.premium.dailyLimitFoodMsg);
+      return;
+    }
+
     try {
       const result = await ImagePicker.launchCameraAsync({
         quality: 0.7,
@@ -300,13 +309,14 @@ export function CalorieScreen() {
       setAiLoading(true);
       setAiModalVisible(true);
       const foods = await recognizeFoodFromImage(result.assets[0].uri);
+      await incrementUsage('food_recognition');
       setAiResults(foods);
       setAiLoading(false);
     } catch (e: any) {
       setAiLoading(false);
       Alert.alert(t.common.error, e.message || t.calorie.aiRecognition);
     }
-  }, [t]);
+  }, [t, isPremium]);
 
   const handleAddAiFood = useCallback((food: RecognizedFood) => {
     const foodItem: FoodItem = {
@@ -636,6 +646,7 @@ export function CalorieScreen() {
               onChangeText={setManualName}
               mode="outlined"
               dense
+              maxLength={100}
             />
             <TextInput
               label={t.barcode.caloriesPer100g}
@@ -644,6 +655,7 @@ export function CalorieScreen() {
               keyboardType="numeric"
               mode="outlined"
               dense
+              maxLength={6}
             />
             <TextInput
               label={t.barcode.proteinPer100g}
@@ -652,6 +664,7 @@ export function CalorieScreen() {
               keyboardType="numeric"
               mode="outlined"
               dense
+              maxLength={6}
             />
             <TextInput
               label={t.barcode.carbsPer100g}
@@ -660,6 +673,7 @@ export function CalorieScreen() {
               keyboardType="numeric"
               mode="outlined"
               dense
+              maxLength={6}
             />
             <TextInput
               label={t.barcode.fatPer100g}
@@ -668,6 +682,7 @@ export function CalorieScreen() {
               keyboardType="numeric"
               mode="outlined"
               dense
+              maxLength={6}
             />
           </Dialog.Content>
           <Dialog.Actions>

@@ -22,6 +22,7 @@ const RC_API_KEY_ANDROID = 'test_neaZQKbwoUMUdsECbtmpqSvWAMj';
 // RevenueCat product identifiers (must match your App Store / Play Store products)
 export const PRODUCT_IDS = {
   monthly: 'fittrack_premium_monthly',
+  quarterly: 'fittrack_premium_quarterly',
   yearly: 'fittrack_premium_yearly',
 } as const;
 
@@ -166,6 +167,8 @@ function checkAndUpdatePremiumStatus(customerInfo: any): boolean {
 
     if (productId.includes('yearly') || productId.includes('annual')) {
       plan = 'yearly';
+    } else if (productId.includes('quarterly') || productId.includes('3month')) {
+      plan = 'quarterly';
     } else {
       plan = 'monthly';
     }

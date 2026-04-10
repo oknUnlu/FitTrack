@@ -31,16 +31,20 @@ export function FastingScreen() {
   const [remainingMinutes, setRemainingMinutes] = useState(0);
 
   const loadData = useCallback(async () => {
-    const [s, log, str] = await Promise.all([
-      getFastingSettings(),
-      getTodayFastingLog(),
-      getFastingStreak(),
-    ]);
-    setSettings(s);
-    setTodayLog(log);
-    setStreak(str);
-    if (s && !log?.completed) {
-      setRemainingMinutes(getRemainingFastingMinutes(s.defaultEndTime));
+    try {
+      const [s, log, str] = await Promise.all([
+        getFastingSettings(),
+        getTodayFastingLog(),
+        getFastingStreak(),
+      ]);
+      setSettings(s);
+      setTodayLog(log);
+      setStreak(str);
+      if (s && !log?.completed) {
+        setRemainingMinutes(getRemainingFastingMinutes(s.defaultEndTime));
+      }
+    } catch (e) {
+      if (__DEV__) console.warn('FastingScreen loadData failed:', e);
     }
   }, []);
 

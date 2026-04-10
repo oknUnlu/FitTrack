@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, TextInput, IconButton, Chip, useTheme, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,6 +16,8 @@ import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { usePremiumStore } from '../../store/premiumStore';
 import { PaywallModal } from '../../components/PaywallModal';
+import { checkDailyLimit } from '../../services/premium/featureGate';
+import { incrementUsage, getRemainingUsage, getDailyLimit } from '../../services/ai/rateLimiter';
 
 type PlanType = 'workout' | 'nutrition' | 'weekly';
 
@@ -30,6 +32,7 @@ export function AICoachScreen() {
   const [loading, setLoading] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
   const isPremium = usePremiumStore((s) => s.isPremium);
+  const [remainingToday, setRemainingToday] = useState<number>(getDailyLimit('ai_coach'));
 
   const quickPrompts = [
     t.aiCoach.prompt1,
@@ -40,17 +43,21 @@ export function AICoachScreen() {
   ];
 
   const planOptions: { type: PlanType; label: string; icon: string }[] = [
-    { type: 'workout', label: 'Antrenman Planı', icon: 'dumbbell' },
-    { type: 'nutrition', label: 'Beslenme Planı', icon: 'food-apple' },
-    { type: 'weekly', label: 'Haftalık Plan', icon: 'calendar-week' },
+    { type: 'workout', label: t.aiCoach.workoutPlan || 'Workout Plan', icon: 'dumbbell' },
+    { type: 'nutrition', label: t.aiCoach.nutritionPlan || 'Nutrition Plan', icon: 'food-apple' },
+    { type: 'weekly', label: t.aiCoach.weeklyPlan || 'Weekly Plan', icon: 'calendar-week' },
   ];
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
     (async () => {
       try {
-        const history = await getChatHistory(userId);
+        const [history, remaining] = await Promise.all([
+          getChatHistory(userId),
+          getRemainingUsage('ai_coach'),
+        ]);
         setMessages(history);
+        setRemainingToday(remaining);
       } catch (e) {
         if (__DEV__) console.warn('AICoachScreen load failed:', e);
       }
@@ -98,6 +105,12 @@ export function AICoachScreen() {
       return;
     }
 
+    const { allowed, remaining } = await checkDailyLimit('ai_coach');
+    if (!allowed) {
+      Alert.alert(t.premium.limitReached, t.premium.dailyLimitMsg);
+      return;
+    }
+
     const userMsg: ConversationMessage = {
       id: Date.now().toString(), role: 'user', content: msg, source: 'gemini_cloud', timestamp: Date.now(),
     };
@@ -108,6 +121,9 @@ export function AICoachScreen() {
     try {
       const context = await buildUserContext();
       const response = await sendMessage(userId, msg, context);
+      await incrementUsage('ai_coach');
+      const newRemaining = await getRemainingUsage('ai_coach');
+      setRemainingToday(newRemaining);
       const aiMsg: ConversationMessage = {
         id: (Date.now() + 1).toString(), role: 'assistant', content: response.message,
         source: response.source, timestamp: Date.now(),
@@ -132,6 +148,12 @@ export function AICoachScreen() {
       return;
     }
 
+    const { allowed } = await checkDailyLimit('ai_coach');
+    if (!allowed) {
+      Alert.alert(t.premium.limitReached, t.premium.dailyLimitMsg);
+      return;
+    }
+
     setLoading(true);
 
     const planLabels: Record<PlanType, string> = {
@@ -149,6 +171,9 @@ export function AICoachScreen() {
     try {
       const context = await buildUserContext();
       const response = await requestPlan(userId, planType, context);
+      await incrementUsage('ai_coach');
+      const newRemaining = await getRemainingUsage('ai_coach');
+      setRemainingToday(newRemaining);
       const aiMsg: ConversationMessage = {
         id: (Date.now() + 1).toString(), role: 'assistant', content: response.message,
         source: response.source, timestamp: Date.now(),
@@ -197,6 +222,9 @@ export function AICoachScreen() {
           <View style={styles.proBadge}>
             <MaterialCommunityIcons name="crown" size={12} color="#FFD700" />
             <Text style={styles.proText}>PRO</Text>
+            <Text style={[styles.proText, { marginLeft: 4, color: remainingToday <= 2 ? '#FF6B6B' : '#FFD700' }]}>
+              {remainingToday}/{getDailyLimit('ai_coach')}
+            </Text>
           </View>
         ) : (
           <View style={styles.proBadge}>

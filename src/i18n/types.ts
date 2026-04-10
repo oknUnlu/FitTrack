@@ -164,6 +164,20 @@ export interface Translations {
     quickStart: string;
     freeWorkout: string;
     freeWorkoutDesc: string;
+    chest: string;
+    back: string;
+    legs: string;
+    shoulders: string;
+    biceps: string;
+    triceps: string;
+    core: string;
+    glutes: string;
+    hamstrings: string;
+    quadriceps: string;
+    calves: string;
+    cardio: string;
+    traps: string;
+    forearms: string;
   };
 
   // Progress Screen
@@ -241,6 +255,9 @@ export interface Translations {
     prompt4: string;
     prompt5: string;
     system: string;
+    workoutPlan: string;
+    nutritionPlan: string;
+    weeklyPlan: string;
   };
 
   // Tools
@@ -608,11 +625,14 @@ export interface Translations {
     featureLockedMsg: string;
     popular: string;
     yearly: string;
+    quarterly: string;
     monthly: string;
     lifetime: string;
     year: string;
+    threeMonths: string;
     month: string;
     savePercent: string;
+    savePercentQuarterly: string;
     restore: string;
     restoreSuccess: string;
     restoreNotFound: string;
@@ -629,12 +649,22 @@ export interface Translations {
     healthHubFull: string;
     adFree: string;
     limitReached: string;
+    dailyLimitMsg: string;
+    dailyLimitFoodMsg: string;
     upgradeNow: string;
     freeLimit: string;
     premiumBadge: string;
     currentPlan: string;
     expiresAt: string;
     managePlan: string;
+    promoCode: string;
+    enterPromoCode: string;
+    promoPlaceholder: string;
+    promoActivated: string;
+    promoInvalid: string;
+    promoExpired: string;
+    promoError: string;
+    activate: string;
   };
 
   // Privacy Policy

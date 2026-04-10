@@ -219,8 +219,6 @@ export function ActiveWorkoutScreen() {
       setSummaryVisible(true);
     } catch {
       setSaving(false);
-      if (timerRef.current) clearInterval(timerRef.current);
-      timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
       Alert.alert(t.common.error, t.workout.saveError);
     }
   };
@@ -335,11 +333,7 @@ export function ActiveWorkoutScreen() {
                       {exerciseDetail.muscleGroups.slice(0, 3).map((mg) => (
                         <View key={mg} style={[styles.muscleTag, { backgroundColor: (MUSCLE_COLORS[mg] || accentColor) + '12' }]}>
                           <Text style={[styles.muscleTagText, { color: MUSCLE_COLORS[mg] || accentColor }]}>
-                            {mg === 'chest' ? 'Göğüs' : mg === 'back' ? 'Sırt' : mg === 'legs' ? 'Bacak' :
-                             mg === 'shoulders' ? 'Omuz' : mg === 'biceps' ? 'Biceps' : mg === 'triceps' ? 'Triceps' :
-                             mg === 'core' ? 'Karın' : mg === 'glutes' ? 'Kalça' : mg === 'hamstrings' ? 'Arka Bacak' :
-                             mg === 'quadriceps' ? 'Ön Bacak' : mg === 'calves' ? 'Baldır' : mg === 'cardio' ? 'Kardiyo' :
-                             mg === 'traps' ? 'Trapez' : mg === 'forearms' ? 'Ön Kol' : mg}
+                            {(t.workout as any)[mg] || mg}
                           </Text>
                         </View>
                       ))}

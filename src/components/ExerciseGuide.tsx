@@ -51,7 +51,7 @@ export function ExerciseGuide({ exercise, isExpanded, onToggle, compact }: Exerc
   const equipConfig = EQUIPMENT_CONFIG[exercise.equipmentType] || EQUIPMENT_CONFIG.bodyweight;
 
   // Talimatları adımlara böl
-  const steps = exercise.instructions
+  const steps = (exercise.instructions || '')
     .split('.')
     .map((s) => s.trim())
     .filter((s) => s.length > 2);

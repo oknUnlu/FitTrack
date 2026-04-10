@@ -36,9 +36,9 @@ export class ErrorBoundary extends Component<Props, State> {
         <View style={styles.container}>
           <ScrollView contentContainerStyle={styles.content}>
             <MaterialCommunityIcons name="alert-circle-outline" size={64} color="#F44336" />
-            <Text style={styles.title}>Bir hata oluştu</Text>
+            <Text style={styles.title}>Something went wrong</Text>
             <Text style={styles.subtitle}>
-              Uygulama beklenmeyen bir hatayla karşılaştı. Lütfen tekrar deneyin.
+              The app encountered an unexpected error. Please try again.
             </Text>
             {__DEV__ && this.state.error && (
               <View style={styles.errorBox}>
@@ -51,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
               style={styles.button}
               buttonColor={colors.primary}
             >
-              Tekrar Dene
+              Try Again
             </Button>
           </ScrollView>
         </View>

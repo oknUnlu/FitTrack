@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Image, Alert, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Image, Alert, Platform, Keyboard } from 'react-native';
 import { Text, Card, useTheme, TextInput, Button, Portal, Dialog } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,7 +35,9 @@ export function BodyMetricsScreen() {
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS === 'web') return;
-      getAllMetrics(userId).then(setMetrics);
+      getAllMetrics(userId).then(setMetrics).catch((e) => {
+        if (__DEV__) console.warn('BodyMetrics load failed:', e);
+      });
     }, [userId])
   );
 
@@ -78,7 +80,8 @@ export function BodyMetricsScreen() {
   };
 
   const handleSave = async () => {
-    if (!weight.trim()) {
+    const w = parseFloat(weight);
+    if (!weight.trim() || isNaN(w) || w <= 0) {
       Alert.alert('', t.onboarding.fillAllFields);
       return;
     }
@@ -86,7 +89,7 @@ export function BodyMetricsScreen() {
       id: generateId(),
       userId,
       date: todayString(),
-      weight: parseFloat(weight),
+      weight: w,
       bodyFat: bodyFat ? parseFloat(bodyFat) : null,
       waistCm: waist ? parseFloat(waist) : null,
       hipCm: hip ? parseFloat(hip) : null,
@@ -95,6 +98,7 @@ export function BodyMetricsScreen() {
       thighCm: thigh ? parseFloat(thigh) : null,
       progressPhotoPath: photoPath,
     };
+    Keyboard.dismiss();
     await insertMetric(metric);
     const updated = await getAllMetrics(userId);
     setMetrics(updated);

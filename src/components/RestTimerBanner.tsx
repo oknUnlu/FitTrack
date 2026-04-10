@@ -33,7 +33,7 @@ export function RestTimerBanner({ durationSeconds = 90, onDone, onSkip }: RestTi
       if (intervalRef.current) clearInterval(intervalRef.current);
       progressAnim.stopAnimation();
     };
-  }, []);
+  }, [durationSeconds]);
 
   // Trigger onDone when countdown reaches 0 (safe — not inside state updater)
   useEffect(() => {

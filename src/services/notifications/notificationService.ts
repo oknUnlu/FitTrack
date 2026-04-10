@@ -80,9 +80,9 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
     if (!enabled) return;
 
     const mealTimes = [
-      { hour: 8, minute: 0, title: '🍳 Kahvaltı Zamanı', body: 'Güne sağlıklı bir kahvaltıyla başla!' },
-      { hour: 12, minute: 30, title: '🥗 Öğle Yemeği', body: 'Öğle yemeğini kaydetmeyi unutma!' },
-      { hour: 19, minute: 0, title: '🍽️ Akşam Yemeği', body: 'Akşam yemeğini kaydetmeyi unutma!' },
+      { hour: 8, minute: 0, title: '🍳 Breakfast Time', body: 'Start your day with a healthy breakfast!' },
+      { hour: 12, minute: 30, title: '🥗 Lunch Time', body: "Don't forget to log your lunch!" },
+      { hour: 19, minute: 0, title: '🍽️ Dinner Time', body: "Don't forget to log your dinner!" },
     ];
 
     for (const meal of mealTimes) {
@@ -124,8 +124,8 @@ export async function scheduleWaterReminders(enabled: boolean): Promise<void> {
     for (const hour of waterHours) {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: '💧 Su İç!',
-          body: 'Bir bardak su içmeyi unutma. Vücudun suya ihtiyaç duyuyor!',
+          title: '💧 Drink Water!',
+          body: "Don't forget to drink a glass of water. Your body needs hydration!",
           data: { type: 'water_reminder' },
         },
         trigger: {
@@ -158,8 +158,8 @@ export async function scheduleWorkoutReminder(enabled: boolean): Promise<void> {
 
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: '💪 Antrenman Zamanı!',
-        body: 'Bugün antrenman yapmayı planlamıştın. Haydi harekete geç!',
+        title: '💪 Workout Time!',
+        body: "You planned a workout today. Let's get moving!",
         data: { type: 'workout_reminder' },
       },
       trigger: {

@@ -12,6 +12,7 @@ import {
 } from '../services/premium/revenueCat';
 import { colors, spacing, borderRadius } from '../theme/theme';
 import { useLanguage } from '../i18n';
+import { getLocalizedPrices } from '../utils/locale';
 
 interface PaywallModalProps {
   visible: boolean;
@@ -32,7 +33,7 @@ const PREMIUM_FEATURES = [
 
 export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const theme = useTheme();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const setPremium = usePremiumStore((s) => s.setPremium);
 
   const rcConfigured = isRevenueCatConfigured();
@@ -60,7 +61,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     setIsLoadingOfferings(false);
   };
 
-  const getPackageByPlan = (plan: 'monthly' | 'yearly') => {
+  const getPackageByPlan = (plan: 'monthly' | 'quarterly' | 'yearly') => {
     if (!offerings?.availablePackages) return null;
     const productId = PRODUCT_IDS[plan];
     return offerings.availablePackages.find(
@@ -68,7 +69,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     ) || null;
   };
 
-  const getPackagePrice = (plan: 'monthly' | 'yearly'): string | null => {
+  const getPackagePrice = (plan: 'monthly' | 'quarterly' | 'yearly'): string | null => {
     const pkg = getPackageByPlan(plan);
     return pkg?.product?.priceString || null;
   };
@@ -104,10 +105,11 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     setIsRestoring(false);
   };
 
-  const handlePurchase = async (plan: 'monthly' | 'yearly') => {
+  const handlePurchase = async (plan: 'monthly' | 'quarterly' | 'yearly') => {
     if (!rcConfigured) {
       // Mock mode: activate directly for development
-      const expiresAt = Date.now() + (plan === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000;
+      const days = plan === 'monthly' ? 30 : plan === 'quarterly' ? 90 : 365;
+      const expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
       await setPremium(plan, expiresAt);
       onClose();
       return;
@@ -134,10 +136,12 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     setIsPurchasing(false);
   };
 
-  // Default prices (shown when RevenueCat isn't configured or offerings haven't loaded)
-  const isTR = language === 'tr';
-  const monthlyPrice = getPackagePrice('monthly') || (isTR ? '₺59,99' : '$4.99');
-  const yearlyPrice = getPackagePrice('yearly') || (isTR ? '₺299,99' : '$24.99');
+  // Default prices by device country (shown when RevenueCat isn't configured)
+  // When RevenueCat is active, App Store / Play Store return localized prices
+  const localPrices = getLocalizedPrices();
+  const monthlyPrice = getPackagePrice('monthly') || localPrices.monthly;
+  const quarterlyPrice = getPackagePrice('quarterly') || localPrices.quarterly;
+  const yearlyPrice = getPackagePrice('yearly') || localPrices.yearly;
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -209,6 +213,19 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                 <Text style={styles.planName}>{t.premium.yearly}</Text>
                 <Text style={styles.planPrice}>{yearlyPrice}/{t.premium.year}</Text>
                 <Text style={styles.planSave}>{t.premium.savePercent}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.planCard, styles.quarterlyPlan]}
+                onPress={() => handlePurchase('quarterly')}
+                disabled={isPurchasing}
+                accessibilityLabel={`3-month plan, ${quarterlyPrice} per 3 months`}
+                accessibilityRole="button"
+                accessibilityHint="Purchase the 3-month premium plan"
+              >
+                <Text style={styles.planName}>{t.premium.quarterly}</Text>
+                <Text style={styles.planPrice}>{quarterlyPrice}/{t.premium.threeMonths}</Text>
+                <Text style={styles.planSave}>{t.premium.savePercentQuarterly}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -318,6 +335,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     marginBottom: spacing.sm,
     position: 'relative',
+  },
+  quarterlyPlan: {
+    backgroundColor: '#1A7A4C',
+    marginBottom: spacing.sm,
   },
   popularBadge: {
     position: 'absolute',

@@ -401,7 +401,7 @@ export function WellnessScreen() {
               {/* Sleep Quality */}
               <Text style={styles.formLabel}>{t.wellness.sleepQuality}</Text>
               {renderRatingDots(formSleepQuality, setFormSleepQuality, colors.secondary)}
-              <Text style={{ fontSize: 11, color: colors.textTertiary, marginTop: 2 }}>{(t.wellness as any)[SLEEP_QUALITY_KEYS[formSleepQuality]] || ''}</Text>
+              <Text style={{ fontSize: 11, color: colors.textTertiary, marginTop: 2 }}>{(t.wellness as any)[SLEEP_QUALITY_KEYS[formSleepQuality] ?? ''] || ''}</Text>
 
               {/* Mood */}
               <Text style={[styles.formLabel, { marginTop: 12 }]}>{t.wellness.mood}</Text>

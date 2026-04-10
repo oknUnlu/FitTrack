@@ -26,6 +26,10 @@ const PROD_INTERSTITIAL_IDS = {
 // __DEV__ modunda her zaman test ID'lerini kullan (production'da gerçek ID'ler kullanılır)
 const isTestMode = __DEV__;
 
+// ── Timing Constants ──
+const AD_LOAD_TIMEOUT_MS = 10_000;
+const AD_RELOAD_DELAY_MS = 3_000;
+
 export type BannerScreen = 'dashboard' | 'progress' | 'nutrition';
 
 // Native modül mevcut mu kontrol et (Expo Go'da mevcut değildir)
@@ -119,8 +123,7 @@ export async function loadInterstitial(): Promise<void> {
       });
       interstitialAd.load();
 
-      // 10 saniye timeout
-      setTimeout(() => { resolve(); }, 10000);
+      setTimeout(() => { resolve(); }, AD_LOAD_TIMEOUT_MS);
     });
   } catch (e) {
     if (__DEV__) console.warn('AdMob: Failed to load interstitial', e);
@@ -137,7 +140,7 @@ export async function showInterstitial(): Promise<boolean> {
     await interstitialAd.show();
     interstitialLoaded = false;
     // Yeni reklam yükle (sonraki gösterim için)
-    setTimeout(() => loadInterstitial(), 3000);
+    setTimeout(() => loadInterstitial(), AD_RELOAD_DELAY_MS);
     return true;
   } catch (e) {
     if (__DEV__) console.warn('AdMob: Failed to show interstitial', e);

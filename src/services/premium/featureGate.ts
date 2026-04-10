@@ -1,4 +1,5 @@
 import { usePremiumStore } from '../../store/premiumStore';
+import { canUseFeature, getRemainingUsage, getDailyLimit, type LimitedFeature } from '../ai/rateLimiter';
 
 export type PremiumFeature =
   | 'ai_coach'
@@ -15,6 +16,28 @@ export type PremiumFeature =
 export function canAccessFeature(feature: PremiumFeature): boolean {
   const { isPremium } = usePremiumStore.getState();
   return isPremium;
+}
+
+/**
+ * Check if a daily-limited feature can be used right now.
+ * Returns { allowed, remaining, limit } so the UI can show usage info.
+ * Free users are always blocked (allowed = false, remaining = 0).
+ */
+export async function checkDailyLimit(feature: LimitedFeature): Promise<{
+  allowed: boolean;
+  remaining: number;
+  limit: number;
+}> {
+  const { isPremium } = usePremiumStore.getState();
+  const limit = getDailyLimit(feature);
+
+  if (!isPremium) {
+    return { allowed: false, remaining: 0, limit };
+  }
+
+  const allowed = await canUseFeature(feature);
+  const remaining = await getRemainingUsage(feature);
+  return { allowed, remaining, limit };
 }
 
 /**
