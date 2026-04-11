@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI, Content } from '@google/generative-ai';
+import { logUsage } from './usageLogger';
+import { checkBudget } from './budgetGuard';
 
 const API_KEY = process.env.GEMINI_API_KEY || '';
 const MODEL = 'gemini-2.5-flash';
@@ -15,11 +17,21 @@ function getClient(): GoogleGenerativeAI {
   return genAI;
 }
 
+async function ensureBudget(): Promise<void> {
+  const hasBalance = await checkBudget();
+  if (!hasBalance) {
+    throw new Error('BUDGET_EXCEEDED: Monthly API budget limit reached');
+  }
+}
+
 export async function chat(
   prompt: string,
   systemInstruction: string,
   history: { role: 'user' | 'model'; content: string }[]
 ): Promise<string> {
+  await ensureBudget();
+
+  const start = Date.now();
   const client = getClient();
   const model = client.getGenerativeModel({
     model: MODEL,
@@ -34,13 +46,19 @@ export async function chat(
   const chatSession = model.startChat({ history: chatHistory });
 
   const result = await chatSession.sendMessage(prompt);
-  return result.response.text();
+  const text = result.response.text();
+
+  logUsage('chat', Date.now() - start);
+  return text;
 }
 
 export async function generateContent(
   prompt: string,
   systemInstruction: string
 ): Promise<string> {
+  await ensureBudget();
+
+  const start = Date.now();
   const client = getClient();
   const model = client.getGenerativeModel({
     model: MODEL,
@@ -51,7 +69,10 @@ export async function generateContent(
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
   });
 
-  return result.response.text();
+  const text = result.response.text();
+
+  logUsage('plan', Date.now() - start);
+  return text;
 }
 
 export async function analyzeImage(
@@ -59,6 +80,9 @@ export async function analyzeImage(
   mimeType: string,
   prompt: string
 ): Promise<string> {
+  await ensureBudget();
+
+  const start = Date.now();
   const client = getClient();
   const model = client.getGenerativeModel({ model: MODEL });
 
@@ -72,5 +96,8 @@ export async function analyzeImage(
     },
   ]);
 
-  return result.response.text();
+  const text = result.response.text();
+
+  logUsage('food_recognition', Date.now() - start);
+  return text;
 }

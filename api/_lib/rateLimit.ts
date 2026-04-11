@@ -1,8 +1,5 @@
 import type { RateLimitConfig } from './types';
-
-// In-memory rate limiting (works per serverless instance)
-// For production, replace with Vercel KV (Upstash Redis)
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+import { getRedis } from './redis';
 
 const LIMITS: Record<string, { free: number; premium: number }> = {
   ai_coach: { free: 10, premium: 250 },
@@ -10,46 +7,44 @@ const LIMITS: Record<string, { free: number; premium: number }> = {
   plan: { free: 10, premium: 250 },
 };
 
-function getKey(deviceId: string, feature: string): string {
+function getTodayKey(deviceId: string, feature: string): string {
   const today = new Date().toISOString().split('T')[0];
-  return `${deviceId}:${feature}:${today}`;
+  return `ratelimit:${deviceId}:${feature}:${today}`;
 }
 
-function getMidnightMs(): number {
+function getSecondsUntilMidnightUTC(): number {
   const now = new Date();
-  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-  return tomorrow.getTime();
+  const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  return Math.ceil((tomorrow.getTime() - now.getTime()) / 1000);
 }
 
-export function checkRateLimit(config: RateLimitConfig): { allowed: boolean; remaining: number } {
+export async function checkRateLimit(config: RateLimitConfig): Promise<{ allowed: boolean; remaining: number }> {
   const { feature, isPremium, deviceId } = config;
   const limits = LIMITS[feature];
   if (!limits) return { allowed: true, remaining: 999 };
 
   const maxRequests = isPremium ? limits.premium : limits.free;
-  const key = getKey(deviceId, feature);
-  const now = Date.now();
+  const key = getTodayKey(deviceId, feature);
 
-  let entry = rateLimitStore.get(key);
-  if (!entry || now >= entry.resetAt) {
-    entry = { count: 0, resetAt: getMidnightMs() };
-    rateLimitStore.set(key, entry);
-  }
+  try {
+    const redis = getRedis();
 
-  if (entry.count >= maxRequests) {
-    return { allowed: false, remaining: 0 };
-  }
+    // Atomically increment counter
+    const count = await redis.incr(key);
 
-  entry.count++;
-  return { allowed: true, remaining: maxRequests - entry.count };
-}
-
-// Cleanup old entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore) {
-    if (now >= entry.resetAt) {
-      rateLimitStore.delete(key);
+    // Set expiry on first increment (key didn't exist before)
+    if (count === 1) {
+      await redis.expire(key, getSecondsUntilMidnightUTC());
     }
+
+    if (count > maxRequests) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    return { allowed: true, remaining: maxRequests - count };
+  } catch (error) {
+    console.error('Rate limit check failed:', error);
+    // Fail-open for rate limiting to avoid blocking all users on Redis outage
+    return { allowed: true, remaining: 1 };
   }
-}, 60 * 60 * 1000); // Every hour
+}

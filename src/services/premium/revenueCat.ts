@@ -15,9 +15,9 @@ function getRC(): any {
   return Purchases;
 }
 
-// RevenueCat API keys
-const RC_API_KEY_IOS = 'test_neaZQKbwoUMUdsECbtmpqSvWAMj';
-const RC_API_KEY_ANDROID = 'test_neaZQKbwoUMUdsECbtmpqSvWAMj';
+// RevenueCat API keys — use environment variables for production keys
+const RC_API_KEY_IOS = process.env.EXPO_PUBLIC_RC_API_KEY_IOS || '';
+const RC_API_KEY_ANDROID = process.env.EXPO_PUBLIC_RC_API_KEY_ANDROID || '';
 
 // RevenueCat product identifiers (must match your App Store / Play Store products)
 export const PRODUCT_IDS = {
@@ -43,6 +43,11 @@ export async function configureRevenueCat(): Promise<void> {
   if (!apiKey) {
     if (__DEV__) console.log('RevenueCat: No API key configured, running in mock mode');
     return;
+  }
+
+  // Warn if test keys are used in production builds
+  if (!__DEV__ && apiKey.startsWith('test_')) {
+    console.error('CRITICAL: RevenueCat is using a TEST key in production! Real purchases will not work.');
   }
 
   try {

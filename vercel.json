@@ -1,3 +1,37 @@
 {
-  "version": 2
+  "version": 2,
+  "functions": {
+    "api/chat.ts": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "api/food-recognition.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/plan.ts": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "api/promo.ts": {
+      "maxDuration": 10,
+      "memory": 256
+    },
+    "api/usage.ts": {
+      "maxDuration": 10,
+      "memory": 256
+    },
+    "api/health.ts": {
+      "maxDuration": 5,
+      "memory": 128
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/health",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=60" }
+      ]
+    }
+  ]
 }

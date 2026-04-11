@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { chat } from './_lib/gemini';
-import { getDeviceToken, isPremiumRequest } from './_lib/auth';
+import { getDeviceToken, verifyPremiumStatus } from './_lib/auth';
 import { checkRateLimit } from './_lib/rateLimit';
 import type { ChatRequest } from './_lib/types';
 
@@ -14,10 +14,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const isPremium = isPremiumRequest(req);
+  const isPremium = await verifyPremiumStatus(deviceId);
 
   // Rate limit check
-  const { allowed, remaining } = checkRateLimit({
+  const { allowed, remaining } = await checkRateLimit({
     feature: 'ai_coach',
     isPremium,
     deviceId,

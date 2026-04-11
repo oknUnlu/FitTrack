@@ -17,6 +17,11 @@ const VERIFIED_COL = 'verified_products';
 const MIN_SUBMISSIONS = 5;
 const MAX_DEVIATION_RATIO = 0.25;
 
+// Local negative cache: track barcodes we already checked and weren't verified.
+// Prevents repeated Firestore reads for non-existent products.
+const NEGATIVE_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const negativeCache = new Map<string, number>();
+
 export interface CloudBarcodeSubmission {
   barcode: string;
   name: string;
@@ -77,10 +82,22 @@ export async function submitBarcodeToCloud(
 export async function getVerifiedProduct(barcode: string): Promise<VerifiedProduct | null> {
   if (!isFirebaseConfigured()) return null;
 
+  // Check negative cache to avoid redundant Firestore reads
+  const cachedAt = negativeCache.get(barcode);
+  if (cachedAt && Date.now() - cachedAt < NEGATIVE_CACHE_TTL_MS) {
+    return null;
+  }
+
   try {
     const docRef = doc(db, VERIFIED_COL, barcode);
     const snap = await getDoc(docRef);
-    if (!snap.exists()) return null;
+    if (!snap.exists()) {
+      // Cache the miss to avoid re-checking Firestore
+      negativeCache.set(barcode, Date.now());
+      return null;
+    }
+    // Clear negative cache on successful find
+    negativeCache.delete(barcode);
     return snap.data() as VerifiedProduct;
   } catch (e) {
     if (__DEV__) console.warn('getVerifiedProduct failed:', e);

@@ -13,9 +13,4 @@ export function getDeviceToken(req: VercelRequest): string | null {
   return token;
 }
 
-/**
- * Check if request claims premium status via header.
- */
-export function isPremiumRequest(req: VercelRequest): boolean {
-  return req.headers['x-premium'] === 'true';
-}
+export { verifyPremiumStatus } from './premiumVerifier';

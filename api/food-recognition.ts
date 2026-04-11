@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { analyzeImage } from './_lib/gemini';
-import { getDeviceToken, isPremiumRequest } from './_lib/auth';
+import { getDeviceToken, verifyPremiumStatus } from './_lib/auth';
 import { checkRateLimit } from './_lib/rateLimit';
 import type { FoodRecognitionRequest, RecognizedFood } from './_lib/types';
 
@@ -35,9 +35,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const isPremium = isPremiumRequest(req);
+  const isPremium = await verifyPremiumStatus(deviceId);
 
-  const { allowed, remaining } = checkRateLimit({
+  const { allowed, remaining } = await checkRateLimit({
     feature: 'food_recognition',
     isPremium,
     deviceId,

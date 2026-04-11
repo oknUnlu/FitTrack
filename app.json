@@ -34,7 +34,7 @@
         "backgroundColor": "#4CAF50"
       },
       "package": "com.fittrack.app",
-      "versionCode": 1,
+      "versionCode": 2,
       "permissions": [
         "CAMERA",
         "VIBRATE",
@@ -56,28 +56,40 @@
       "expo-sqlite",
       "expo-asset",
       "expo-font",
-      ["react-native-health", {
-        "isClinicalDataEnabled": false
-      }],
-      ["expo-health-connect", {
-        "requestPermissionsOnStart": false
-      }],
-      ["react-native-google-mobile-ads", {
-        "androidAppId": "ca-app-pub-3850996093825148~5620803043",
-        "iosAppId": "ca-app-pub-3850996093825148~5620803043"
-      }],
-      ["expo-build-properties", {
-        "android": {
-          "compileSdkVersion": 35,
-          "targetSdkVersion": 35,
-          "minSdkVersion": 26
+      [
+        "react-native-health",
+        {
+          "isClinicalDataEnabled": false
         }
-      }]
+      ],
+      [
+        "expo-health-connect",
+        {
+          "requestPermissionsOnStart": false
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3850996093825148~5620803043",
+          "iosAppId": "ca-app-pub-3850996093825148~5620803043"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 26
+          }
+        }
+      ]
     ],
     "extra": {
       "apiBaseUrl": "https://fittrack-api-liard.vercel.app",
       "eas": {
-        "projectId": ""
+        "projectId": "ab8d70ce-dbaa-4638-8aa9-dd8781d83e53"
       }
     }
   }

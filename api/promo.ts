@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getDeviceToken } from './_lib/auth';
+import { getRedis } from './_lib/redis';
 
 /**
  * Promo code validation endpoint.
@@ -13,7 +14,8 @@ import { getDeviceToken } from './_lib/auth';
  *
  * Each code can optionally have:
  *   - maxUses: number (default: unlimited)
- *   - usedBy: string[] (tracked in-memory per instance; for persistent tracking use a DB)
+ *
+ * Usage tracking is persistent via Redis (shared across all serverless instances).
  */
 
 interface PromoCodeEntry {
@@ -21,10 +23,6 @@ interface PromoCodeEntry {
   durationDays: number;
   maxUses?: number;
 }
-
-// In-memory usage tracking (per serverless instance)
-// For production with high traffic, consider using Vercel KV / Upstash Redis
-const usageStore = new Map<string, Set<string>>();
 
 function getPromoCodes(): Record<string, PromoCodeEntry> | null {
   const raw = process.env.PROMO_CODES;
@@ -76,19 +74,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(404).json({ success: false, message: 'Invalid promo code' });
   }
 
-  // Check max uses (per serverless instance)
+  const redis = getRedis();
+
+  // Check max uses (persistent via Redis)
   if (entry.maxUses) {
-    const usedSet = usageStore.get(normalizedCode) || new Set();
-    if (usedSet.size >= entry.maxUses) {
+    const usageKey = `promo_usage:${normalizedCode}`;
+    const currentUses = await redis.scard(usageKey);
+    if (currentUses >= entry.maxUses) {
       return res.status(410).json({ success: false, message: 'Promo code expired' });
     }
+    // Check if this device already used this code
+    const alreadyUsed = await redis.sismember(usageKey, deviceId);
+    if (alreadyUsed) {
+      return res.status(409).json({ success: false, message: 'Promo code already used' });
+    }
     // Track usage
-    usedSet.add(deviceId);
-    usageStore.set(normalizedCode, usedSet);
+    await redis.sadd(usageKey, deviceId);
   }
 
   // Calculate expiry
   const expiresAt = Date.now() + entry.durationDays * 24 * 60 * 60 * 1000;
+  const ttlSeconds = entry.durationDays * 24 * 60 * 60;
+
+  // Grant premium status in Redis (used by premiumVerifier.ts)
+  const promoKey = `promo_premium:${deviceId}`;
+  await redis.set(promoKey, expiresAt, { ex: ttlSeconds });
 
   return res.status(200).json({
     success: true,
