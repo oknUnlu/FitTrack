@@ -19,7 +19,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fittrack.app",
+      "bundleIdentifier": "com.okanu.fittrack",
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Barkod taramak ve yemek fotoğrafı çekmek için kamera izni gereklidir.",
@@ -33,7 +33,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#4CAF50"
       },
-      "package": "com.fittrack.app",
+      "package": "com.okanu.fittrack",
       "versionCode": 2,
       "permissions": [
         "CAMERA",

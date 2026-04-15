@@ -19,11 +19,11 @@ async function resizeImageIfNeeded(imageUri: string): Promise<string> {
   if (Platform.OS === 'web') return imageUri;
 
   try {
-    const ImageManipulator = require('expo-image-manipulator');
-    const result = await ImageManipulator.manipulateAsync(
+    const { manipulateAsync, SaveFormat } = require('expo-image-manipulator');
+    const result = await manipulateAsync(
       imageUri,
       [{ resize: { width: MAX_IMAGE_DIMENSION } }],
-      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      { compress: 0.7, format: SaveFormat.JPEG }
     );
     return result.uri;
   } catch {
