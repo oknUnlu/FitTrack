@@ -9,9 +9,15 @@ interface PremiumStatus {
 }
 
 /**
- * Verify premium status server-side via RevenueCat REST API.
- * Results are cached in Redis for 1 hour to avoid excessive API calls.
- * Falls back to checking promo-granted premium in Redis.
+ * Verify premium status server-side.
+ * Checks in this order:
+ *   1. Promo-granted premium (set by /api/promo, stored in Redis)
+ *   2. Cached premium status in Redis
+ *   3. Google Play purchase verification via /api/verify-purchase
+ *
+ * The client calls /api/verify-purchase after a successful Google Play purchase,
+ * which stores the verified status in Redis. This function reads from that cache.
+ *
  * Fail-closed: returns false on any error to prevent cost exposure.
  */
 export async function verifyPremiumStatus(deviceId: string): Promise<boolean> {
@@ -25,56 +31,39 @@ export async function verifyPremiumStatus(deviceId: string): Promise<boolean> {
       return true;
     }
 
-    // 2. Check cached premium status
+    // 2. Check cached premium status (set by /api/verify-purchase)
     const cacheKey = `premium:${deviceId}`;
     const cached = await redis.get<PremiumStatus>(cacheKey);
     if (cached !== null) {
-      return cached.isPremium;
-    }
-
-    // 3. Query RevenueCat REST API
-    const rcApiKey = process.env.REVENUECAT_API_KEY;
-    if (!rcApiKey) {
-      // RevenueCat not configured — deny premium (fail-closed)
-      return false;
-    }
-
-    const response = await fetch(
-      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(deviceId)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${rcApiKey}`,
-          'Content-Type': 'application/json',
-        },
+      // Check if premium hasn't expired
+      if (cached.isPremium && cached.expiresAt && cached.expiresAt > Date.now()) {
+        return true;
       }
-    );
-
-    if (!response.ok) {
-      // API error — deny premium (fail-closed), cache briefly to avoid hammering
-      await redis.set(cacheKey, { isPremium: false, plan: null, expiresAt: null }, { ex: 300 });
+      // Expired or not premium
       return false;
     }
 
-    const data = await response.json();
-    const entitlements = data?.subscriber?.entitlements;
-    const premiumEntitlement = entitlements?.premium;
-
-    if (premiumEntitlement && premiumEntitlement.expires_date) {
-      const expiresAt = new Date(premiumEntitlement.expires_date).getTime();
-      const isPremium = expiresAt > Date.now();
-      const plan = premiumEntitlement.product_identifier || null;
-
-      const status: PremiumStatus = { isPremium, plan, expiresAt };
-      await redis.set(cacheKey, status, { ex: CACHE_TTL_SECONDS });
-      return isPremium;
-    }
-
-    // No premium entitlement found
-    await redis.set(cacheKey, { isPremium: false, plan: null, expiresAt: null }, { ex: CACHE_TTL_SECONDS });
+    // 3. No cached status found — user is not premium
     return false;
   } catch (error) {
     console.error('Premium verification failed:', error);
     // Fail-closed: deny premium on any error
     return false;
   }
+}
+
+/**
+ * Grant premium status for a device (called after successful purchase verification).
+ */
+export async function grantPremiumStatus(
+  deviceId: string,
+  plan: string,
+  expiresAt: number
+): Promise<void> {
+  const redis = getRedis();
+  const cacheKey = `premium:${deviceId}`;
+  const ttl = Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000));
+
+  const status: PremiumStatus = { isPremium: true, plan, expiresAt };
+  await redis.set(cacheKey, status, { ex: ttl });
 }

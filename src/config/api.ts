@@ -28,4 +28,5 @@ export const API_ENDPOINTS = {
   plan: `${API_BASE_URL}/api/plan`,
   foodRecognition: `${API_BASE_URL}/api/food-recognition`,
   promo: `${API_BASE_URL}/api/promo`,
+  verifyPurchase: `${API_BASE_URL}/api/verify-purchase`,
 } as const;

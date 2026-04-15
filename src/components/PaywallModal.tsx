@@ -4,12 +4,12 @@ import { Text, Button, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePremiumStore } from '../store/premiumStore';
 import {
-  isRevenueCatConfigured,
-  getOfferings,
-  purchasePackage,
+  isBillingConfigured,
+  getSubscriptions,
+  purchaseSubscription,
   restorePurchases,
   PRODUCT_IDS,
-} from '../services/premium/revenueCat';
+} from '../services/premium/googleBilling';
 import { colors, spacing, borderRadius } from '../theme/theme';
 import { useLanguage } from '../i18n';
 import { getLocalizedPrices } from '../utils/locale';
@@ -36,47 +36,41 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const { t } = useLanguage();
   const setPremium = usePremiumStore((s) => s.setPremium);
 
-  const rcConfigured = isRevenueCatConfigured();
+  const billingReady = isBillingConfigured();
 
-  const [offerings, setOfferings] = useState<any>(null);
-  const [isLoadingOfferings, setIsLoadingOfferings] = useState(false);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [isLoadingSubs, setIsLoadingSubs] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
-  // Load offerings when modal opens
+  // Load subscriptions when modal opens
   useEffect(() => {
-    if (visible && rcConfigured && !offerings) {
-      loadOfferings();
+    if (visible && billingReady && subscriptions.length === 0) {
+      loadSubscriptions();
     }
   }, [visible]);
 
-  const loadOfferings = async () => {
-    setIsLoadingOfferings(true);
+  const loadSubscriptions = async () => {
+    setIsLoadingSubs(true);
     try {
-      const result = await getOfferings();
-      setOfferings(result);
+      const result = await getSubscriptions();
+      setSubscriptions(result);
     } catch (e) {
-      if (__DEV__) console.warn('Failed to load offerings:', e);
+      if (__DEV__) console.warn('Failed to load subscriptions:', e);
     }
-    setIsLoadingOfferings(false);
+    setIsLoadingSubs(false);
   };
 
-  const getPackageByPlan = (plan: 'monthly' | 'quarterly' | 'yearly') => {
-    if (!offerings?.availablePackages) return null;
+  const getSubPrice = (plan: 'monthly' | 'quarterly' | 'yearly'): string | null => {
     const productId = PRODUCT_IDS[plan];
-    return offerings.availablePackages.find(
-      (pkg: any) => pkg.product?.identifier === productId
-    ) || null;
-  };
-
-  const getPackagePrice = (plan: 'monthly' | 'quarterly' | 'yearly'): string | null => {
-    const pkg = getPackageByPlan(plan);
-    return pkg?.product?.priceString || null;
+    const sub = subscriptions.find(
+      (s: any) => s.productId === productId
+    );
+    return sub?.localizedPrice || null;
   };
 
   const handleRestore = async () => {
-    if (!rcConfigured) {
-      // Mock mode: just close
+    if (!billingReady) {
       onClose();
       return;
     }
@@ -106,7 +100,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   };
 
   const handlePurchase = async (plan: 'monthly' | 'quarterly' | 'yearly') => {
-    if (!rcConfigured) {
+    if (!billingReady) {
       // Mock mode: activate directly for development
       const days = plan === 'monthly' ? 30 : plan === 'quarterly' ? 90 : 365;
       const expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
@@ -115,16 +109,11 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
       return;
     }
 
-    const pkg = getPackageByPlan(plan);
-    if (!pkg) {
-      Alert.alert(t.common.error, t.common.errorOccurred);
-      return;
-    }
-
+    const productId = PRODUCT_IDS[plan];
     setIsPurchasing(true);
     try {
-      const success = await purchasePackage(pkg);
-      if (success) {
+      const token = await purchaseSubscription(productId);
+      if (token) {
         onClose();
       }
     } catch (e: any) {
@@ -136,12 +125,12 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     setIsPurchasing(false);
   };
 
-  // Default prices by device country (shown when RevenueCat isn't configured)
-  // When RevenueCat is active, App Store / Play Store return localized prices
+  // Default prices by device country (shown when Google Play isn't available)
+  // When billing is active, Play Store returns localized prices
   const localPrices = getLocalizedPrices();
-  const monthlyPrice = getPackagePrice('monthly') || localPrices.monthly;
-  const quarterlyPrice = getPackagePrice('quarterly') || localPrices.quarterly;
-  const yearlyPrice = getPackagePrice('yearly') || localPrices.yearly;
+  const monthlyPrice = getSubPrice('monthly') || localPrices.monthly;
+  const quarterlyPrice = getSubPrice('quarterly') || localPrices.quarterly;
+  const yearlyPrice = getSubPrice('yearly') || localPrices.yearly;
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -192,8 +181,8 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
               ))}
             </View>
 
-            {/* Loading indicator for offerings */}
-            {isLoadingOfferings && (
+            {/* Loading indicator for subscriptions */}
+            {isLoadingSubs && (
               <ActivityIndicator size="small" color={colors.primary} style={{ marginBottom: spacing.md }} />
             )}
 
@@ -260,9 +249,9 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
             </Button>
 
             {/* Dev mode indicator */}
-            {__DEV__ && !rcConfigured && (
+            {__DEV__ && !billingReady && (
               <Text style={styles.devNote}>
-                DEV: RevenueCat not configured — mock purchases active
+                DEV: Google Play Billing not available — mock purchases active
               </Text>
             )}
           </ScrollView>

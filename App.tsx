@@ -14,7 +14,7 @@ import { usePremiumStore } from './src/store/premiumStore';
 import { lightTheme, darkTheme } from './src/theme/theme';
 import { initDatabase, seedDatabase } from './src/services/database/database';
 import { getDeviceToken } from './src/services/api/apiClient';
-import { configureRevenueCat, checkSubscriptionStatus } from './src/services/premium/revenueCat';
+import { initializeBilling, checkSubscriptionStatus, setupPurchaseListener, endBillingConnection } from './src/services/premium/googleBilling';
 import { initializeAds, loadInterstitial } from './src/services/ads/adService';
 
 // Splash screen'i uygulama hazır olana kadar görünür tut
@@ -28,6 +28,8 @@ export default function App() {
   const loadPremiumState = usePremiumStore((s) => s.loadPremiumState);
 
   useEffect(() => {
+    let cleanupListener: (() => void) | undefined;
+
     const init = async () => {
       await loadOnboardingState();
       await loadPremiumState();
@@ -48,12 +50,13 @@ export default function App() {
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: Could not init device token:', e);
       }
-      // Initialize RevenueCat and check subscription status
+      // Initialize Google Play Billing and check subscription status
       try {
-        await configureRevenueCat();
+        await initializeBilling();
         await checkSubscriptionStatus();
+        cleanupListener = setupPurchaseListener();
       } catch (e) {
-        if (__DEV__) console.warn('FitTrack: RevenueCat init failed:', e);
+        if (__DEV__) console.warn('FitTrack: Google Billing init failed:', e);
       }
       // Initialize AdMob
       try {
@@ -65,6 +68,11 @@ export default function App() {
       await SplashScreen.hideAsync();
     };
     init();
+
+    return () => {
+      cleanupListener?.();
+      endBillingConnection();
+    };
   }, []);
 
   if (isLoading) return null;

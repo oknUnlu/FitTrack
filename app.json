@@ -17,17 +17,6 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.okanu.fittrack",
-      "buildNumber": "1",
-      "infoPlist": {
-        "NSCameraUsageDescription": "Barkod taramak ve yemek fotoğrafı çekmek için kamera izni gereklidir.",
-        "NSPhotoLibraryUsageDescription": "Yemek fotoğrafı seçmek için galeri izni gereklidir.",
-        "NSHealthShareUsageDescription": "Sağlık verilerinizi görüntülemek için izin gereklidir.",
-        "ITSAppUsesNonExemptEncryption": false
-      }
-    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
