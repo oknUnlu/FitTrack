@@ -76,7 +76,7 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "https://fittrack-api-liard.vercel.app",
+      "apiBaseUrl": "https://fittrack-a958c.web.app",
       "eas": {
         "projectId": "ab8d70ce-dbaa-4638-8aa9-dd8781d83e53"
       }

@@ -1,5 +1,52 @@
 {
   "firestore": {
     "rules": "firestore.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ],
+  "hosting": {
+    "public": "public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "/api/chat",
+        "run": { "serviceId": "chat", "region": "europe-west1" }
+      },
+      {
+        "source": "/api/food-recognition",
+        "run": { "serviceId": "foodrecognition", "region": "europe-west1" }
+      },
+      {
+        "source": "/api/plan",
+        "run": { "serviceId": "plan", "region": "europe-west1" }
+      },
+      {
+        "source": "/api/verify-purchase",
+        "run": { "serviceId": "verifypurchase", "region": "europe-west1" }
+      },
+      {
+        "source": "/api/promo",
+        "run": { "serviceId": "promo", "region": "europe-west1" }
+      },
+      {
+        "source": "/api/health",
+        "run": { "serviceId": "health", "region": "europe-west1" }
+      },
+      {
+        "source": "/api/usage",
+        "run": { "serviceId": "usage", "region": "europe-west1" }
+      }
+    ]
   }
 }

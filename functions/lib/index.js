@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.usage = exports.health = exports.promo = exports.verifyPurchase = exports.plan = exports.foodRecognition = exports.chat = void 0;
+var chat_1 = require("./chat");
+Object.defineProperty(exports, "chat", { enumerable: true, get: function () { return chat_1.chat; } });
+var foodRecognition_1 = require("./foodRecognition");
+Object.defineProperty(exports, "foodRecognition", { enumerable: true, get: function () { return foodRecognition_1.foodRecognition; } });
+var plan_1 = require("./plan");
+Object.defineProperty(exports, "plan", { enumerable: true, get: function () { return plan_1.plan; } });
+var verifyPurchase_1 = require("./verifyPurchase");
+Object.defineProperty(exports, "verifyPurchase", { enumerable: true, get: function () { return verifyPurchase_1.verifyPurchase; } });
+var promo_1 = require("./promo");
+Object.defineProperty(exports, "promo", { enumerable: true, get: function () { return promo_1.promo; } });
+var health_1 = require("./health");
+Object.defineProperty(exports, "health", { enumerable: true, get: function () { return health_1.health; } });
+var usage_1 = require("./usage");
+Object.defineProperty(exports, "usage", { enumerable: true, get: function () { return usage_1.usage; } });
+//# sourceMappingURL=index.js.map

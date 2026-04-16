@@ -1,23 +1,24 @@
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+
+// Firebase project ID — sabit, değişmez
+const FIREBASE_PROJECT_ID = 'fittrack-a958c';
+
+// Production: Firebase Hosting URL (fittrack-a958c.web.app)
+// Development: Firebase Emulator
+const FIREBASE_EMULATOR_HOST = 'http://localhost:5001';
 
 function getBaseUrl(): string {
-  // Check app.json extra config first
+  // app.json extra.apiBaseUrl varsa öncelikli kullan
   const configUrl = Constants.expoConfig?.extra?.apiBaseUrl;
   if (configUrl) return configUrl;
 
-  // Development: use local Vercel dev server
   if (__DEV__) {
-    if (Platform.OS === 'web') {
-      // Web dev: same origin (proxy through metro or direct)
-      return '';
-    }
-    // Native dev: localhost
-    return 'http://localhost:3000';
+    // Firebase Emulator (firebase emulators:start --only functions,hosting)
+    return FIREBASE_EMULATOR_HOST;
   }
 
-  // Production: Vercel deployment URL
-  return 'https://fittrack-api-liard.vercel.app';
+  // Production: Firebase Hosting üzerinden (rewrites → Cloud Functions)
+  return `https://${FIREBASE_PROJECT_ID}.web.app`;
 }
 
 export const API_BASE_URL = getBaseUrl();

@@ -26,6 +26,24 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Server-side collections: only accessible via Firebase Admin SDK (Cloud Functions)
+    // Clients cannot read or write these directly
+    match /rate_limits/{doc} {
+      allow read, write: if false;
+    }
+    match /premium_status/{doc} {
+      allow read, write: if false;
+    }
+    match /promo_premium/{doc} {
+      allow read, write: if false;
+    }
+    match /promo_usage/{doc} {
+      allow read, write: if false;
+    }
+    match /usage_stats/{doc} {
+      allow read, write: if false;
+    }
+
     // Default: deny all
     match /{document=**} {
       allow read, write: if false;
