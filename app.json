@@ -51,12 +51,7 @@
           "requestPermissionsOnStart": false
         }
       ],
-      [
-        "react-native-iap",
-        {
-          "paymentProvider": "Play Store"
-        }
-      ],
+      "./plugins/withIAPAndroid",
       [
         "react-native-google-mobile-ads",
         {
