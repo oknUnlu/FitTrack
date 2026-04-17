@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, Alert, TouchableOpacity } from 'react-native';
 import { Text, Card, List, Switch, Button, Divider, useTheme, Dialog, Portal, TextInput, RadioButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -167,7 +167,7 @@ export function ProfileScreen() {
               <MaterialCommunityIcons name="crown" size={20} color="#FFD700" />
               <Text style={styles.premiumTitle}>{t.premium.title}</Text>
               <View style={styles.premiumPlanBadge}>
-                <Text style={styles.premiumPlanText}>{premiumPlan.toUpperCase()}</Text>
+                <Text style={styles.premiumPlanText}>{(premiumPlan ?? 'FREE').toString().toUpperCase()}</Text>
               </View>
             </View>
             {premiumExpiresAt && (
@@ -179,22 +179,33 @@ export function ProfileScreen() {
         </Card>
       ) : (
         <>
-          <Card
-            style={[styles.card, { backgroundColor: 'rgba(255,215,0,0.08)' }]}
-            mode="elevated"
+          <TouchableOpacity
             onPress={() => setPaywallVisible(true)}
+            activeOpacity={0.85}
             accessibilityLabel="Upgrade to Premium, unlock all features"
             accessibilityRole="button"
+            style={styles.premiumHeroWrap}
           >
-            <Card.Content style={styles.premiumUpgradeRow}>
-              <MaterialCommunityIcons name="crown" size={28} color="#FFD700" />
-              <View style={styles.premiumUpgradeText}>
-                <Text style={styles.premiumUpgradeTitle}>{t.premium.upgradeNow}</Text>
-                <Text style={styles.premiumUpgradeSubtitle}>{t.premium.subtitle}</Text>
+            <View style={styles.premiumHeroCard}>
+              <View style={styles.premiumHeroCrownCircle}>
+                <MaterialCommunityIcons name="crown" size={26} color="#1A1A2E" />
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textTertiary} />
-            </Card.Content>
-          </Card>
+              <View style={styles.premiumHeroTextCol}>
+                <View style={styles.premiumHeroTitleRow}>
+                  <Text style={styles.premiumHeroTitle}>{t.premium.upgradeNow}</Text>
+                  <View style={styles.premiumHeroBadge}>
+                    <Text style={styles.premiumHeroBadgeText}>PRO</Text>
+                  </View>
+                </View>
+                <Text style={styles.premiumHeroSubtitle} numberOfLines={2}>
+                  {t.premium.subtitle}
+                </Text>
+              </View>
+              <View style={styles.premiumHeroArrow}>
+                <MaterialCommunityIcons name="arrow-right" size={20} color="#FFD700" />
+              </View>
+            </View>
+          </TouchableOpacity>
           <Card style={styles.card} mode="elevated">
             <List.Section>
               <List.Item
@@ -276,7 +287,7 @@ export function ProfileScreen() {
         </List.Section>
       </Card>
 
-      {/* Privacy Policy */}
+      {/* Legal */}
       <Card style={styles.card} mode="elevated">
         <List.Section>
           <List.Item
@@ -284,6 +295,18 @@ export function ProfileScreen() {
             left={(props) => <List.Icon {...props} icon="shield-lock" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => (navigation as any).navigate('Privacy')}
+          />
+          <List.Item
+            title={t.kvkk.title}
+            left={(props) => <List.Icon {...props} icon="shield-account" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => (navigation as any).navigate('Kvkk')}
+          />
+          <List.Item
+            title={t.terms.title}
+            left={(props) => <List.Icon {...props} icon="file-document-outline" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => (navigation as any).navigate('Terms')}
           />
         </List.Section>
       </Card>
@@ -413,16 +436,69 @@ const styles = StyleSheet.create({
   },
   chipText: { fontSize: 11, color: colors.textPrimary },
 
-  // Premium
+  // Premium (active)
   premiumRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   premiumTitle: { fontWeight: 'bold', fontSize: 15, flex: 1 },
   premiumPlanBadge: { backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   premiumPlanText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
   premiumExpiry: { color: colors.textTertiary, fontSize: 11, marginTop: spacing.xs },
-  premiumUpgradeRow: { flexDirection: 'row', alignItems: 'center' },
-  premiumUpgradeText: { flex: 1, marginLeft: spacing.sm },
-  premiumUpgradeTitle: { fontWeight: 'bold', fontSize: 15 },
-  premiumUpgradeSubtitle: { color: colors.textTertiary, fontSize: 12 },
+
+  // Premium Upgrade CTA (hero)
+  premiumHeroWrap: {
+    marginBottom: spacing.sm,
+    borderRadius: borderRadius.lg,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  premiumHeroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: '#1A1A2E',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: '#FFD700',
+  },
+  premiumHeroCrownCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  premiumHeroTextCol: { flex: 1, marginLeft: spacing.md },
+  premiumHeroTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  premiumHeroTitle: { fontWeight: 'bold', fontSize: 16, color: '#FFFFFF' },
+  premiumHeroBadge: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  premiumHeroBadgeText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#1A1A2E',
+    letterSpacing: 0.5,
+  },
+  premiumHeroSubtitle: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 12,
+    marginTop: 3,
+  },
+  premiumHeroArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,215,0,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: spacing.sm,
+  },
 
   // Macro Goals
   sectionLabel: { fontWeight: 'bold', fontSize: 13, marginBottom: spacing.sm, color: colors.textSecondary },

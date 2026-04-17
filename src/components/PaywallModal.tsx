@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePremiumStore } from '../store/premiumStore';
 import {
   isBillingConfigured,
@@ -35,6 +36,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const theme = useTheme();
   const { t } = useLanguage();
   const setPremium = usePremiumStore((s) => s.setPremium);
+  const insets = useSafeAreaInsets();
 
   const billingReady = isBillingConfigured();
 
@@ -64,9 +66,16 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const getSubPrice = (plan: 'monthly' | 'quarterly' | 'yearly'): string | null => {
     const productId = PRODUCT_IDS[plan];
     const sub = subscriptions.find(
-      (s: any) => s.productId === productId
+      (s: any) => s.id === productId || s.productId === productId
     );
-    return sub?.localizedPrice || null;
+    if (!sub) return null;
+
+    // Android subscription: pricing phase'den formattedPrice al (en doğru kaynak)
+    const phase = sub.subscriptionOfferDetailsAndroid?.[0]?.pricingPhases?.pricingPhaseList?.[0];
+    if (phase?.formattedPrice) return phase.formattedPrice;
+
+    // Common field'lar (Android/iOS)
+    return sub.displayPrice || sub.localizedPrice || null;
   };
 
   const handleRestore = async () => {
@@ -136,7 +145,10 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: insets.bottom + spacing.md }}
+          >
             {/* Close button */}
             <TouchableOpacity
               style={styles.closeBtn}

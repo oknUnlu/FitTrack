@@ -361,8 +361,13 @@ function StreakCard({ streak, weeklyActive }: { streak: number; weeklyActive: bo
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ fontSize: 28 }}>🔥</Text>
           <View style={{ marginLeft: spacing.sm }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18 }}>{streak} {t.dashboard.dayStreak}</Text>
-            <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{t.dashboard.keepGoing}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 22, lineHeight: 26 }}>{streak}</Text>
+              <Text style={{ fontWeight: '600', fontSize: 13, color: colors.textSecondary, marginLeft: 6 }}>
+                {t.dashboard.dayStreak}
+              </Text>
+            </View>
+            <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 2 }}>{t.dashboard.keepGoing}</Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 4 }}>

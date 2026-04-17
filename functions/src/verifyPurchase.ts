@@ -46,7 +46,7 @@ async function getGoogleAccessToken(): Promise<string | null> {
 }
 
 export const verifyPurchase = onRequest(
-  { cors: true, timeoutSeconds: 30, memory: '256MiB', region: 'europe-west1' },
+  { cors: true, timeoutSeconds: 30, memory: '256MiB', region: 'europe-west1', secrets: ['GOOGLE_SERVICE_ACCOUNT_KEY'] },
   async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).json({ success: false, message: 'Method not allowed' });

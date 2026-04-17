@@ -668,6 +668,58 @@ export interface Translations {
   };
 
   // Privacy Policy
+  terms: {
+    title: string;
+    lastUpdated: string;
+    introTitle: string;
+    introDesc: string;
+    partiesTitle: string;
+    partiesDesc: string;
+    serviceTitle: string;
+    serviceDesc: string;
+    userObligationsTitle: string;
+    userObligationsDesc: string;
+    premiumTitle: string;
+    premiumDesc: string;
+    cancellationTitle: string;
+    cancellationDesc: string;
+    ipTitle: string;
+    ipDesc: string;
+    liabilityTitle: string;
+    liabilityDesc: string;
+    healthDisclaimerTitle: string;
+    healthDisclaimerDesc: string;
+    changesTitle: string;
+    changesDesc: string;
+    governingLawTitle: string;
+    governingLawDesc: string;
+    contactTitle: string;
+    contactDesc: string;
+  };
+
+  kvkk: {
+    title: string;
+    lastUpdated: string;
+    introTitle: string;
+    introDesc: string;
+    controllerTitle: string;
+    controllerDesc: string;
+    dataTypesTitle: string;
+    dataTypesDesc: string;
+    purposesTitle: string;
+    purposesDesc: string;
+    legalBasisTitle: string;
+    legalBasisDesc: string;
+    transferTitle: string;
+    transferDesc: string;
+    retentionTitle: string;
+    retentionDesc: string;
+    rightsTitle: string;
+    rightsDesc: string;
+    contactTitle: string;
+    contactDesc: string;
+  };
+
   privacy: {
     title: string;
     lastUpdated: string;

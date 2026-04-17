@@ -25,6 +25,8 @@ import { HealthHubScreen } from '../screens/HealthHub/HealthHubScreen';
 import { SocialScreen } from '../screens/Social/SocialScreen';
 import { FastingScreen } from '../screens/Fasting/FastingScreen';
 import { PrivacyPolicyScreen } from '../screens/Privacy/PrivacyPolicyScreen';
+import { TermsScreen } from '../screens/Legal/TermsScreen';
+import { KvkkNoticeScreen } from '../screens/Legal/KvkkNoticeScreen';
 import { useLanguage } from '../i18n';
 
 export type RootStackParamList = {
@@ -40,6 +42,8 @@ export type RootStackParamList = {
   Social: undefined;
   Fasting: undefined;
   Privacy: undefined;
+  Terms: undefined;
+  Kvkk: undefined;
   ActiveWorkout: { templateId?: string; templateName?: string; preloadedExerciseIds?: string[] } | undefined;
   SessionDetail: { sessionId: string; sessionName: string; date: string; durationMinutes: number; caloriesBurned: number };
 };
@@ -174,6 +178,16 @@ function AppStack() {
         options={{ headerShown: true, title: t.privacy.title, animation: 'slide_from_right' }}
       />
       <Stack.Screen
+        name="Terms"
+        component={TermsScreen}
+        options={{ headerShown: true, title: t.terms.title, animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Kvkk"
+        component={KvkkNoticeScreen}
+        options={{ headerShown: true, title: t.kvkk.title, animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
         name="ActiveWorkout"
         component={ActiveWorkoutScreen}
         options={{ headerShown: false, animation: 'slide_from_bottom' }}
@@ -208,6 +222,8 @@ const linking: any = {
       HealthHub: 'health',
       Fasting: 'fasting',
       Privacy: 'privacy',
+      Terms: 'terms',
+      Kvkk: 'kvkk',
     },
   },
 };

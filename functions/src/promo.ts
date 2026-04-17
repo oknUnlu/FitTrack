@@ -20,7 +20,7 @@ function getPromoCodes(): Record<string, PromoCodeEntry> | null {
 }
 
 export const promo = onRequest(
-  { cors: true, timeoutSeconds: 15, memory: '256MiB', region: 'europe-west1' },
+  { cors: true, timeoutSeconds: 15, memory: '256MiB', region: 'europe-west1', secrets: ['PROMO_CODES'] },
   async (req, res) => {
     if (req.method === 'OPTIONS') { res.status(200).end(); return; }
     if (req.method !== 'POST') {

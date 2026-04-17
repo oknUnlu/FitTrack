@@ -7,6 +7,12 @@ const REFERRAL_REWARD_KEY = 'fittrack_referral_reward_until';
 
 export type PremiumPlan = 'free' | 'monthly' | 'quarterly' | 'yearly' | 'trial' | 'referral' | 'promo';
 
+const VALID_PLANS: readonly PremiumPlan[] = ['free', 'monthly', 'quarterly', 'yearly', 'trial', 'referral', 'promo'];
+
+function sanitizePlan(plan: unknown): PremiumPlan {
+  return VALID_PLANS.includes(plan as PremiumPlan) ? (plan as PremiumPlan) : 'free';
+}
+
 interface PremiumState {
   isPremium: boolean;
   plan: PremiumPlan;
@@ -30,22 +36,35 @@ export const usePremiumStore = create<PremiumState>((set) => ({
       // Check paid subscription
       const stored = await AsyncStorage.getItem(PREMIUM_KEY);
       if (stored) {
-        const data = JSON.parse(stored);
-        if (data.expiresAt && data.expiresAt < Date.now()) {
+        try {
+          const data = JSON.parse(stored);
+          const plan = sanitizePlan(data?.plan);
+          const expiresAt = typeof data?.expiresAt === 'number' ? data.expiresAt : null;
+          if (expiresAt && expiresAt < Date.now()) {
+            await AsyncStorage.removeItem(PREMIUM_KEY);
+          } else if (plan !== 'free') {
+            set({ isPremium: true, plan, expiresAt, isLoading: false });
+            return;
+          } else {
+            await AsyncStorage.removeItem(PREMIUM_KEY);
+          }
+        } catch {
           await AsyncStorage.removeItem(PREMIUM_KEY);
-        } else {
-          set({ isPremium: true, plan: data.plan, expiresAt: data.expiresAt, isLoading: false });
-          return;
         }
       }
 
       // Check trial
       const trial = await AsyncStorage.getItem(TRIAL_KEY);
       if (trial) {
-        const trialData = JSON.parse(trial);
-        if (trialData.expiresAt > Date.now()) {
-          set({ isPremium: true, plan: 'trial', expiresAt: trialData.expiresAt, isLoading: false });
-          return;
+        try {
+          const trialData = JSON.parse(trial);
+          const expiresAt = typeof trialData?.expiresAt === 'number' ? trialData.expiresAt : 0;
+          if (expiresAt > Date.now()) {
+            set({ isPremium: true, plan: 'trial', expiresAt, isLoading: false });
+            return;
+          }
+        } catch {
+          await AsyncStorage.removeItem(TRIAL_KEY);
         }
       }
 
@@ -53,7 +72,7 @@ export const usePremiumStore = create<PremiumState>((set) => ({
       const referralReward = await AsyncStorage.getItem(REFERRAL_REWARD_KEY);
       if (referralReward) {
         const expiry = new Date(referralReward).getTime();
-        if (expiry > Date.now()) {
+        if (Number.isFinite(expiry) && expiry > Date.now()) {
           set({ isPremium: true, plan: 'referral', expiresAt: expiry, isLoading: false });
           return;
         }
@@ -61,7 +80,7 @@ export const usePremiumStore = create<PremiumState>((set) => ({
 
       set({ isPremium: false, plan: 'free', expiresAt: null, isLoading: false });
     } catch {
-      set({ isLoading: false });
+      set({ isPremium: false, plan: 'free', expiresAt: null, isLoading: false });
     }
   },
 

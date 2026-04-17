@@ -3,18 +3,18 @@ import { usePremiumStore, PremiumPlan } from '../../store/premiumStore';
 import { apiPost } from '../api/apiClient';
 import { API_ENDPOINTS } from '../../config/api';
 
-let RNIap: any = null;
+let IAP: any = null;
 let isInitialized = false;
 
 function getIap(): any {
-  if (!RNIap) {
+  if (!IAP) {
     try {
-      RNIap = require('react-native-iap');
+      IAP = require('expo-iap');
     } catch {
       return null;
     }
   }
-  return RNIap;
+  return IAP;
 }
 
 // Google Play product IDs (must match Google Play Console products)
@@ -35,7 +35,7 @@ export async function initializeBilling(): Promise<void> {
 
   const iap = getIap();
   if (!iap) {
-    if (__DEV__) console.log('GoogleBilling: react-native-iap not available');
+    if (__DEV__) console.log('GoogleBilling: expo-iap not available');
     return;
   }
 
@@ -63,7 +63,7 @@ export async function getSubscriptions(): Promise<any[]> {
   if (!iap || !isInitialized) return [];
 
   try {
-    const subscriptions = await iap.getSubscriptions({ skus: ALL_PRODUCT_IDS });
+    const subscriptions = await iap.fetchProducts({ skus: ALL_PRODUCT_IDS, type: 'subs' });
     return subscriptions || [];
   } catch (e) {
     if (__DEV__) console.warn('GoogleBilling: Failed to get subscriptions', e);
@@ -80,9 +80,9 @@ export async function purchaseSubscription(productId: string): Promise<string | 
   if (!iap || !isInitialized) return null;
 
   try {
-    const purchase = await iap.requestSubscription({
-      sku: productId,
-      subscriptionOffers: [{ sku: productId, offerToken: '' }],
+    const purchase = await iap.requestPurchase({
+      request: { android: { skus: [productId] } },
+      type: 'subs',
     });
 
     if (purchase) {
@@ -91,7 +91,7 @@ export async function purchaseSubscription(productId: string): Promise<string | 
 
       // Acknowledge the purchase
       if (purchaseData.purchaseToken) {
-        await iap.acknowledgePurchaseAndroid({ token: purchaseData.purchaseToken });
+        await iap.finishTransaction({ purchase: purchaseData, isConsumable: false });
       }
 
       // Verify purchase on server and grant premium in Redis
@@ -195,7 +195,7 @@ export function setupPurchaseListener(): () => void {
     async (purchase: any) => {
       if (purchase.purchaseToken) {
         try {
-          await iap.acknowledgePurchaseAndroid({ token: purchase.purchaseToken });
+          await iap.finishTransaction({ purchase, isConsumable: false });
         } catch {
           // ignore
         }

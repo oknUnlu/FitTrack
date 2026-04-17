@@ -1,13 +1,24 @@
 import { Platform, NativeModules } from 'react-native';
 
+function extractCountry(locale: string): string | null {
+  if (!locale) return null;
+  const parts = locale.replace('-', '_').split('_');
+  const region = parts[1] || parts[0];
+  if (region && region.length === 2) return region.toUpperCase();
+  return null;
+}
+
 /**
  * Get the device's country/region code (e.g. "TR", "US", "DE").
- * Uses native APIs — no extra dependencies needed.
  */
 export function getDeviceCountry(): string {
   try {
+    // Intl API is available in Hermes on all modern RN/Expo versions; most reliable source.
+    const intlLocale = Intl.DateTimeFormat().resolvedOptions().locale;
+    const fromIntl = extractCountry(intlLocale);
+    if (fromIntl) return fromIntl;
+
     if (Platform.OS === 'ios') {
-      // iOS: Settings.AppleLocale = "tr_TR", AppleLanguages = ["tr-TR"]
       const settings =
         NativeModules.SettingsManager?.settings ||
         NativeModules.Settings?.settings;
@@ -15,25 +26,20 @@ export function getDeviceCountry(): string {
         settings?.AppleLocale ||
         settings?.AppleLanguages?.[0] ||
         '';
-      // "tr_TR" → "TR", "en-US" → "US"
-      const parts = locale.replace('-', '_').split('_');
-      return (parts[1] || parts[0] || 'US').toUpperCase();
+      const fromNative = extractCountry(locale);
+      if (fromNative) return fromNative;
     }
 
     if (Platform.OS === 'android') {
-      // Android: I18nManager or localeIdentifier
       const locale: string =
         NativeModules.I18nManager?.localeIdentifier || '';
-      // "tr_TR" → "TR"
-      const parts = locale.replace('-', '_').split('_');
-      return (parts[1] || parts[0] || 'US').toUpperCase();
+      const fromNative = extractCountry(locale);
+      if (fromNative) return fromNative;
     }
 
-    // Web fallback: navigator.language = "tr-TR"
     if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
-      const lang = navigator.language || '';
-      const parts = lang.replace('_', '-').split('-');
-      return (parts[1] || parts[0] || 'US').toUpperCase();
+      const fromNav = extractCountry(navigator.language || '');
+      if (fromNav) return fromNav;
     }
   } catch {
     // Fallback

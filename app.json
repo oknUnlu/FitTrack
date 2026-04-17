@@ -51,7 +51,7 @@
           "requestPermissionsOnStart": false
         }
       ],
-      "./plugins/withIAPAndroid",
+      "expo-iap",
       [
         "react-native-google-mobile-ads",
         {
