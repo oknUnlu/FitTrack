@@ -20,6 +20,7 @@ import {
   scheduleWorkoutReminder,
 } from '../../services/notifications/notificationService';
 import { validatePromoCode } from '../../services/api/promoService';
+import { exportUserData, deleteAccount } from '../../services/privacy/dataPrivacy';
 
 const NOTIF_MEAL_KEY = 'pref_meal_reminder';
 const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
@@ -311,7 +312,56 @@ export function ProfileScreen() {
         </List.Section>
       </Card>
 
-      {/* Reset Account */}
+      {/* Privacy: export + delete (KVKK/GDPR rights) */}
+      <Card style={styles.card} mode="elevated">
+        <List.Section>
+          <List.Item
+            title={(t as any).profile?.exportData || 'Verilerimi Dışa Aktar'}
+            description={(t as any).profile?.exportDataDesc || 'Tüm verilerinizi JSON dosyası olarak indirin'}
+            left={(props) => <List.Icon {...props} icon="download" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={async () => {
+              try {
+                const result = await exportUserData();
+                if (!result) {
+                  Alert.alert(t.common.error, (t as any).profile?.exportFailed || 'Dışa aktarma başarısız.');
+                }
+              } catch {
+                Alert.alert(t.common.error, (t as any).profile?.exportFailed || 'Dışa aktarma başarısız.');
+              }
+            }}
+          />
+          <List.Item
+            title={(t as any).profile?.deleteAccount || 'Hesabımı Sil'}
+            description={(t as any).profile?.deleteAccountDesc || 'Tüm verileriniz kalıcı olarak silinir (geri alınamaz)'}
+            left={(props) => <List.Icon {...props} icon="delete-forever" color="#D32F2F" />}
+            onPress={() =>
+              Alert.alert(
+                (t as any).profile?.deleteAccount || 'Hesabımı Sil',
+                (t as any).profile?.deleteAccountConfirm ||
+                  'Bu işlem geri alınamaz. Tüm antrenman, öğün, vücut ölçümü ve AI sohbet kayıtlarınız kalıcı olarak silinecek. Devam etmek istiyor musunuz?',
+                [
+                  { text: t.common.cancel, style: 'cancel' },
+                  {
+                    text: (t as any).profile?.deleteConfirmCta || 'Evet, Kalıcı Olarak Sil',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await deleteAccount();
+                        await resetOnboarding();
+                      } catch (e) {
+                        Alert.alert(t.common.error, (t as any).profile?.deleteFailed || 'Silme başarısız.');
+                      }
+                    },
+                  },
+                ]
+              )
+            }
+          />
+        </List.Section>
+      </Card>
+
+      {/* Reset Account (soft reset — keeps data but re-runs onboarding) */}
       <Card style={styles.card} mode="elevated">
         <List.Section>
           <List.Item

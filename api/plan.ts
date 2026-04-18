@@ -31,10 +31,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { planPrompt, systemInstruction } = req.body as PlanRequest;
+    const { planPrompt, systemInstruction } = (req.body || {}) as PlanRequest;
 
-    if (!planPrompt || !systemInstruction) {
+    if (!planPrompt || !systemInstruction ||
+        typeof planPrompt !== 'string' || typeof systemInstruction !== 'string') {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    if (planPrompt.length > 8000 || systemInstruction.length > 4000) {
+      return res.status(413).json({ success: false, message: 'Payload too large' });
     }
 
     const message = await generateContent(planPrompt, systemInstruction);
@@ -46,10 +50,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       source: 'gemini_cloud',
     });
   } catch (error: any) {
-    console.error('Plan error:', error.message);
+    console.error('Plan error:', error?.message);
+    const msg = String(error?.message || '');
+    if (msg.startsWith('SAFETY_BLOCKED')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request was blocked by the AI safety filter',
+        source: 'gemini_cloud',
+      });
+    }
+    if (msg.startsWith('BUDGET_EXCEEDED')) {
+      return res.status(503).json({
+        success: false,
+        message: 'AI service temporarily unavailable',
+        source: 'fallback',
+      });
+    }
     return res.status(500).json({
       success: false,
-      message: `AI error: ${error.message}`,
+      message: 'AI service error',
       source: 'gemini_cloud',
     });
   }

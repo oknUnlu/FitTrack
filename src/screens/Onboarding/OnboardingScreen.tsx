@@ -65,7 +65,8 @@ export function OnboardingScreen() {
     try {
       const bmr = calculateBMR(w, h, a, g);
       const tdee = calculateTDEE(bmr, al);
-      const calorieTarget = calculateCalorieTarget(tdee, go);
+      // Safety clamp applies floors (1200 F / 1500 M kcal).
+      const calorieTarget = calculateCalorieTarget(tdee, go, g);
       const macros = calculateMacroTargets(calorieTarget, go);
       const waterMl = calculateWaterNeeds(w, al);
 
@@ -92,13 +93,40 @@ export function OnboardingScreen() {
   };
 
   const goNext = () => {
-    if (step === 1 && (!name.trim() || !age.trim() || !gender)) {
-      Alert.alert('', t.onboarding.fillAllFields);
-      return;
+    if (step === 1) {
+      if (!name.trim() || !age.trim() || !gender) {
+        Alert.alert('', t.onboarding.fillAllFields);
+        return;
+      }
+      const parsedAge = parseInt(age, 10);
+      if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+        Alert.alert('', (t as any).onboarding.ageInvalid || 'Lütfen geçerli bir yaş girin.');
+        return;
+      }
+      if (parsedAge < 13) {
+        Alert.alert(
+          (t as any).legal?.ageRestrictionTitle || 'Yaş Sınırı',
+          (t as any).legal?.ageRestrictionBody ||
+            'Bu uygulama 13 yaşın altındaki çocukların kullanımına uygun değildir. Lütfen bir ebeveyne veya yasal vasiye danışın.',
+        );
+        return;
+      }
     }
-    if (step === 2 && (!height.trim() || !weight.trim())) {
-      Alert.alert('', t.onboarding.fillAllFields);
-      return;
+    if (step === 2) {
+      if (!height.trim() || !weight.trim()) {
+        Alert.alert('', t.onboarding.fillAllFields);
+        return;
+      }
+      const w = parseFloat(weight);
+      const h = parseFloat(height);
+      if (isNaN(w) || w < 25 || w > 400 || isNaN(h) || h < 80 || h > 250) {
+        Alert.alert(
+          '',
+          (t as any).onboarding.bodyInvalid ||
+            'Lütfen geçerli boy (80-250 cm) ve kilo (25-400 kg) değerleri girin.',
+        );
+        return;
+      }
     }
     if (step === 3 && !activityLevel) {
       Alert.alert('', t.onboarding.fillAllFields);

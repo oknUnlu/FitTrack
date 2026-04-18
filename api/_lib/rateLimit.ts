@@ -44,7 +44,9 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<{ allowed
     return { allowed: true, remaining: maxRequests - count };
   } catch (error) {
     console.error('Rate limit check failed:', error);
-    // Fail-open for rate limiting to avoid blocking all users on Redis outage
-    return { allowed: true, remaining: 1 };
+    // SECURITY: Fail-closed. A Redis outage must not let us expose the
+    // expensive Gemini API quota to abuse. If the limiter cannot operate,
+    // reject the request so the client retries later.
+    return { allowed: false, remaining: 0 };
   }
 }

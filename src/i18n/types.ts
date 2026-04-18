@@ -239,6 +239,19 @@ export interface Translations {
     resetAccount: string;
     resetAccountDesc: string;
     resetAccountConfirm: string;
+    // KVKK / GDPR rights (optional — EN/TR provided, fallback otherwise)
+    privacySection?: string;
+    exportData?: string;
+    exportDataDesc?: string;
+    exportDataSuccess?: string;
+    exportDataError?: string;
+    deleteAccount?: string;
+    deleteAccountDesc?: string;
+    deleteAccountConfirmTitle?: string;
+    deleteAccountConfirmBody?: string;
+    deleteAccountConfirmYes?: string;
+    deleteAccountSuccess?: string;
+    deleteAccountError?: string;
   };
 
   // AI Coach
@@ -258,6 +271,8 @@ export interface Translations {
     workoutPlan: string;
     nutritionPlan: string;
     weeklyPlan: string;
+    // Medical disclaimer shown above chat (optional)
+    disclaimer?: string;
   };
 
   // Tools
@@ -449,6 +464,13 @@ export interface Translations {
     fillAllFields: string;
     back: string;
     next: string;
+    // Age / body validation (optional)
+    ageInvalidTitle?: string;
+    ageInvalidBody?: string;
+    ageRestrictionTitle?: string;
+    ageRestrictionBody?: string;
+    bodyInvalidTitle?: string;
+    bodyInvalidBody?: string;
   };
 
   // Wellness
@@ -550,6 +572,10 @@ export interface Translations {
     evening: string;
     preWorkout: string;
     postWorkout: string;
+    // Medical / age guardrails (optional)
+    disclaimer?: string;
+    blockedMinorTitle?: string;
+    blockedMinorBody?: string;
   };
 
   // Social / Challenges
@@ -608,6 +634,13 @@ export interface Translations {
     settings: string;
     sahur: string;
     iftar: string;
+    // Medical / age guardrails (optional)
+    disclaimer?: string;
+    blockedTitle?: string;
+    blockedBody?: string;
+    blockedUnderweight?: string;
+    blockedMinor?: string;
+    blockedDuration?: string;
   };
 
   // Referral
@@ -665,6 +698,17 @@ export interface Translations {
     promoExpired: string;
     promoError: string;
     activate: string;
+    // Consumer compliance (TKHK 6502 / MSY) — optional, EN/TR supplied
+    preContractualTitle?: string;
+    preContractualBody?: string;
+    withdrawalTitle?: string;
+    withdrawalBody?: string;
+    consumerRightAck?: string;
+    consumerRightAckRequired?: string;
+    consumerRightTitle?: string;
+    viewTerms?: string;
+    viewPrivacy?: string;
+    manageSubscription?: string;
   };
 
   // Privacy Policy
@@ -765,5 +809,52 @@ export interface Translations {
     fri: string;
     sat: string;
     sun: string;
+  };
+
+  // Consent / medical disclaimer / KVKK-GDPR surfaces (optional)
+  legal?: {
+    consent?: {
+      title?: string;
+      intro?: string;
+      ageQuestion?: string;
+      ageUnit?: string;
+      ageUnderMin?: string;
+      requiredSection?: string;
+      optionalSection?: string;
+      privacyPolicy?: string;
+      privacyPolicyDesc?: string;
+      termsOfService?: string;
+      termsOfServiceDesc?: string;
+      kvkk?: string;
+      kvkkDesc?: string;
+      medicalDisclaimer?: string;
+      medicalDisclaimerDesc?: string;
+      aiDataSharing?: string;
+      aiDataSharingDesc?: string;
+      healthData?: string;
+      healthDataDesc?: string;
+      analytics?: string;
+      analyticsDesc?: string;
+      crashReports?: string;
+      crashReportsDesc?: string;
+      marketing?: string;
+      marketingDesc?: string;
+      personalizedAds?: string;
+      personalizedAdsDesc?: string;
+      accept?: string;
+      decline?: string;
+      mustAcceptRequired?: string;
+      viewDocument?: string;
+    };
+    medicalDisclaimer?: {
+      title?: string;
+      body?: string;
+      emergency?: string;
+      call112?: string;
+    };
+    ageRestriction?: {
+      title?: string;
+      body?: string;
+    };
   };
 }

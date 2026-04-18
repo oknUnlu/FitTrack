@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Linking, Platform } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,13 @@ import {
 import { colors, spacing, borderRadius } from '../theme/theme';
 import { useLanguage } from '../i18n';
 import { getLocalizedPrices } from '../utils/locale';
+
+// Pre-contractual information URLs (TKHK 6502 / Distance Contracts Regulation)
+const TERMS_URL = 'https://fittrack-a958c.web.app/terms';
+const PRIVACY_URL = 'https://fittrack-a958c.web.app/privacy';
+// Google Play: manage/cancel subscriptions — required by Play Policy and TKHK 6502.
+const MANAGE_SUB_URL_ANDROID = 'https://play.google.com/store/account/subscriptions';
+const MANAGE_SUB_URL_IOS = 'https://apps.apple.com/account/subscriptions';
 
 interface PaywallModalProps {
   visible: boolean;
@@ -44,6 +51,10 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   const [isLoadingSubs, setIsLoadingSubs] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  // Consumer-right acknowledgement: user must accept that by starting the
+  // subscription the 14-day withdrawal right is consumed once the digital
+  // service begins (TKHK m.15/1-ğ / MSY m.15 exception).
+  const [consumerRightAck, setConsumerRightAck] = useState(false);
 
   // Load subscriptions when modal opens
   useEffect(() => {
@@ -108,7 +119,33 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     setIsRestoring(false);
   };
 
+  const openManageSubscription = async () => {
+    const url = Platform.OS === 'ios' ? MANAGE_SUB_URL_IOS : MANAGE_SUB_URL_ANDROID;
+    try {
+      await Linking.openURL(url);
+    } catch {
+      // ignore — user can still navigate manually
+    }
+  };
+
+  const openUrl = async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch {}
+  };
+
   const handlePurchase = async (plan: 'monthly' | 'quarterly' | 'yearly') => {
+    // Consumer right acknowledgement must be granted before any purchase is
+    // initiated (TKHK 6502 m.48 pre-contractual info obligation).
+    if (!consumerRightAck) {
+      Alert.alert(
+        (t as any).premium?.consumerRightTitle || 'Onay Gerekli',
+        (t as any).premium?.consumerRightAckRequired ||
+          'Devam etmeden önce ön bilgilendirme ve cayma hakkı bildirimini onaylayın.',
+      );
+      return;
+    }
+
     if (!billingReady) {
       // Mock mode: activate directly for development
       const days = plan === 'monthly' ? 30 : plan === 'quarterly' ? 90 : 365;
@@ -249,6 +286,69 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
               </View>
             )}
 
+            {/* ───── Pre-contractual info (TKHK 6502 m.48 / MSY) ───── */}
+            <View style={styles.legalBlock}>
+              <Text style={[styles.legalTitle, { color: theme.colors.onSurface }]}>
+                {(t as any).premium?.preContractualTitle || 'Ön Bilgilendirme'}
+              </Text>
+              <Text style={[styles.legalBody, { color: colors.textSecondary }]}>
+                {(t as any).premium?.preContractualBody ||
+                  'Abonelik ücretleri ekranda gösterilen fiyatlar üzerinden Google Play (Android) veya App Store (iOS) tarafından tahsil edilir. Fiyatlara geçerli KDV dahildir. Abonelik, iptal edilmediği sürece aynı süre ile otomatik olarak yenilenir. Seçtiğiniz plana göre ödeme, mevcut dönemin sonunda mağaza hesabınızdan otomatik olarak alınır.'}
+              </Text>
+
+              <Text style={[styles.legalTitle, { color: theme.colors.onSurface, marginTop: spacing.sm }]}>
+                {(t as any).premium?.withdrawalTitle || 'Cayma Hakkı'}
+              </Text>
+              <Text style={[styles.legalBody, { color: colors.textSecondary }]}>
+                {(t as any).premium?.withdrawalBody ||
+                  '6502 sayılı Tüketicinin Korunması Hakkında Kanun kapsamında 14 gün içinde gerekçe göstermeksizin cayma hakkınız bulunmaktadır. Premium özellikler satın alma ile birlikte anında açıldığından (dijital içerik ifası), cayma hakkınız ifa ile birlikte sona erer. Aşağıdaki kutuyu işaretleyerek bu durumu kabul etmiş olursunuz.'}
+              </Text>
+
+              <TouchableOpacity
+                onPress={() => setConsumerRightAck((v) => !v)}
+                style={styles.ackRow}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: consumerRightAck }}
+              >
+                <MaterialCommunityIcons
+                  name={consumerRightAck ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                  size={22}
+                  color={consumerRightAck ? colors.primary : colors.textSecondary}
+                />
+                <Text style={[styles.ackText, { color: theme.colors.onSurface }]}>
+                  {(t as any).premium?.consumerRightAck ||
+                    'Ön bilgilendirmeyi okudum; dijital içeriğin anında ifası ile cayma hakkımın sona ereceğini kabul ediyorum.'}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.linkRow}>
+                <Button
+                  mode="text"
+                  compact
+                  onPress={() => openUrl(TERMS_URL)}
+                  labelStyle={styles.linkLabel}
+                >
+                  {(t as any).premium?.viewTerms || 'Üyelik Sözleşmesi'}
+                </Button>
+                <Button
+                  mode="text"
+                  compact
+                  onPress={() => openUrl(PRIVACY_URL)}
+                  labelStyle={styles.linkLabel}
+                >
+                  {(t as any).premium?.viewPrivacy || 'Gizlilik Politikası'}
+                </Button>
+                <Button
+                  mode="text"
+                  compact
+                  onPress={openManageSubscription}
+                  labelStyle={styles.linkLabel}
+                >
+                  {(t as any).premium?.manageSubscription || 'Aboneliği Yönet / İptal Et'}
+                </Button>
+              </View>
+            </View>
+
             {/* Restore */}
             <Button
               mode="text"
@@ -383,5 +483,41 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     marginTop: spacing.sm,
     fontStyle: 'italic',
+  },
+  legalBlock: {
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 0.5,
+    borderTopColor: colors.divider,
+  },
+  legalTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  legalBody: {
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 4,
+  },
+  ackRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: spacing.sm,
+    paddingVertical: 6,
+  },
+  ackText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    marginLeft: 8,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  linkLabel: {
+    fontSize: 11,
+    marginHorizontal: 2,
   },
 });

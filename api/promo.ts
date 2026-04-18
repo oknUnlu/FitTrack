@@ -35,11 +35,25 @@ function getPromoCodes(): Record<string, PromoCodeEntry> | null {
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+// CORS whitelist. Keep narrow — mobile app uses native fetch (no CORS),
+// so only our own web origins ever need to hit this endpoint.
+const CORS_ALLOW_LIST = new Set<string>([
+  'https://fittrack-a958c.web.app',
+  'https://fittrack-a958c.firebaseapp.com',
+]);
+
+function applyCors(req: VercelRequest, res: VercelResponse): void {
+  const origin = (req.headers.origin as string | undefined) || '';
+  if (origin && CORS_ALLOW_LIST.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  applyCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -56,12 +70,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Body
-  const { code } = req.body as { code?: string };
+  const { code } = (req.body || {}) as { code?: string };
   if (!code || typeof code !== 'string') {
     return res.status(400).json({ success: false, message: 'Missing promo code' });
   }
+  if (code.length > 64) {
+    return res.status(400).json({ success: false, message: 'Invalid promo code' });
+  }
 
   const normalizedCode = code.trim().toUpperCase();
+  // Only allow alphanumeric + dash/underscore to prevent weird Redis key injection.
+  if (!/^[A-Z0-9_-]{1,64}$/.test(normalizedCode)) {
+    return res.status(400).json({ success: false, message: 'Invalid promo code' });
+  }
 
   // Load codes
   const promoCodes = getPromoCodes();

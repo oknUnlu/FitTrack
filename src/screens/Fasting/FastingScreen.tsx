@@ -19,34 +19,49 @@ import {
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { generateId, todayString } from '../../utils/helpers';
+import { useUserStore } from '../../store/userStore';
+import { fastingEligibility } from '../../utils/calculations';
+import { MedicalDisclaimer } from '../../components/MedicalDisclaimer';
+import { getUserById, User } from '../../services/database/userDao';
 
 export function FastingScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
+  const userId = useUserStore((s) => s.userId);
 
   const [settings, setSettings] = useState<FastingSettings | null>(null);
   const [todayLog, setTodayLog] = useState<FastingLog | null>(null);
   const [streak, setStreak] = useState(0);
   const [remainingMinutes, setRemainingMinutes] = useState(0);
+  const [profile, setProfile] = useState<User | null>(null);
+
+  // Safety check: block under-18 users and underweight users from fasting.
+  const eligibility = fastingEligibility({
+    age: profile?.age,
+    weightKg: profile?.weight,
+    heightCm: profile?.height,
+  });
 
   const loadData = useCallback(async () => {
     try {
-      const [s, log, str] = await Promise.all([
+      const [s, log, str, u] = await Promise.all([
         getFastingSettings(),
         getTodayFastingLog(),
         getFastingStreak(),
+        getUserById(userId),
       ]);
       setSettings(s);
       setTodayLog(log);
       setStreak(str);
+      setProfile(u);
       if (s && !log?.completed) {
         setRemainingMinutes(getRemainingFastingMinutes(s.defaultEndTime));
       }
     } catch (e) {
       if (__DEV__) console.warn('FastingScreen loadData failed:', e);
     }
-  }, []);
+  }, [userId]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
@@ -68,6 +83,14 @@ export function FastingScreen() {
 
   const handleStartFasting = async () => {
     if (!settings) return;
+    // Enforce safety gate before logging any session.
+    if (!eligibility.allowed) {
+      Alert.alert(
+        (t as any).fasting?.blockedTitle || 'Güvenlik Uyarısı',
+        eligibility.message || 'Bu özellik sizin için uygun değildir.',
+      );
+      return;
+    }
     const log: FastingLog = {
       id: generateId(),
       date: todayString(),
@@ -98,6 +121,26 @@ export function FastingScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}
     >
+      {!eligibility.allowed && (
+        <MedicalDisclaimer
+          variant="warning"
+          title={(t as any).fasting?.blockedTitle || 'Güvenlik Uyarısı'}
+          message={
+            eligibility.message ||
+            ((t as any).fasting?.blockedBody ||
+              'Aralıklı oruç belirli koşullarda (18 yaş altı, BMI < 18.5, hamilelik, kronik hastalık) sakıncalıdır. Lütfen bir sağlık profesyoneline danışın.')
+          }
+        />
+      )}
+
+      <MedicalDisclaimer
+        variant="inline"
+        message={
+          (t as any).fasting?.disclaimer ||
+          'Aralıklı oruç tıbbi tavsiye değildir. Gebelik, emzirme, diyabet veya kronik hastalık durumunda hekiminize danışın.'
+        }
+      />
+
       {/* Enable toggle */}
       <Card style={styles.card} mode="elevated">
         <Card.Content style={styles.rowBetween}>

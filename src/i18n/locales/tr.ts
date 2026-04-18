@@ -215,6 +215,19 @@ const tr: Translations = {
     resetAccount: 'Hesabı Sıfırla',
     resetAccountDesc: 'Kurulum ekranına geri dön',
     resetAccountConfirm: 'Tüm ayarlar sıfırlanacak ve kurulum ekranına yönlendirileceksiniz. Devam etmek istiyor musunuz?',
+    // KVKK m.11 / GDPR Art. 15–17
+    privacySection: 'Gizlilik ve Verilerim',
+    exportData: 'Verilerimi Dışa Aktar',
+    exportDataDesc: 'Tüm yerel verilerinizin JSON kopyasını indirin (KVKK m.11 / GDPR Art. 15)',
+    exportDataSuccess: 'Veriler başarıyla dışa aktarıldı.',
+    exportDataError: 'Veri dışa aktarımı başarısız oldu. Lütfen tekrar deneyin.',
+    deleteAccount: 'Hesabımı Sil',
+    deleteAccountDesc: 'Tüm yerel ve sunucu verilerinizi kalıcı olarak silin (KVKK m.7 / GDPR Art. 17)',
+    deleteAccountConfirmTitle: 'Hesabını Kalıcı Olarak Sil',
+    deleteAccountConfirmBody: 'Bu işlem tüm yerel verilerinizi, ayarlarınızı ve sunucuda saklanan izlerinizi kalıcı olarak siler. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?',
+    deleteAccountConfirmYes: 'Evet, Kalıcı Olarak Sil',
+    deleteAccountSuccess: 'Hesabınız ve verileriniz silindi.',
+    deleteAccountError: 'Silme işlemi başarısız oldu. Lütfen tekrar deneyin.',
   },
 
   aiCoach: {
@@ -233,6 +246,7 @@ const tr: Translations = {
     workoutPlan: 'Antrenman Planı',
     nutritionPlan: 'Beslenme Planı',
     weeklyPlan: 'Haftalık Plan',
+    disclaimer: 'AI Koç tıbbi, yasal veya finansal tavsiye vermez. Önerileri sadece genel bilgi amaçlıdır; diyet veya egzersiz değişikliklerinden önce mutlaka doktor veya uzman diyetisyene danışın.',
   },
 
   tools: {
@@ -417,6 +431,12 @@ const tr: Translations = {
     fillAllFields: 'Lütfen tüm alanları doldurun',
     back: 'Geri',
     next: 'İleri',
+    ageInvalidTitle: 'Geçersiz Yaş',
+    ageInvalidBody: 'Lütfen 1 ile 120 arasında geçerli bir yaş girin.',
+    ageRestrictionTitle: 'Yaş Sınırı',
+    ageRestrictionBody: 'FitTrack 13 yaş ve üzerindeki kullanıcılar içindir. Lütfen bir ebeveyn veya veliye danışın.',
+    bodyInvalidTitle: 'Vücut Bilgileri Geçersiz',
+    bodyInvalidBody: 'Lütfen gerçekçi bir kilo (25-400 kg) ve boy (80-250 cm) değeri girin.',
   },
 
   wellness: {
@@ -515,6 +535,9 @@ const tr: Translations = {
     evening: 'Akşam',
     preWorkout: 'Antrenman Öncesi',
     postWorkout: 'Antrenman Sonrası',
+    disclaimer: 'Takviyeler reçeteli ilaç yerine geçmez. Kronik hastalık, hamilelik veya sürekli ilaç kullanımınız varsa takviye almadan önce mutlaka doktorunuza danışın.',
+    blockedMinorTitle: 'Yaş Sınırı',
+    blockedMinorBody: 'Takviye özelliği 18 yaş altındaki kullanıcılar için erişime kapalıdır. Lütfen bir sağlık profesyoneline danışın.',
   },
 
   social: {
@@ -569,6 +592,12 @@ const tr: Translations = {
     settings: 'Oruç Saatleri',
     sahur: 'Sahur Sonu',
     iftar: 'İftar',
+    disclaimer: 'Oruç tutmak herkes için uygun değildir. Hamilelik, diyabet, yeme bozukluğu geçmişi, düşük vücut kütle indeksi (BMI) veya kronik hastalık durumunda oruç tutmadan önce mutlaka doktorunuza danışın.',
+    blockedTitle: 'Oruç Tutamazsınız',
+    blockedBody: 'Girdiğiniz bilgiler oruç tutma için uygun görünmüyor.',
+    blockedUnderweight: 'Vücut kütle indeksiniz (BMI) 18.5\'in altında olduğu için oruç özelliği devre dışı bırakıldı. Sağlığınız için lütfen bir sağlık profesyoneline danışın.',
+    blockedMinor: '18 yaşından küçük kullanıcılar için oruç takibi kapalıdır.',
+    blockedDuration: 'Tek seferde 24 saatten uzun oruç sağlık açısından risk oluşturabilir; lütfen daha kısa bir süre seçin.',
   },
 
   referral: {
@@ -624,6 +653,17 @@ const tr: Translations = {
     promoExpired: 'Bu promosyon kodunun süresi dolmuş.',
     promoError: 'Promosyon kodu doğrulanamadı. Lütfen daha sonra tekrar deneyin.',
     activate: 'Etkinleştir',
+    // TKHK 6502 consumer-right disclosures
+    preContractualTitle: 'Ön Bilgilendirme',
+    preContractualBody: 'Abonelik ücretleri ekranda gösterilen fiyatlar üzerinden Google Play (Android) veya App Store (iOS) tarafından tahsil edilir. Fiyatlara geçerli KDV dahildir. Abonelik iptal edilmediği sürece aynı süre ile otomatik olarak yenilenir ve ödeme her dönem sonunda mağaza hesabınızdan otomatik olarak alınır. İptal için: Google Play > Abonelikler veya App Store > Abonelikler.',
+    withdrawalTitle: 'Cayma Hakkı',
+    withdrawalBody: '6502 sayılı Tüketicinin Korunması Hakkında Kanun kapsamında 14 gün içinde gerekçe göstermeksizin cayma hakkınız bulunmaktadır. Premium özellikler satın alma anında anında açıldığından, dijital içeriğin ifası ile birlikte cayma hakkınız sona erer.',
+    consumerRightAck: 'Ön bilgilendirmeyi okudum; dijital içeriğin anında ifası ile cayma hakkımın sona ereceğini kabul ediyorum.',
+    consumerRightAckRequired: 'Devam etmeden önce ön bilgilendirme ve cayma hakkı bildirimini onaylayın.',
+    consumerRightTitle: 'Onay Gerekli',
+    viewTerms: 'Üyelik Sözleşmesi',
+    viewPrivacy: 'Gizlilik Politikası',
+    manageSubscription: 'Aboneliği Yönet / İptal Et',
   },
 
   terms: {
@@ -722,6 +762,52 @@ const tr: Translations = {
     fri: 'Cu',
     sat: 'Ct',
     sun: 'Pz',
+  },
+
+  legal: {
+    consent: {
+      title: 'Gizlilik ve Onay',
+      intro: 'Devam etmeden önce aşağıdaki izinleri gözden geçirin. İşaretli olanlar uygulamanın yasal olarak çalışması için gereklidir (KVKK m.5 / GDPR Art. 6).',
+      ageQuestion: 'Yaşınız',
+      ageUnit: 'yaş',
+      ageUnderMin: 'FitTrack 13 yaş ve üzerindeki kullanıcılar içindir. Kayıtlı bir ebeveyn/veliyle tekrar deneyin.',
+      requiredSection: 'Zorunlu İzinler',
+      optionalSection: 'İsteğe Bağlı İzinler',
+      privacyPolicy: 'Gizlilik Politikası',
+      privacyPolicyDesc: 'Verilerinizin nasıl işlendiğini açıklayan politikayı kabul ediyorum.',
+      termsOfService: 'Üyelik Sözleşmesi',
+      termsOfServiceDesc: 'Kullanım koşullarını okudum ve kabul ediyorum.',
+      kvkk: 'KVKK Aydınlatma Metni',
+      kvkkDesc: '6698 sayılı KVKK kapsamında kişisel verilerimin işlenmesine ilişkin aydınlatma metnini okudum.',
+      medicalDisclaimer: 'Tıbbi Feragat',
+      medicalDisclaimerDesc: 'FitTrack tıbbi tavsiye, teşhis veya tedavi yerine geçmez; sağlık kararlarımı bir sağlık profesyoneline danışarak alacağımı kabul ediyorum.',
+      aiDataSharing: 'AI Veri Paylaşımı',
+      aiDataSharingDesc: 'AI Koç ve besin tanıma için mesaj/görsellerimin Google Gemini (ABD) hizmetine gönderilmesine ve ücretsiz API kapsamında model eğitimi için kullanılabileceğine açık rıza veriyorum.',
+      healthData: 'Sağlık Verileri (Özel Nitelikli)',
+      healthDataDesc: 'Apple HealthKit / Google Health Connect üzerinden adım, kalp atışı, uyku gibi sağlık verilerimin okunmasına açık rıza veriyorum (KVKK m.6 / GDPR Art. 9).',
+      analytics: 'Analitik',
+      analyticsDesc: 'Anonim kullanım istatistiklerinin ürünü geliştirmek için işlenmesine izin veriyorum.',
+      crashReports: 'Çökme Raporları',
+      crashReportsDesc: 'Çökme ve hata raporlarının otomatik gönderilmesine izin veriyorum.',
+      marketing: 'Pazarlama İletişimi',
+      marketingDesc: 'Kampanya, özellik duyurusu vb. pazarlama iletişimlerini almak istiyorum.',
+      personalizedAds: 'Kişiselleştirilmiş Reklam',
+      personalizedAdsDesc: 'Uygulama içi reklamların ilgi alanlarıma göre kişiselleştirilmesine izin veriyorum.',
+      accept: 'Kabul Et ve Devam Et',
+      decline: 'Reddet',
+      mustAcceptRequired: 'Devam edebilmek için zorunlu izinleri onaylamanız gerekir.',
+      viewDocument: 'Metni Oku',
+    },
+    medicalDisclaimer: {
+      title: 'Tıbbi Feragat',
+      body: 'Bu uygulama tıbbi tavsiye, teşhis veya tedavi amacıyla kullanılamaz. Sağlık durumunuzla ilgili her türlü karar için mutlaka yetkili bir sağlık profesyoneline danışın. Acil durumlarda 112\'yi arayın.',
+      emergency: 'Acil Durum',
+      call112: '112 Acil Çağrı Merkezini Ara',
+    },
+    ageRestriction: {
+      title: 'Yaş Sınırı',
+      body: 'Bu özellik yalnızca 18 yaş ve üzerindeki kullanıcılar içindir.',
+    },
   },
 };
 

@@ -16,6 +16,7 @@ import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { usePremiumStore } from '../../store/premiumStore';
 import { PaywallModal } from '../../components/PaywallModal';
+import { MedicalDisclaimer } from '../../components/MedicalDisclaimer';
 import { checkDailyLimit } from '../../services/premium/featureGate';
 import { incrementUsage, getRemainingUsage, getDailyLimit } from '../../services/ai/rateLimiter';
 
@@ -235,6 +236,17 @@ export function AICoachScreen() {
       </View>
 
       <PaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} feature="ai_coach" />
+
+      {/* Medical / AI disclaimer shown above chat */}
+      <View style={{ paddingHorizontal: spacing.md }}>
+        <MedicalDisclaimer
+          variant="inline"
+          message={
+            (t as any).aiCoach?.disclaimer ||
+            'AI Koç tıbbi veya yasal tavsiye vermez. Yanıtlar genel bilgilendirme amaçlıdır ve bir hekim, diyetisyen veya antrenörün yerine geçmez.'
+          }
+        />
+      </View>
 
       {/* Quick prompts + plan buttons (shown when no messages) */}
       {messages.length === 0 && (

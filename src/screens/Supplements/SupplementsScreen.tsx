@@ -18,6 +18,10 @@ import { useLanguage } from '../../i18n';
 import { generateId, todayString } from '../../utils/helpers';
 import { usePremiumStore } from '../../store/premiumStore';
 import { PaywallModal } from '../../components/PaywallModal';
+import { useUserStore } from '../../store/userStore';
+import { supplementEligibility } from '../../utils/calculations';
+import { MedicalDisclaimer } from '../../components/MedicalDisclaimer';
+import { getUserById, User } from '../../services/database/userDao';
 
 const TIME_ICONS: Record<string, string> = {
   morning: 'weather-sunny',
@@ -56,6 +60,9 @@ export function SupplementsScreen() {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
   const isPremium = usePremiumStore((s) => s.isPremium);
+  const userId = useUserStore((s) => s.userId);
+  const [profile, setProfile] = useState<User | null>(null);
+  const supplementAllowed = supplementEligibility(profile?.age);
   const FREE_SUPPLEMENT_LIMIT = 3;
 
   // Form
@@ -65,16 +72,18 @@ export function SupplementsScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [sups, todayLogs] = await Promise.all([
+      const [sups, todayLogs, u] = await Promise.all([
         getSupplements(),
         getSupplementLogs(today),
+        getUserById(userId),
       ]);
       setSupplements(sups);
       setLogs(todayLogs);
+      setProfile(u);
     } catch (e) {
       if (__DEV__) console.warn('Supplements load failed:', e);
     }
-  }, [today]);
+  }, [today, userId]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
@@ -129,6 +138,24 @@ export function SupplementsScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={{ paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: insets.bottom + 40 }}
     >
+      {!supplementAllowed.allowed && (
+        <MedicalDisclaimer
+          variant="warning"
+          title={(t as any).supplements?.blockedTitle || 'Yaş Kısıtlaması'}
+          message={
+            supplementAllowed.message ||
+            'Takviye önerileri 18 yaş altı kullanıcılar için gösterilmez.'
+          }
+        />
+      )}
+      <MedicalDisclaimer
+        variant="inline"
+        message={
+          (t as any).supplements?.disclaimer ||
+          'Takviye almadan önce mutlaka bir hekime veya eczacıya danışın. İlaçlarla etkileşim gösterebilir. Önerilen günlük üst sınırları aşmayın.'
+        }
+      />
+
       {/* Hero Progress Card */}
       {supplements.length > 0 && (
         <View style={[styles.heroCard, { backgroundColor: isDark ? '#1B3A1B' : '#E8F5E9' }]}>
@@ -172,8 +199,16 @@ export function SupplementsScreen() {
 
       {/* Add Button */}
       <TouchableOpacity
-        style={[styles.addButton, { backgroundColor: isDark ? sc.surface : '#fff', borderColor: sc.border }]}
+        style={[styles.addButton, { backgroundColor: isDark ? sc.surface : '#fff', borderColor: sc.border, opacity: supplementAllowed.allowed ? 1 : 0.5 }]}
         onPress={() => {
+          if (!supplementAllowed.allowed) {
+            Alert.alert(
+              (t as any).supplements?.blockedTitle || 'Yaş Kısıtlaması',
+              supplementAllowed.message ||
+                'Takviye ekleme özelliği 18 yaş altı kullanıcılar için kapalıdır.',
+            );
+            return;
+          }
           if (!isPremium && supplements.length >= FREE_SUPPLEMENT_LIMIT) {
             setPaywallVisible(true);
             return;

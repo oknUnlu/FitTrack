@@ -1,15 +1,29 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import crypto from 'crypto';
 import { getRedis } from './_lib/redis';
+
+// Constant-time string compare to prevent timing attacks against admin key.
+function safeEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, 'utf8');
+  const bBuf = Buffer.from(b, 'utf8');
+  if (aBuf.length !== bBuf.length) return false;
+  return crypto.timingSafeEqual(aBuf, bBuf);
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
-  // Admin auth via secret key
+  // Admin auth via secret key. Require ADMIN_API_KEY to be configured and
+  // at least 24 chars long — reject outright otherwise (no silent open door).
   const adminKey = process.env.ADMIN_API_KEY;
+  if (!adminKey || adminKey.length < 24) {
+    console.error('ADMIN_API_KEY not configured or too short — /api/usage disabled');
+    return res.status(503).json({ success: false, message: 'Admin endpoint not configured' });
+  }
   const authHeader = req.headers['x-admin-key'];
-  if (!adminKey || authHeader !== adminKey) {
+  if (typeof authHeader !== 'string' || !safeEqual(authHeader, adminKey)) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 

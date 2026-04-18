@@ -23,9 +23,33 @@ export function calculateTDEE(bmr: number, activityLevel: string): number {
   return Math.round(bmr * (multipliers[activityLevel] ?? 1.2));
 }
 
-export function calculateCalorieTarget(tdee: number, goal: string): number {
+/**
+ * Medically conservative floor values. Prolonged intake below these numbers
+ * is considered unsafe without clinical supervision (NHS / EFSA / NIH). The
+ * calorie target is clamped to these regardless of the selected goal to avoid
+ * giving users a plan that could cause harm. These floors also protect the
+ * app from being characterised as promoting eating disorders.
+ *
+ * Sources:
+ *   - NHS (UK): 1200 kcal/day minimum for women without supervision.
+ *   - NIH / AHA: 1500 kcal/day minimum for men without supervision.
+ */
+export const CALORIE_FLOOR_FEMALE = 1200;
+export const CALORIE_FLOOR_MALE = 1500;
+export const CALORIE_FLOOR_GENERIC = 1200;
+
+export function calorieFloorFor(gender?: string): number {
+  if (gender === 'female') return CALORIE_FLOOR_FEMALE;
+  if (gender === 'male') return CALORIE_FLOOR_MALE;
+  return CALORIE_FLOOR_GENERIC;
+}
+
+export function calculateCalorieTarget(tdee: number, goal: string, gender?: string): number {
   const offsets: Record<string, number> = { lose: -500, gain: 300, muscle: 200 };
-  return tdee + (offsets[goal] ?? 0);
+  const target = tdee + (offsets[goal] ?? 0);
+  // Safety clamp to medically accepted minimums.
+  const floor = calorieFloorFor(gender);
+  return Math.max(floor, target);
 }
 
 export function calculateMacroTargets(calorieTarget: number, goal: string): MacroTargets {
@@ -84,4 +108,70 @@ export function calculateProteinNeeds(weightKg: number, goal: string): [number, 
   };
   const [minR, maxR] = ranges[goal] ?? ranges.maintain;
   return [weightKg * minR, weightKg * maxR];
+}
+
+/**
+ * Eligibility checks used across Fasting / Calorie / Supplement screens to
+ * protect vulnerable users (underweight, minors, pregnant, chronic conditions).
+ * Screens should call these before allowing the user to start a session.
+ */
+export interface SafetyEligibility {
+  allowed: boolean;
+  reason?:
+    | 'UNDERWEIGHT'
+    | 'MINOR'
+    | 'MISSING_DATA'
+    | 'EXTREME_DURATION';
+  message?: string;
+}
+
+export function fastingEligibility(params: {
+  weightKg?: number;
+  heightCm?: number;
+  age?: number;
+  durationHours?: number;
+}): SafetyEligibility {
+  const { weightKg, heightCm, age, durationHours } = params;
+  if (!weightKg || !heightCm || !age) {
+    return { allowed: false, reason: 'MISSING_DATA' };
+  }
+  if (age < 18) {
+    return {
+      allowed: false,
+      reason: 'MINOR',
+      message:
+        'Aralıklı oruç 18 yaş altı kullanıcılar için önerilmez. Büyüme ve gelişim dönemindeki bireyler için tıbbi gözetim gereklidir.',
+    };
+  }
+  const bmi = calculateBMI(weightKg, heightCm);
+  if (bmi < 18.5) {
+    return {
+      allowed: false,
+      reason: 'UNDERWEIGHT',
+      message:
+        'Vücut kitle indeksiniz (BMI) 18.5\'in altında. Aralıklı oruç sizin için uygun olmayabilir. Lütfen bir sağlık profesyoneline danışın.',
+    };
+  }
+  if (typeof durationHours === 'number' && durationHours > 24) {
+    return {
+      allowed: false,
+      reason: 'EXTREME_DURATION',
+      message:
+        '24 saati aşan oruçlar tıbbi gözetim olmadan önerilmez.',
+    };
+  }
+  return { allowed: true };
+}
+
+export function supplementEligibility(age?: number): SafetyEligibility {
+  if (!age) return { allowed: false, reason: 'MISSING_DATA' };
+  if (age < 18) {
+    return {
+      allowed: false,
+      reason: 'MINOR',
+      message:
+        'Takviye önerileri 18 yaş altı kullanıcılar için gösterilmez. Takviye kullanmadan önce lütfen bir hekime danışın.',
+    };
+  }
+  return { allowed: true };
 }

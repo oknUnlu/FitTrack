@@ -51,10 +51,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { image, mimeType } = req.body as FoodRecognitionRequest;
+    const { image, mimeType } = (req.body || {}) as FoodRecognitionRequest;
 
-    if (!image || !mimeType) {
+    if (!image || !mimeType || typeof image !== 'string' || typeof mimeType !== 'string') {
       return res.status(400).json({ success: false, message: 'Missing image or mimeType' });
+    }
+    if (image.length > 8 * 1024 * 1024) {
+      return res.status(413).json({ success: false, message: 'Image too large' });
     }
 
     const text = await analyzeImage(image, mimeType, FOOD_PROMPT);
@@ -66,17 +69,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       jsonStr = jsonMatch[0];
     }
 
-    const foods: RecognizedFood[] = JSON.parse(jsonStr).filter(
-      (f: RecognizedFood) => f.name && f.calories >= 0
-    );
+    let foods: RecognizedFood[] = [];
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (Array.isArray(parsed)) {
+        foods = parsed.filter(
+          (f: any) => f && typeof f.name === 'string' && typeof f.calories === 'number' && f.calories >= 0
+        );
+      }
+    } catch {
+      foods = [];
+    }
 
     res.setHeader('X-RateLimit-Remaining', remaining.toString());
     return res.status(200).json({ success: true, foods });
   } catch (error: any) {
-    console.error('Food recognition error:', error.message);
+    console.error('Food recognition error:', error?.message);
+    const msg = String(error?.message || '');
+    if (msg.startsWith('SAFETY_BLOCKED') || msg.startsWith('INVALID_IMAGE')) {
+      return res.status(400).json({ success: false, message: 'Image rejected', foods: [] });
+    }
+    if (msg.startsWith('BUDGET_EXCEEDED')) {
+      return res.status(503).json({ success: false, message: 'AI service temporarily unavailable', foods: [] });
+    }
     return res.status(500).json({
       success: false,
-      message: `Recognition error: ${error.message}`,
+      message: 'Recognition error',
       foods: [],
     });
   }

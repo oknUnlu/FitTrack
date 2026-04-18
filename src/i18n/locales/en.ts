@@ -215,6 +215,18 @@ const en: Translations = {
     resetAccount: 'Reset Account',
     resetAccountDesc: 'Return to setup screen',
     resetAccountConfirm: 'All settings will be reset and you will be redirected to the setup screen. Do you want to continue?',
+    privacySection: 'Privacy & My Data',
+    exportData: 'Export My Data',
+    exportDataDesc: 'Download a JSON copy of all your local data (GDPR Art. 15 / KVKK Art. 11)',
+    exportDataSuccess: 'Data exported successfully.',
+    exportDataError: 'Data export failed. Please try again.',
+    deleteAccount: 'Delete My Account',
+    deleteAccountDesc: 'Permanently erase all your local and server-side data (GDPR Art. 17 / KVKK Art. 7)',
+    deleteAccountConfirmTitle: 'Permanently Delete Account',
+    deleteAccountConfirmBody: 'This will permanently erase all your local data, settings, and server-side traces. This action cannot be undone. Continue?',
+    deleteAccountConfirmYes: 'Yes, Delete Permanently',
+    deleteAccountSuccess: 'Your account and data have been deleted.',
+    deleteAccountError: 'Deletion failed. Please try again.',
   },
 
   aiCoach: {
@@ -233,6 +245,7 @@ const en: Translations = {
     workoutPlan: 'Workout Plan',
     nutritionPlan: 'Nutrition Plan',
     weeklyPlan: 'Weekly Plan',
+    disclaimer: 'AI Coach does not provide medical, legal, or financial advice. Suggestions are for general information only; consult a doctor or registered dietitian before changing your diet or exercise.',
   },
 
   tools: {
@@ -417,6 +430,12 @@ const en: Translations = {
     fillAllFields: 'Please fill all fields',
     back: 'Back',
     next: 'Next',
+    ageInvalidTitle: 'Invalid Age',
+    ageInvalidBody: 'Please enter a valid age between 1 and 120.',
+    ageRestrictionTitle: 'Age Restriction',
+    ageRestrictionBody: 'FitTrack is for users aged 13 and older. Please consult a parent or guardian.',
+    bodyInvalidTitle: 'Invalid Body Information',
+    bodyInvalidBody: 'Please enter a realistic weight (25-400 kg) and height (80-250 cm).',
   },
 
   wellness: {
@@ -515,6 +534,9 @@ const en: Translations = {
     evening: 'Evening',
     preWorkout: 'Pre-Workout',
     postWorkout: 'Post-Workout',
+    disclaimer: 'Supplements are not a substitute for prescription medicine. If you have a chronic condition, are pregnant, or take regular medication, consult your doctor before starting any supplement.',
+    blockedMinorTitle: 'Age Restriction',
+    blockedMinorBody: 'The supplements feature is disabled for users under 18. Please consult a healthcare professional.',
   },
 
   social: {
@@ -569,6 +591,12 @@ const en: Translations = {
     settings: 'Fasting Times',
     sahur: 'Sahur End',
     iftar: 'Iftar',
+    disclaimer: 'Fasting is not suitable for everyone. Pregnant users, people with diabetes, a history of eating disorders, low BMI, or chronic conditions must consult a doctor before fasting.',
+    blockedTitle: 'Fasting Unavailable',
+    blockedBody: 'Based on the information you provided, fasting is not recommended for you.',
+    blockedUnderweight: 'Your BMI is below 18.5, so the fasting feature is disabled. Please consult a healthcare professional for your safety.',
+    blockedMinor: 'Fasting tracking is not available for users under 18.',
+    blockedDuration: 'Fasting longer than 24 hours in a single session can be risky. Please choose a shorter duration.',
   },
 
   referral: {
@@ -624,6 +652,16 @@ const en: Translations = {
     promoExpired: 'This promo code has expired.',
     promoError: 'Could not validate promo code. Please try again later.',
     activate: 'Activate',
+    preContractualTitle: 'Pre-contractual Information',
+    preContractualBody: 'Subscription prices shown include applicable VAT/sales tax. Charges are processed by Google Play (Android) or the App Store (iOS). Subscriptions renew automatically at the end of each period unless cancelled. Manage or cancel anytime via Google Play > Subscriptions or App Store > Subscriptions.',
+    withdrawalTitle: 'Right of Withdrawal',
+    withdrawalBody: 'You have a statutory right of withdrawal within 14 days of purchase (EU Consumer Rights Directive / TR Consumer Act No. 6502). Because Premium is delivered as digital content immediately on purchase, your withdrawal right expires upon delivery of the service.',
+    consumerRightAck: 'I have read the pre-contractual information and acknowledge that my right of withdrawal ends once the digital content is delivered.',
+    consumerRightAckRequired: 'Please acknowledge the pre-contractual information and withdrawal notice before continuing.',
+    consumerRightTitle: 'Acknowledgement Required',
+    viewTerms: 'Terms of Service',
+    viewPrivacy: 'Privacy Policy',
+    manageSubscription: 'Manage / Cancel Subscription',
   },
 
   terms: {
@@ -722,6 +760,52 @@ const en: Translations = {
     fri: 'Fr',
     sat: 'Sa',
     sun: 'Su',
+  },
+
+  legal: {
+    consent: {
+      title: 'Privacy & Consent',
+      intro: 'Please review the permissions below before continuing. Items marked as required are necessary for the app to operate lawfully (GDPR Art. 6 / KVKK Art. 5).',
+      ageQuestion: 'Your age',
+      ageUnit: 'years old',
+      ageUnderMin: 'FitTrack is for users aged 13 and above. Please try again with a parent or guardian.',
+      requiredSection: 'Required Permissions',
+      optionalSection: 'Optional Permissions',
+      privacyPolicy: 'Privacy Policy',
+      privacyPolicyDesc: 'I accept the privacy policy that explains how my data is processed.',
+      termsOfService: 'Terms of Service',
+      termsOfServiceDesc: 'I have read and accept the terms of service.',
+      kvkk: 'KVKK / GDPR Notice',
+      kvkkDesc: 'I have read the disclosure regarding the processing of my personal data under GDPR / KVKK Law No. 6698.',
+      medicalDisclaimer: 'Medical Disclaimer',
+      medicalDisclaimerDesc: 'FitTrack is not a substitute for medical advice, diagnosis or treatment; I agree to consult a healthcare professional for health-related decisions.',
+      aiDataSharing: 'AI Data Sharing',
+      aiDataSharingDesc: 'I give explicit consent for my messages/images to be sent to Google Gemini (US) for AI Coach and food recognition, including the possibility that the free API tier may be used for model training.',
+      healthData: 'Health Data (Sensitive Category)',
+      healthDataDesc: 'I give explicit consent for reading my health data (steps, heart rate, sleep) via Apple HealthKit / Google Health Connect (GDPR Art. 9 / KVKK Art. 6).',
+      analytics: 'Analytics',
+      analyticsDesc: 'I allow anonymous usage statistics to be used to improve the product.',
+      crashReports: 'Crash Reports',
+      crashReportsDesc: 'I allow crash and error reports to be sent automatically.',
+      marketing: 'Marketing Communications',
+      marketingDesc: 'I want to receive campaigns, feature announcements and other marketing messages.',
+      personalizedAds: 'Personalized Ads',
+      personalizedAdsDesc: 'I allow in-app ads to be personalised based on my interests.',
+      accept: 'Accept & Continue',
+      decline: 'Decline',
+      mustAcceptRequired: 'You must accept the required permissions to continue.',
+      viewDocument: 'Read Document',
+    },
+    medicalDisclaimer: {
+      title: 'Medical Disclaimer',
+      body: 'This app is not intended as medical advice, diagnosis, or treatment. For any decisions regarding your health, consult a qualified healthcare professional. In case of emergency, call your local emergency number (112 in the EU/Turkey, 911 in the US).',
+      emergency: 'Emergency',
+      call112: 'Call Emergency Services (112)',
+    },
+    ageRestriction: {
+      title: 'Age Restriction',
+      body: 'This feature is available for users aged 18 and above only.',
+    },
   },
 };
 

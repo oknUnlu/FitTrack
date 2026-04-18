@@ -11,6 +11,7 @@ import { LanguageProvider } from './src/i18n';
 import { useThemeStore } from './src/store/themeStore';
 import { useUserStore } from './src/store/userStore';
 import { usePremiumStore } from './src/store/premiumStore';
+import { useConsentStore } from './src/store/consentStore';
 import { lightTheme, darkTheme } from './src/theme/theme';
 import { initDatabase, seedDatabase } from './src/services/database/database';
 import { getDeviceToken } from './src/services/api/apiClient';
@@ -26,6 +27,7 @@ export default function App() {
   const loadOnboardingState = useUserStore((s) => s.loadOnboardingState);
   const isLoading = useUserStore((s) => s.isLoading);
   const loadPremiumState = usePremiumStore((s) => s.loadPremiumState);
+  const loadConsents = useConsentStore((s) => s.loadConsents);
 
   useEffect(() => {
     let cleanupListener: (() => void) | undefined;
@@ -33,6 +35,7 @@ export default function App() {
     const init = async () => {
       await loadOnboardingState();
       await loadPremiumState();
+      await loadConsents();
       if (Platform.OS === 'web') {
         if (__DEV__) console.log('FitTrack: SQLite not available on web, skipping DB init.');
         await SplashScreen.hideAsync();

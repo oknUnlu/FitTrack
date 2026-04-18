@@ -46,3 +46,8 @@ coverage/
 # Build artifacts
 *.tsbuildinfo
 .vercel
+
+# Documents
+*.pdf
+*.docx
+*.md

@@ -2,49 +2,68 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Verified products: public read, no direct client writes
+    // ─── Helpers ────────────────────────────────────────
+    function isString(v) { return v is string; }
+    function hasLen(v, min, max) { return v.size() >= min && v.size() <= max; }
+    function isBoundedNumber(v, min, max) {
+      return v is number && v >= min && v <= max;
+    }
+    // App Check is required on clients that call public/create rules.
+    // Uncomment once the Firebase project has App Check enabled.
+    function isAppChecked() {
+      return request.app_check != null;
+    }
+
+    // ─── verified_products: public read, no client writes ───
     match /verified_products/{barcode} {
-      allow read: if true;
+      // Read is public (unauthenticated) but require App Check and a sane
+      // barcode key length to avoid enumeration/DDoS style scans.
+      allow read: if isAppChecked() && barcode is string && barcode.size() <= 64;
       allow write: if false;
     }
 
-    // Barcode submissions: validated create only, no read/update/delete
+    // ─── barcode_submissions: client may create only, strict validation ───
     match /barcode_submissions/{docId} {
       allow read: if false;
-      allow create: if request.resource.data.deviceId is string
-                    && request.resource.data.barcode is string
-                    && request.resource.data.name is string
-                    && request.resource.data.calories is number
-                    && request.resource.data.calories >= 0
-                    && request.resource.data.calories <= 5000
-                    && request.resource.data.protein is number
-                    && request.resource.data.protein >= 0
-                    && request.resource.data.carbs is number
-                    && request.resource.data.carbs >= 0
-                    && request.resource.data.fat is number
-                    && request.resource.data.fat >= 0;
+      allow create: if isAppChecked()
+                    && request.resource.data.keys().hasOnly([
+                         'deviceId', 'barcode', 'name',
+                         'calories', 'protein', 'carbs', 'fat',
+                         'brand', 'servingSize', 'servingUnit', 'createdAt'
+                       ])
+                    && isString(request.resource.data.deviceId)
+                    && hasLen(request.resource.data.deviceId, 8, 128)
+                    && isString(request.resource.data.barcode)
+                    && hasLen(request.resource.data.barcode, 4, 32)
+                    && request.resource.data.barcode.matches('^[0-9A-Za-z-]+$')
+                    && isString(request.resource.data.name)
+                    && hasLen(request.resource.data.name, 1, 200)
+                    && isBoundedNumber(request.resource.data.calories, 0, 5000)
+                    && isBoundedNumber(request.resource.data.protein, 0, 500)
+                    && isBoundedNumber(request.resource.data.carbs, 0, 1000)
+                    && isBoundedNumber(request.resource.data.fat, 0, 500)
+                    && (!('brand' in request.resource.data) ||
+                        (isString(request.resource.data.brand) && request.resource.data.brand.size() <= 100))
+                    && (!('servingSize' in request.resource.data) ||
+                        isBoundedNumber(request.resource.data.servingSize, 0, 10000))
+                    && (!('servingUnit' in request.resource.data) ||
+                        (isString(request.resource.data.servingUnit) && request.resource.data.servingUnit.size() <= 20))
+                    && (!('createdAt' in request.resource.data) ||
+                        request.resource.data.createdAt is number);
       allow update, delete: if false;
     }
 
-    // Server-side collections: only accessible via Firebase Admin SDK (Cloud Functions)
-    // Clients cannot read or write these directly
-    match /rate_limits/{doc} {
-      allow read, write: if false;
-    }
-    match /premium_status/{doc} {
-      allow read, write: if false;
-    }
-    match /promo_premium/{doc} {
-      allow read, write: if false;
-    }
-    match /promo_usage/{doc} {
-      allow read, write: if false;
-    }
-    match /usage_stats/{doc} {
-      allow read, write: if false;
-    }
+    // ─── Server-only collections: Firebase Admin SDK / Cloud Functions only ───
+    match /rate_limits/{doc}       { allow read, write: if false; }
+    match /premium_status/{doc}    { allow read, write: if false; }
+    match /promo_premium/{doc}     { allow read, write: if false; }
+    match /promo_usage/{doc}       { allow read, write: if false; }
+    match /usage_stats/{doc}       { allow read, write: if false; }
+    match /deletion_requests/{doc} { allow read, write: if false; }
+    match /data_exports/{doc}      { allow read, write: if false; }
+    match /consent_records/{doc}   { allow read, write: if false; }
 
-    // Default: deny all
+    // ─── Default: deny all ─────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }
