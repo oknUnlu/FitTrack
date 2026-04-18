@@ -18,6 +18,35 @@
   "hosting": {
     "public": "public",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "X-Frame-Options", "value": "DENY" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "Permissions-Policy", "value": "geolocation=(), microphone=(), camera=(), payment=()" },
+          { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+          { "key": "Cross-Origin-Resource-Policy", "value": "same-site" }
+        ]
+      },
+      {
+        "source": "/api/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, private" },
+          { "key": "Pragma", "value": "no-cache" },
+          { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+        ]
+      },
+      {
+        "source": "**/*.@(html|json)",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-store" },
+          { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" }
+        ]
+      }
+    ],
     "rewrites": [
       {
         "source": "/api/chat",
@@ -46,6 +75,10 @@
       {
         "source": "/api/usage",
         "run": { "serviceId": "usage", "region": "europe-west1" }
+      },
+      {
+        "source": "/api/delete-account",
+        "run": { "serviceId": "deleteaccount", "region": "europe-west1" }
       }
     ]
   }

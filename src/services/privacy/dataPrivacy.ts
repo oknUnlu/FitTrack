@@ -158,7 +158,8 @@ export async function deleteAccount(options?: { notifyServer?: boolean }): Promi
   if (notifyServer) {
     try {
       const { apiPost } = await import('../api/apiClient');
-      await apiPost('/delete-account', {});
+      const { API_ENDPOINTS } = await import('../../config/api');
+      await apiPost(API_ENDPOINTS.deleteAccount, {});
     } catch {
       // ignore — local wipe continues regardless.
     }

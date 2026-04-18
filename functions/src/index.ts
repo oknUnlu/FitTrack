@@ -5,3 +5,4 @@ export { verifyPurchase } from './verifyPurchase';
 export { promo } from './promo';
 export { health } from './health';
 export { usage } from './usage';
+export { deleteAccount } from './deleteAccount';
