@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.usage = exports.health = exports.promo = exports.verifyPurchase = exports.plan = exports.foodRecognition = exports.chat = void 0;
+exports.deleteAccount = exports.usage = exports.health = exports.promo = exports.verifyPurchase = exports.plan = exports.foodRecognition = exports.chat = void 0;
 var chat_1 = require("./chat");
 Object.defineProperty(exports, "chat", { enumerable: true, get: function () { return chat_1.chat; } });
 var foodRecognition_1 = require("./foodRecognition");
@@ -15,4 +15,6 @@ var health_1 = require("./health");
 Object.defineProperty(exports, "health", { enumerable: true, get: function () { return health_1.health; } });
 var usage_1 = require("./usage");
 Object.defineProperty(exports, "usage", { enumerable: true, get: function () { return usage_1.usage; } });
+var deleteAccount_1 = require("./deleteAccount");
+Object.defineProperty(exports, "deleteAccount", { enumerable: true, get: function () { return deleteAccount_1.deleteAccount; } });
 //# sourceMappingURL=index.js.map

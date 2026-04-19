@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index, follow">
+  <title>Hesap ve Veri Silme — FitTrack</title>
+  <style>
+    :root {
+      --green: #4CAF50;
+      --red: #d33;
+      --text: #1a1a1a;
+      --muted: #555;
+      --bg: #fff;
+      --border: #e5e5e5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.65;
+      margin: 0;
+      padding: 0 20px 60px;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding-top: 40px; }
+    header {
+      border-bottom: 2px solid var(--green);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    h1 { font-size: 26px; margin: 0 0 4px; }
+    h2 {
+      font-size: 19px;
+      margin: 28px 0 8px;
+      color: var(--green);
+      border-left: 3px solid var(--green);
+      padding-left: 12px;
+    }
+    p.meta { color: var(--muted); font-size: 13px; margin: 0; }
+    p, li { font-size: 15px; }
+    ol li, ul li { margin-bottom: 6px; }
+    .step {
+      background: #f7fbf7;
+      border: 1px solid #d0e8d0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    .alt {
+      background: #fff8f0;
+      border: 1px solid #ffd9a8;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: ui-monospace, Menlo, Monaco, monospace;
+    }
+    a { color: var(--green); }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f9f9f9; }
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Hesap ve Veri Silme Talimatları</h1>
+      <p class="meta">FitTrack — AI Fitness Koç &middot; Yürürlük: 19 Nisan 2026</p>
+    </header>
+
+    <p>
+      FitTrack, KVKK Madde 11 ve GDPR Madde 17 (“Unutulma hakkı”) kapsamında
+      tüm kullanıcılarına verilerini silme hakkı tanır. Aşağıda hesabınızı ve
+      ilgili tüm verileri nasıl silebileceğinizi adım adım anlatıyoruz.
+    </p>
+
+    <h2>Yöntem 1 — Uygulama içinden silme (önerilen)</h2>
+    <div class="step">
+      <ol>
+        <li>FitTrack uygulamasını açın.</li>
+        <li><strong>Ayarlar</strong> sekmesine gidin.</li>
+        <li><strong>Gizlilik ve Veriler</strong> bölümüne dokunun.</li>
+        <li><strong>Hesabı Sil</strong> seçeneğine dokunun.</li>
+        <li>Onay ekranında <strong>“Evet, verilerimi sil”</strong> butonuna basın.</li>
+      </ol>
+    </div>
+    <p>
+      Bu işlem geri alınamaz. Telefonunuzdaki tüm veriler (öğün kayıtları,
+      antrenmanlar, vücut ölçümleri, yapay zekâ sohbet geçmişi, sağlık
+      platformu eşleşmeleri) anında silinir. Aynı anda sunucularımıza bir
+      silme isteği gönderilir ve sunucudaki tüm kayıtlarınız (rate-limit,
+      premium durumu, promo kod kullanımları) toplu olarak silinir.
+    </p>
+
+    <h2>Yöntem 2 — E-posta ile talep</h2>
+    <div class="alt">
+      <p>
+        Uygulamayı silmiş veya erişimini kaybetmişseniz, aşağıdaki adrese
+        e-posta atarak silme talebinde bulunabilirsiniz:
+      </p>
+      <p>
+        <strong>E-posta:</strong>
+        <a href="mailto:fittrackaiapp.support@gmail.com?subject=Hesap%20Silme%20Talebi">
+          fittrackaiapp.support@gmail.com
+        </a>
+      </p>
+      <p>
+        Konu kısmına <em>“Hesap Silme Talebi”</em> yazmanız yeterlidir.
+        Mümkünse mesajınıza cihaz kimliğinizi (Ayarlar → Hakkında → Cihaz ID)
+        ekleyin; eklemezseniz de e-posta kutunuzdan gelen taleple eşleşen
+        tüm kayıtları sileceğimizi garanti ederiz.
+      </p>
+      <p>
+        Talepleriniz <strong>en geç 30 gün</strong> içinde (KVKK Madde 13)
+        işleme alınır ve size e-posta ile onay gönderilir.
+      </p>
+    </div>
+
+    <h2>Silinen Veriler</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Veri</th>
+          <th>Nerede saklanıyordu</th>
+          <th>Silinme süresi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Profil bilgileri (yaş, boy, kilo, hedef)</td>
+          <td>Telefon (SQLite)</td>
+          <td>Anında</td>
+        </tr>
+        <tr>
+          <td>Öğün ve kalori kayıtları</td>
+          <td>Telefon (SQLite)</td>
+          <td>Anında</td>
+        </tr>
+        <tr>
+          <td>Antrenman ve egzersiz kayıtları</td>
+          <td>Telefon (SQLite)</td>
+          <td>Anında</td>
+        </tr>
+        <tr>
+          <td>Vücut ölçümleri</td>
+          <td>Telefon (SQLite)</td>
+          <td>Anında</td>
+        </tr>
+        <tr>
+          <td>Yapay zekâ sohbet geçmişi</td>
+          <td>Telefon (SQLite)</td>
+          <td>Anında</td>
+        </tr>
+        <tr>
+          <td>Sağlık platformu eşleşmeleri (HealthKit / Health Connect)</td>
+          <td>Telefon (izin kaydı)</td>
+          <td>Anında (veriyi biz tutmuyoruz)</td>
+        </tr>
+        <tr>
+          <td>Rate-limit ve kötüye kullanım kayıtları</td>
+          <td>Firebase (europe-west1)</td>
+          <td>Anında</td>
+        </tr>
+        <tr>
+          <td>Premium abonelik durumu</td>
+          <td>Firebase (europe-west1)</td>
+          <td>Anında</td>
+        </tr>
+        <tr>
+          <td>Promo kod kullanım kayıtları</td>
+          <td>Firebase (europe-west1)</td>
+          <td>Anında</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Silinmeyen / Saklanmaya Devam Eden Veriler</h2>
+    <p>
+      Yasal yükümlülükler ve platform politikaları gereği aşağıdaki veriler
+      sınırlı süreyle saklanmaya devam eder:
+    </p>
+    <ul>
+      <li>
+        <strong>Satın alma kanıtları (makbuzlar):</strong> Tüketici hakları
+        ve vergi mevzuatı gereği 1 yıl süreyle Google Play tarafında tutulur.
+        Bizim sunucumuzda saklanmaz.
+      </li>
+      <li>
+        <strong>Anonim istek logları:</strong> Sunucu tarafında kişisel
+        veri içermeyen, anonim teknik loglar (cevap süresi, hata oranı)
+        72 saate kadar tutulabilir ve sonrasında otomatik silinir.
+      </li>
+    </ul>
+
+    <h2>Google Play Aboneliğini İptal Etme</h2>
+    <p>
+      Premium aboneliğiniz varsa, hesap silme işlemi Google Play
+      aboneliğini <strong>otomatik iptal etmez</strong>. Aboneliğinizi
+      ayrıca iptal etmeniz gerekir:
+    </p>
+    <ol>
+      <li>Google Play Store'u açın.</li>
+      <li>Profil simgesine dokunun → <strong>Ödemeler ve abonelikler</strong>.</li>
+      <li><strong>Abonelikler</strong> listesinde FitTrack'i seçin.</li>
+      <li><strong>Aboneliği iptal et</strong> butonuna dokunun.</li>
+    </ol>
+    <p>
+      Veya doğrudan
+      <a href="https://play.google.com/store/account/subscriptions" target="_blank" rel="noopener">
+        play.google.com/store/account/subscriptions
+      </a>
+      adresine gidebilirsiniz.
+    </p>
+
+    <h2>İletişim</h2>
+    <p>
+      Silme işlemi veya haklarınız hakkında herhangi bir sorunuz varsa:
+    </p>
+    <ul>
+      <li><strong>E-posta:</strong> <a href="mailto:fittrackaiapp.support@gmail.com">fittrackaiapp.support@gmail.com</a></li>
+      <li><strong>Veri sorumlusu:</strong> Okan Ünlü — İstanbul, Türkiye</li>
+      <li>
+        <strong>Şikâyet hakkı:</strong> KVKK Kurulu
+        (<a href="https://kvkk.gov.tr" target="_blank" rel="noopener">kvkk.gov.tr</a>)
+        veya AB'de ikamet ediyorsanız yerel denetim otoritesi.
+      </li>
+    </ul>
+
+    <footer>
+      <p>
+        <a href="/privacy.html">Gizlilik Politikası</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

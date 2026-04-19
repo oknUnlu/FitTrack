@@ -37,11 +37,23 @@ exports.verifyPurchase = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const auth_1 = require("./_lib/auth");
 const premiumVerifier_1 = require("./_lib/premiumVerifier");
-const PLAN_DURATIONS = {
-    fittrack_premium_monthly: 30,
-    fittrack_premium_quarterly: 90,
-    fittrack_premium_yearly: 365,
+// Strict product whitelist — anything else is rejected outright. Prevents an
+// attacker from minting their own product identifiers and confusing the grant
+// logic below.
+const ALLOWED_PRODUCT_IDS = new Set([
+    'fittrack_premium_monthly',
+    'fittrack_premium_quarterly',
+    'fittrack_premium_yearly',
+]);
+const PLAN_FROM_PRODUCT = {
+    fittrack_premium_monthly: 'monthly',
+    fittrack_premium_quarterly: 'quarterly',
+    fittrack_premium_yearly: 'yearly',
 };
+// Loose but defensive input caps — Google purchase tokens are ~2 kB, product
+// IDs are short strings. Anything outside this range is garbage or attack.
+const MAX_TOKEN_LEN = 2048;
+const MAX_PRODUCT_ID_LEN = 128;
 async function getGoogleAccessToken() {
     const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
     if (!serviceAccountJson)
@@ -77,7 +89,7 @@ async function getGoogleAccessToken() {
         return null;
     }
 }
-exports.verifyPurchase = (0, https_1.onRequest)({ cors: true, timeoutSeconds: 30, memory: '256MiB', region: 'europe-west1' }, async (req, res) => {
+exports.verifyPurchase = (0, https_1.onRequest)({ cors: true, timeoutSeconds: 30, memory: '256MiB', region: 'europe-west1', secrets: ['GOOGLE_SERVICE_ACCOUNT_KEY', 'GOOGLE_PLAY_PACKAGE_NAME'] }, async (req, res) => {
     if (req.method !== 'POST') {
         res.status(405).json({ success: false, message: 'Method not allowed' });
         return;
@@ -87,45 +99,72 @@ exports.verifyPurchase = (0, https_1.onRequest)({ cors: true, timeoutSeconds: 30
         res.status(401).json({ success: false, message: 'Unauthorized' });
         return;
     }
-    const { purchaseToken, productId } = req.body;
-    if (!purchaseToken || !productId) {
-        res.status(400).json({ success: false, message: 'Missing purchaseToken or productId' });
+    const body = (req.body || {});
+    const purchaseToken = body.purchaseToken;
+    const productId = body.productId;
+    // Strict input validation — refuse anything non-string, oversized, or
+    // not in our product whitelist. We never trust client-supplied product IDs.
+    if (typeof purchaseToken !== 'string' ||
+        typeof productId !== 'string' ||
+        purchaseToken.length === 0 ||
+        purchaseToken.length > MAX_TOKEN_LEN ||
+        productId.length === 0 ||
+        productId.length > MAX_PRODUCT_ID_LEN) {
+        res.status(400).json({ success: false, message: 'Invalid purchaseToken or productId' });
         return;
     }
-    const packageName = process.env.GOOGLE_PLAY_PACKAGE_NAME || 'com.okanu.fittrack';
-    const accessToken = await getGoogleAccessToken();
-    if (accessToken) {
-        try {
-            const verifyUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases/subscriptions/${productId}/tokens/${purchaseToken}`;
-            const verifyRes = await fetch(verifyUrl, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-            });
-            if (!verifyRes.ok) {
-                res.status(400).json({ success: false, message: 'Invalid purchase' });
-                return;
-            }
-            const purchase = await verifyRes.json();
-            const expiryMs = parseInt(purchase.expiryTimeMillis || '0', 10);
-            if (expiryMs < Date.now()) {
-                res.status(400).json({ success: false, message: 'Subscription expired' });
-                return;
-            }
-            const plan = productId.includes('yearly') ? 'yearly' : productId.includes('quarterly') ? 'quarterly' : 'monthly';
-            await (0, premiumVerifier_1.grantPremiumStatus)(deviceId, plan, expiryMs);
-            res.status(200).json({ success: true, plan, expiresAt: expiryMs });
-            return;
-        }
-        catch (error) {
-            console.error('Google Play verification failed:', error.message);
-            res.status(500).json({ success: false, message: 'Verification failed' });
-            return;
-        }
+    if (!ALLOWED_PRODUCT_IDS.has(productId)) {
+        res.status(400).json({ success: false, message: 'Unknown product' });
+        return;
     }
-    // Fallback (dev only — configure GOOGLE_SERVICE_ACCOUNT_KEY in production)
-    const durationDays = PLAN_DURATIONS[productId] || 30;
-    const expiresAt = Date.now() + durationDays * 24 * 60 * 60 * 1000;
-    const plan = productId.includes('yearly') ? 'yearly' : productId.includes('quarterly') ? 'quarterly' : 'monthly';
-    await (0, premiumVerifier_1.grantPremiumStatus)(deviceId, plan, expiresAt);
-    res.status(200).json({ success: true, plan, expiresAt, warning: 'GOOGLE_SERVICE_ACCOUNT_KEY not configured' });
+    const packageName = process.env.GOOGLE_PLAY_PACKAGE_NAME;
+    if (!packageName) {
+        // Refuse to proceed without a configured package name — otherwise an
+        // attacker could target someone else's app.
+        res.status(503).json({ success: false, message: 'Billing backend not configured' });
+        return;
+    }
+    const accessToken = await getGoogleAccessToken();
+    if (!accessToken) {
+        // CRITICAL: no silent fallback to "grant premium anyway". An absent
+        // service-account key means we literally cannot verify the purchase,
+        // so we must refuse. Previous versions of this file handed out a free
+        // premium subscription in this branch — that bypass is now closed.
+        console.error('verifyPurchase: GOOGLE_SERVICE_ACCOUNT_KEY not configured — refusing to grant premium.');
+        res.status(503).json({ success: false, message: 'Purchase verification temporarily unavailable' });
+        return;
+    }
+    try {
+        const verifyUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/` +
+            `${encodeURIComponent(packageName)}/purchases/subscriptions/` +
+            `${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+        const verifyRes = await fetch(verifyUrl, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!verifyRes.ok) {
+            res.status(400).json({ success: false, message: 'Invalid purchase' });
+            return;
+        }
+        const purchase = (await verifyRes.json());
+        const expiryMs = parseInt(purchase.expiryTimeMillis || '0', 10);
+        if (!expiryMs || expiryMs < Date.now()) {
+            res.status(400).json({ success: false, message: 'Subscription expired' });
+            return;
+        }
+        // paymentState: 0=pending, 1=received, 2=free trial, 3=pending deferred
+        // Only 1 and 2 represent an active paid or free-trial state that we
+        // should honour. Pending (0/3) must not grant premium.
+        if (purchase.paymentState !== 1 && purchase.paymentState !== 2) {
+            res.status(400).json({ success: false, message: 'Subscription not active' });
+            return;
+        }
+        const plan = PLAN_FROM_PRODUCT[productId];
+        await (0, premiumVerifier_1.grantPremiumStatus)(deviceId, plan, expiryMs);
+        res.status(200).json({ success: true, plan, expiresAt: expiryMs });
+    }
+    catch (error) {
+        console.error('Google Play verification failed:', error === null || error === void 0 ? void 0 : error.message);
+        res.status(500).json({ success: false, message: 'Verification failed' });
+    }
 });
 //# sourceMappingURL=verifyPurchase.js.map

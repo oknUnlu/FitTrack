@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index, follow">
+  <title>Gizlilik Politikası — FitTrack</title>
+  <style>
+    :root {
+      --green: #4CAF50;
+      --text: #1a1a1a;
+      --muted: #555;
+      --bg: #fff;
+      --border: #e5e5e5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.65;
+      margin: 0;
+      padding: 0 20px 60px;
+    }
+    .container { max-width: 820px; margin: 0 auto; padding-top: 40px; }
+    header {
+      border-bottom: 2px solid var(--green);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    h1 { font-size: 28px; margin: 0 0 4px; }
+    h2 {
+      font-size: 20px;
+      margin: 32px 0 8px;
+      color: var(--green);
+      border-left: 3px solid var(--green);
+      padding-left: 12px;
+    }
+    h3 { font-size: 17px; margin: 20px 0 6px; }
+    p, li { font-size: 15px; color: var(--text); }
+    p.meta { color: var(--muted); font-size: 13px; margin: 0; }
+    ul, ol { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: ui-monospace, Menlo, Monaco, monospace;
+    }
+    a { color: var(--green); }
+    .callout {
+      background: #f7fbf7;
+      border: 1px solid #d0e8d0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>FitTrack — Gizlilik Politikası</h1>
+      <p class="meta">Yürürlük tarihi: 19 Nisan 2026 &middot; Sürüm 1.0</p>
+    </header>
+
+    <p>
+      Bu Gizlilik Politikası, <strong>FitTrack — AI Fitness Koç</strong> mobil
+      uygulamasının (bundan sonra “Uygulama”) kişisel verilerinizi nasıl
+      işlediğini, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve
+      Avrupa Birliği Genel Veri Koruma Tüzüğü (GDPR) kapsamındaki haklarınızı
+      açıklar.
+    </p>
+
+    <div class="callout">
+      <strong>Kısa özet:</strong> Sağlık ve fitness verileriniz (yediğiniz
+      besinler, antrenmanlarınız, boy/kilo, adım sayısı, nabız, uyku) büyük
+      ölçüde <strong>yalnızca telefonunuzda</strong> saklanır. Sunucularımıza
+      yalnızca anonim bir cihaz kimliği ve yapay zekâ özelliklerini
+      kullanırken gönderdiğiniz sorgular iletilir. Tüm verilerinizi
+      Uygulama içinden dışa aktarabilir veya tek tıkla silebilirsiniz.
+    </div>
+
+    <h2>1. Veri Sorumlusu</h2>
+    <p>
+      6698 sayılı KVKK kapsamında veri sorumlusu sıfatıyla hareket eden
+      gerçek kişi:
+    </p>
+    <ul>
+      <li><strong>Ad-Soyad:</strong> Okan Ünlü (bireysel geliştirici)</li>
+      <li><strong>Adres:</strong> İstanbul, Türkiye</li>
+      <li>
+        <strong>İletişim:</strong>
+        <a href="mailto:fittrackaiapp.support@gmail.com">fittrackaiapp.support@gmail.com</a>
+      </li>
+    </ul>
+    <p>
+      Uygulama ticari bir kuruluşa ait değildir; bireysel geliştirici
+      tarafından kişisel proje olarak yayımlanmaktadır.
+    </p>
+
+    <h2>2. İşlediğimiz Kişisel Veriler</h2>
+
+    <h3>2.1. Yalnızca cihazınızda saklanan veriler</h3>
+    <p>
+      Aşağıdaki veriler <strong>hiçbir şekilde sunucularımıza iletilmez</strong>;
+      telefonunuzun yerel veritabanında (SQLite) ve güvenli depolamasında
+      (SecureStore / Keychain) tutulur. Uygulamayı silmeniz veya Uygulama içinden
+      “Hesabımı sil” işlemini tetiklemeniz durumunda tamamen silinir.
+    </p>
+    <ul>
+      <li>Profil bilgileri: yaş, cinsiyet, boy, kilo, aktivite seviyesi, hedef (kilo alma/verme/koruma)</li>
+      <li>Öğün kayıtları (yediğiniz besinler, porsiyon, kalori ve makro bilgileri)</li>
+      <li>Su takibi kayıtları</li>
+      <li>Antrenman kayıtları (egzersiz, set, tekrar, ağırlık)</li>
+      <li>Vücut ölçümleri (kilo geçmişi, bel, göğüs, kol çevresi vb.)</li>
+      <li>Yapay zekâ sohbet geçmişi</li>
+      <li>Premium abonelik durumu ve tercihler</li>
+      <li>
+        <strong>Sağlık platformu verileri (özel nitelikli veri):</strong>
+        Apple HealthKit veya Android Health Connect üzerinden okuduğumuz adım
+        sayısı, kalp atış hızı, uyku ve aktif kalori verileri. Bu veriler
+        cihazınızdan dışarı çıkmaz.
+      </li>
+    </ul>
+
+    <h3>2.2. Sunucularımıza gönderilen veriler</h3>
+    <p>
+      Uygulama, yalnızca aşağıdaki sınırlı verileri Google Firebase Cloud
+      Run sunucularımıza (europe-west1, Belçika) iletir:
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Veri</th>
+          <th>Amaç</th>
+          <th>Saklama süresi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Anonim cihaz kimliği (UUID)</td>
+          <td>Kötüye kullanımı engelleme, kullanım limitlerini takip</td>
+          <td>30 gün (rate-limit kayıtları)</td>
+        </tr>
+        <tr>
+          <td>Yapay zekâ sohbet sorgularınız</td>
+          <td>AI cevabı üretmek (Google Gemini)</td>
+          <td>Kalıcı saklanmaz; işlendikten sonra silinir</td>
+        </tr>
+        <tr>
+          <td>Yemek fotoğrafları (isteğe bağlı)</td>
+          <td>Yemek tanıma (Google Gemini)</td>
+          <td>Kalıcı saklanmaz</td>
+        </tr>
+        <tr>
+          <td>Antrenman planı istekleri</td>
+          <td>Kişiselleştirilmiş plan üretmek</td>
+          <td>Kalıcı saklanmaz</td>
+        </tr>
+        <tr>
+          <td>Satın alma kanıtları (Google Play fişi)</td>
+          <td>Premium abonelik doğrulaması</td>
+          <td>Abonelik süresince + 1 yıl (yasal yükümlülük)</td>
+        </tr>
+        <tr>
+          <td>Promo kod girişleri</td>
+          <td>Kodun daha önce kullanılıp kullanılmadığını kontrol</td>
+          <td>Kod geçerli olduğu sürece</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>Hesap oluşturmaya gerek yoktur.</strong> Uygulama e-posta
+      adresi, telefon numarası veya ad-soyad istemez. Sunucuda sizi
+      tanımlayan tek veri, telefonunuzda üretilen rastgele bir kimliktir
+      (UUID). Bu kimlik sizinle geri ilişkilendirilemez.
+    </div>
+
+    <h2>3. İşleme Amaçları ve Hukuki Sebep</h2>
+    <p>Kişisel verilerinizi aşağıdaki amaçlarla işleriz:</p>
+    <ul>
+      <li>Kalori, makro ve su takibi gibi temel uygulama işlevlerini sağlamak</li>
+      <li>Kişiselleştirilmiş antrenman ve beslenme planı üretmek</li>
+      <li>Yapay zekâ tabanlı sorularınıza yanıt vermek</li>
+      <li>Premium abonelik satışı ve doğrulaması</li>
+      <li>Teknik sorunları ayıklamak ve kötüye kullanımı önlemek</li>
+      <li>Yasal yükümlülükleri (örn. tüketici hakları, vergi kayıtları) yerine getirmek</li>
+    </ul>
+    <p>Hukuki sebepler:</p>
+    <ul>
+      <li><strong>Sözleşmenin ifası</strong> (KVKK m.5/2-c): Uygulamayı çalıştırmak için zorunlu temel veriler</li>
+      <li><strong>Açık rıza</strong> (KVKK m.5/1, m.6/2): Sağlık verileri, reklam kişiselleştirme, isteğe bağlı özellikler</li>
+      <li><strong>Meşru menfaat</strong> (KVKK m.5/2-f): Güvenlik ve kötüye kullanım önleme</li>
+      <li><strong>Hukuki yükümlülük</strong> (KVKK m.5/2-ç): Tüketici ve vergi mevzuatı</li>
+    </ul>
+
+    <h2>4. Özel Nitelikli (Sağlık) Veriler</h2>
+    <p>
+      KVKK Madde 6 kapsamında sağlık verileri özel nitelikli kişisel veri
+      sayılır. Uygulamamız:
+    </p>
+    <ul>
+      <li>
+        Sağlık verilerini <strong>yalnızca cihazınız üzerinde</strong>
+        işler; sunucularımıza, bulut depolamaya veya üçüncü taraflara
+        iletmez.
+      </li>
+      <li>
+        Apple HealthKit / Android Health Connect üzerinden veri okumaya
+        başlamadan önce <strong>açık rızanızı</strong> ister. Rızanızı
+        her an cihaz ayarlarından geri çekebilirsiniz.
+      </li>
+      <li>
+        Sağlık verileri yalnızca size özet göstermek ve kalori hedeflerini
+        kalibre etmek için kullanılır; başka bir amaçla işlenmez.
+      </li>
+    </ul>
+    <p>
+      Sağlık verileri hiçbir şekilde sunucumuza gönderilmediği için KVKK
+      VERBİS kaydı kapsamında herhangi bir sicile kaydı yapılmamıştır.
+    </p>
+
+    <h2>5. Paylaşılan Üçüncü Taraflar</h2>
+    <p>
+      Verilerinizi satmayız. Uygulamanın çalışabilmesi için aşağıdaki servis
+      sağlayıcılar sınırlı erişime sahiptir:
+    </p>
+    <ul>
+      <li>
+        <strong>Google Firebase</strong> (Cloud Run, Firestore, Hosting) —
+        Sunucu altyapısı. Veriler Avrupa Birliği (europe-west1 / Belçika)
+        bölgesinde işlenir.
+      </li>
+      <li>
+        <strong>Google Gemini API</strong> — Yapay zekâ yanıtları üretmek
+        için. Sorgularınız Google'ın AI platformlarına iletilir.
+      </li>
+      <li>
+        <strong>Google Play Billing / Developer API</strong> — Abonelik
+        satışı ve satın alma doğrulaması.
+      </li>
+      <li>
+        <strong>Google AdMob</strong> — Ücretsiz sürümde reklam göstermek
+        için. AdMob, reklam kimliği (Advertising ID) gibi teknik tanımlayıcıları
+        işler. Reklam kişiselleştirmesini cihaz ayarlarınızdan veya
+        Uygulama içinden kapatabilirsiniz.
+      </li>
+    </ul>
+    <p>
+      Bu servislerin kendi gizlilik politikaları geçerlidir:
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Gizlilik Politikası</a>.
+    </p>
+
+    <h2>6. Yurt Dışına Veri Aktarımı</h2>
+    <p>
+      Google'ın küresel altyapısı nedeniyle, bazı verileriniz (yapay zekâ
+      sorguları, Google Play satın alma kanıtları) KVKK Madde 9 kapsamında
+      yurt dışına aktarılmaktadır. Bu aktarımın hukuki dayanağı açık
+      rızanızdır. Onaylamadığınız takdirde yapay zekâ özelliklerini
+      kullanmamayı tercih edebilirsiniz; Uygulamanın temel işlevleri
+      (kalori takibi, su takibi, egzersiz kayıtları) bu özellikler olmadan
+      çalışmaya devam eder.
+    </p>
+
+    <h2>7. Veri Saklama Süreleri</h2>
+    <ul>
+      <li>
+        <strong>Cihaz içi veriler:</strong> Uygulama yüklü olduğu sürece.
+        “Hesabımı sil” tetiklendiğinde veya Uygulama silindiğinde tamamen
+        kaldırılır.
+      </li>
+      <li>
+        <strong>Sunucu tarafı rate-limit kayıtları:</strong> En fazla 30 gün.
+      </li>
+      <li>
+        <strong>Premium abonelik kayıtları:</strong> Abonelik süresince ve
+        yasal zorunluluk gereği sonrasında 1 yıl.
+      </li>
+      <li>
+        <strong>Yapay zekâ sorguları:</strong> Kalıcı olarak saklanmaz;
+        Google Gemini'nin kendi politikalarına göre geçici olarak işlenir.
+      </li>
+    </ul>
+
+    <h2>8. KVKK ve GDPR Kapsamındaki Haklarınız</h2>
+    <p>
+      KVKK Madde 11 ve GDPR Madde 15–22 kapsamında aşağıdaki haklara sahipsiniz:
+    </p>
+    <ul>
+      <li><strong>Erişim hakkı:</strong> Hakkınızda tuttuğumuz verileri öğrenme.</li>
+      <li><strong>Düzeltme hakkı:</strong> Yanlış/eksik verilerin düzeltilmesini isteme.</li>
+      <li>
+        <strong>Silme hakkı (“unutulma”):</strong> Uygulama içinden
+        <em>Ayarlar → Hesabı Sil</em> menüsünden tek tıkla tüm verileri
+        silebilirsiniz. Ayrıca dilediğiniz zaman
+        <a href="mailto:fittrackaiapp.support@gmail.com">fittrackaiapp.support@gmail.com</a>
+        adresine e-posta atarak silme talebinde bulunabilirsiniz.
+      </li>
+      <li>
+        <strong>Taşınabilirlik hakkı:</strong> Uygulama içinden
+        <em>Ayarlar → Verilerimi Dışa Aktar</em> seçeneğiyle tüm verilerinizi
+        makine tarafından okunabilir JSON formatında indirebilirsiniz.
+      </li>
+      <li><strong>İşlemeye itiraz hakkı:</strong> Belirli işlemelere itiraz edebilirsiniz.</li>
+      <li><strong>Rızayı geri çekme hakkı:</strong> Açık rızaya dayanan işlemeleri durdurabilirsiniz.</li>
+      <li>
+        <strong>Şikâyet hakkı:</strong> Kişisel Verileri Koruma Kurulu'na
+        (<a href="https://kvkk.gov.tr" target="_blank" rel="noopener">kvkk.gov.tr</a>)
+        veya AB'de ikamet ediyorsanız yerel denetim otoritesine başvurabilirsiniz.
+      </li>
+    </ul>
+    <p>
+      Taleplerinize en geç <strong>30 gün</strong> içinde yanıt veririz
+      (KVKK Madde 13).
+    </p>
+
+    <h2>9. Reklamlar ve Kişiselleştirme</h2>
+    <p>
+      Ücretsiz sürümde Google AdMob üzerinden reklam gösterilir. Açık
+      rızanız yoksa yalnızca kişiselleştirilmemiş reklamlar sunulur.
+      Uygulama ilk açılışında sizden rıza alırız ve
+      <em>Ayarlar → Gizlilik → Reklam Tercihleri</em> üzerinden istediğiniz
+      zaman değiştirebilirsiniz. Premium aboneliğe geçerek reklamları
+      tamamen kaldırabilirsiniz.
+    </p>
+
+    <h2>10. Çocuk Kullanıcılar</h2>
+    <p>
+      Uygulama 13 yaş altındaki çocuklara yönelik değildir. Kayıt
+      sırasında yaş doğrulaması uygulanır. 13 yaşından küçük olduğunu
+      tespit ettiğimiz hesaplar silinir. AB'de 16 yaşından küçük
+      kullanıcıların ebeveyn onayı gerekir.
+    </p>
+
+    <h2>11. Güvenlik Önlemleri</h2>
+    <ul>
+      <li>Tüm sunucu iletişimi TLS 1.2+ ile şifrelenir (HTTPS zorunlu).</li>
+      <li>HSTS, CSP, X-Frame-Options gibi modern güvenlik başlıkları aktiftir.</li>
+      <li>Cihaz içi hassas veriler SecureStore / Keychain ile şifrelenir.</li>
+      <li>Şifre veya e-posta tutulmaz — sunucu tarafı kimlik doğrulama yoktur.</li>
+      <li>Firestore kuralları ile cihaz kimliği başına erişim sınırlandırılmıştır.</li>
+    </ul>
+    <p>
+      Veri ihlali durumunda KVKK Madde 12/5 ve GDPR Madde 33 uyarınca 72 saat
+      içinde ilgili otoritelere ve sizlere bildirim yaparız.
+    </p>
+
+    <h2>12. Çerezler ve Benzeri Teknolojiler</h2>
+    <p>
+      Mobil Uygulama web çerezi kullanmaz. Reklam SDK'ları (AdMob) cihaz
+      reklam kimliği (Advertising ID) gibi tanımlayıcıları işler. Bunu
+      cihaz ayarlarınızdan istediğiniz zaman sıfırlayabilir veya kişiselleştirilmiş
+      reklamları kapatabilirsiniz.
+    </p>
+
+    <h2>13. Politika Değişiklikleri</h2>
+    <p>
+      Bu politikada değişiklik yaptığımızda, yürürlük tarihini güncelleriz
+      ve önemli değişiklikleri Uygulama içi bir bildirimle duyururuz. Geriye
+      dönük aleyhe değişiklikler yalnızca açık rızanız alındıktan sonra
+      uygulanır.
+    </p>
+
+    <h2>14. İletişim</h2>
+    <p>
+      KVKK / GDPR başvuruları ve diğer tüm sorular için:
+    </p>
+    <ul>
+      <li><strong>E-posta:</strong> <a href="mailto:fittrackaiapp.support@gmail.com">fittrackaiapp.support@gmail.com</a></li>
+      <li><strong>Posta:</strong> Okan Ünlü — İstanbul, Türkiye</li>
+    </ul>
+
+    <footer>
+      <p>
+        FitTrack — AI Fitness Koç &middot; Bireysel geliştirici projesi
+        &middot; Yayın tarihi: 2026
+      </p>
+      <p>
+        <a href="/account-deletion.html">Hesap silme talimatları</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

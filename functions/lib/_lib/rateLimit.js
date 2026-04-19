@@ -42,8 +42,11 @@ async function checkRateLimit(config) {
         return result;
     }
     catch (error) {
+        // Fail-closed: when Firestore is unreachable we must not hand out free
+        // requests, otherwise a simulated outage becomes a trivial rate-limit
+        // bypass. Prefer a short hiccup over granting unlimited AI usage.
         console.error('Rate limit check failed:', error);
-        return { allowed: true, remaining: 1 };
+        return { allowed: false, remaining: 0 };
     }
 }
 //# sourceMappingURL=rateLimit.js.map
