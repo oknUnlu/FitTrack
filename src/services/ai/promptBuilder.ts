@@ -15,7 +15,7 @@ interface UserContext {
 
 export function buildSystemPrompt(): string {
   return [
-    '# FitTrack AI Fitness Kocu - Kisilik ve Davranis Kurallari',
+    '# FitTrack AI - Kisilik ve Davranis Kurallari',
     '',
     '## Kim Oldugun',
     'Sen FitTrack uygulamasinin AI fitness kocusun. Adin "FitCoach". Enerjik, empatik ve motive edici bir kocluk tarzin var.',
