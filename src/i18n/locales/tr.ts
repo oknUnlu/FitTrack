@@ -672,7 +672,7 @@ const tr: Translations = {
     introTitle: 'Giriş',
     introDesc: 'Bu üyelik sözleşmesi ("Sözleşme"), FitTrack mobil uygulamasını ("Uygulama") kullanımınızı düzenler. Uygulamayı yükleyerek, hesap oluşturarak veya kullanmaya devam ederek bu Sözleşme\'nin tüm maddelerini kabul etmiş sayılırsınız. Kabul etmediğiniz takdirde lütfen uygulamayı kullanmayınız.',
     partiesTitle: 'Taraflar',
-    partiesDesc: 'Bu Sözleşme, FitTrack uygulamasını geliştiren ve sunan tarafından ("Hizmet Sağlayıcı") ile uygulamayı kullanan gerçek kişi ("Kullanıcı") arasında akdedilmiştir. İletişim: support@fittrack.app',
+    partiesDesc: 'Bu Sözleşme, FitTrack uygulamasını geliştiren ve sunan tarafından ("Hizmet Sağlayıcı") ile uygulamayı kullanan gerçek kişi ("Kullanıcı") arasında akdedilmiştir. İletişim: fittrackaiapp.support@gmail.com',
     serviceTitle: 'Hizmet Tanımı',
     serviceDesc: 'FitTrack; kalori takibi, makro besin hesaplama, antrenman kaydı, vücut ölçümü takibi, su takibi, yapay zeka destekli beslenme ve antrenman önerisi, barkod ile ürün tanıma ve sağlık uygulamaları (Apple HealthKit / Google Health Connect) entegrasyonu gibi özellikler sunan bir fitness ve beslenme takip uygulamasıdır. Uygulama 12 dilde kullanılabilir.',
     userObligationsTitle: 'Kullanıcı Yükümlülükleri',
@@ -692,7 +692,7 @@ const tr: Translations = {
     governingLawTitle: 'Uygulanacak Hukuk ve Yetkili Mahkeme',
     governingLawDesc: 'Bu Sözleşme, Türkiye Cumhuriyeti kanunlarına tabidir. Sözleşme\'den doğabilecek uyuşmazlıklarda İstanbul Merkez (Çağlayan) Mahkemeleri ve İcra Daireleri yetkilidir. Tüketici uyuşmazlıkları için Tüketici Hakem Heyetleri\'ne ve Tüketici Mahkemeleri\'ne başvuru hakkı saklıdır.',
     contactTitle: 'İletişim',
-    contactDesc: 'Sözleşme hakkında sorularınız veya taleplerinizi iletmek için: support@fittrack.app',
+    contactDesc: 'Sözleşme hakkında sorularınız veya taleplerinizi iletmek için: fittrackaiapp.support@gmail.com',
   },
 
   kvkk: {
@@ -701,7 +701,7 @@ const tr: Translations = {
     introTitle: 'Giriş',
     introDesc: '6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında, kişisel verilerinizin işlenmesi hakkında sizi bilgilendirmek amacıyla bu Aydınlatma Metni hazırlanmıştır. Bu metin, KVKK m.10 uyarınca aydınlatma yükümlülüğümüzün yerine getirilmesine hizmet eder.',
     controllerTitle: 'Veri Sorumlusu',
-    controllerDesc: 'Veri sorumlusu: FitTrack uygulamasını geliştiren ve sunan taraftır. İletişim: support@fittrack.app. KVKK kapsamındaki başvurularınızı bu e-posta adresi üzerinden iletebilirsiniz.',
+    controllerDesc: 'Veri sorumlusu: FitTrack uygulamasını geliştiren ve sunan taraftır. İletişim: fittrackaiapp.support@gmail.com. KVKK kapsamındaki başvurularınızı bu e-posta adresi üzerinden iletebilirsiniz.',
     dataTypesTitle: 'İşlenen Kişisel Veriler',
     dataTypesDesc: 'Aşağıdaki kategorilerde kişisel verileriniz işlenmektedir: (a) Kimlik bilgileri (ad, yaş, cinsiyet), (b) Fiziksel özellikler (boy, kilo, vücut ölçümleri), (c) Sağlık verileri — özel nitelikli (adım sayısı, kalp atış hızı, uyku süresi, aktif kalori; yalnızca izin verdiğiniz HealthKit/Health Connect verileri), (d) Beslenme verileri (öğün kayıtları, kalori ve makro besin değerleri), (e) Antrenman verileri (egzersizler, set, tekrar, süre), (f) Cihaz bilgileri (anonim cihaz kimlik token\'ı, dil/ülke ayarı), (g) Kamera ile çekilen fotoğraflar (barkod, besin tanıma ve ilerleme fotoğrafları — sadece cihazınızda saklanır).',
     purposesTitle: 'İşleme Amaçları',
@@ -713,9 +713,9 @@ const tr: Translations = {
     retentionTitle: 'Saklama Süresi',
     retentionDesc: 'Kişisel verileriniz, uygulamayı kullandığınız süre boyunca cihazınızda saklanır. Uygulamayı silmeniz veya hesabınızı sıfırlamanız halinde tüm yerel veriler derhal silinir. Sunucuda tutulan anonim cihaz token\'ı ve abonelik bilgileri, aboneliğin sona ermesinden itibaren en fazla 12 ay muhafaza edilir ve yasal süreler dolunca imha edilir.',
     rightsTitle: 'KVKK Madde 11 Kapsamındaki Haklarınız',
-    rightsDesc: 'KVKK m.11 uyarınca aşağıdaki haklara sahipsiniz: (a) Kişisel verilerinizin işlenip işlenmediğini öğrenme, (b) İşlenmişse bilgi talep etme, (c) İşlenme amacını ve bu amaca uygun kullanılıp kullanılmadığını öğrenme, (d) Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme, (e) Eksik veya yanlış işlenmişse düzeltilmesini talep etme, (f) KVKK m.7\'de öngörülen şartlar çerçevesinde silinmesini veya yok edilmesini talep etme, (g) Otomatik sistemlerle işlenmesi sonucu aleyhinize bir sonuç ortaya çıkmasına itiraz etme, (h) Kanuna aykırı işleme nedeniyle zarara uğramanız halinde tazminat talep etme. Başvurularınız support@fittrack.app adresine iletilebilir ve en geç 30 gün içinde yanıtlanır.',
+    rightsDesc: 'KVKK m.11 uyarınca aşağıdaki haklara sahipsiniz: (a) Kişisel verilerinizin işlenip işlenmediğini öğrenme, (b) İşlenmişse bilgi talep etme, (c) İşlenme amacını ve bu amaca uygun kullanılıp kullanılmadığını öğrenme, (d) Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme, (e) Eksik veya yanlış işlenmişse düzeltilmesini talep etme, (f) KVKK m.7\'de öngörülen şartlar çerçevesinde silinmesini veya yok edilmesini talep etme, (g) Otomatik sistemlerle işlenmesi sonucu aleyhinize bir sonuç ortaya çıkmasına itiraz etme, (h) Kanuna aykırı işleme nedeniyle zarara uğramanız halinde tazminat talep etme. Başvurularınız fittrackaiapp.support@gmail.com adresine iletilebilir ve en geç 30 gün içinde yanıtlanır.',
     contactTitle: 'İletişim ve Başvuru',
-    contactDesc: 'KVKK kapsamındaki taleplerinizi veya sorularınızı şu adresten iletebilirsiniz: support@fittrack.app. Başvurunuz en geç 30 gün içinde yanıtlanır. Cevap Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ hükümlerine uygun şekilde sağlanır.',
+    contactDesc: 'KVKK kapsamındaki taleplerinizi veya sorularınızı şu adresten iletebilirsiniz: fittrackaiapp.support@gmail.com. Başvurunuz en geç 30 gün içinde yanıtlanır. Cevap Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ hükümlerine uygun şekilde sağlanır.',
   },
 
   privacy: {
@@ -749,7 +749,7 @@ const tr: Translations = {
     dataRetention: 'Veri Saklama Süresi',
     dataRetentionDesc: 'Verileriniz uygulamayı kullandığınız süre boyunca cihazınızda saklanır. Uygulamayı sildiğinizde veya hesabınızı sıfırladığınızda tüm yerel veriler kalıcı olarak silinir.',
     contact: 'İletişim',
-    contactDesc: 'Gizlilik politikası hakkında sorularınız için: support@fittrack.app',
+    contactDesc: 'Gizlilik politikası hakkında sorularınız için: fittrackaiapp.support@gmail.com',
     consentTitle: 'Onay',
     consentDesc: 'Uygulamayı kullanarak bu gizlilik politikasını kabul etmiş sayılırsınız. AI özelliklerini kullanmanız durumunda verilerinizin Google Gemini tarafından işlenebileceğini kabul etmiş olursunuz.',
   },

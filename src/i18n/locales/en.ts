@@ -670,7 +670,7 @@ const en: Translations = {
     introTitle: 'Introduction',
     introDesc: 'These Terms of Service ("Agreement") govern your use of the FitTrack mobile application ("Application"). By installing the Application, creating an account, or continuing to use the Application, you agree to all terms of this Agreement. If you do not agree, please refrain from using the Application.',
     partiesTitle: 'Parties',
-    partiesDesc: 'This Agreement is entered into between the developer and provider of the FitTrack application ("Service Provider") and the natural person using the Application ("User"). Contact: support@fittrack.app',
+    partiesDesc: 'This Agreement is entered into between the developer and provider of the FitTrack application ("Service Provider") and the natural person using the Application ("User"). Contact: fittrackaiapp.support@gmail.com',
     serviceTitle: 'Service Description',
     serviceDesc: 'FitTrack is a fitness and nutrition tracking application providing features such as calorie tracking, macro calculation, workout logging, body measurements, water intake, AI-powered nutrition and workout suggestions, barcode-based food recognition, and integration with Apple HealthKit / Google Health Connect. The Application is available in 12 languages.',
     userObligationsTitle: 'User Obligations',
@@ -690,7 +690,7 @@ const en: Translations = {
     governingLawTitle: 'Governing Law & Jurisdiction',
     governingLawDesc: 'This Agreement is governed by the laws of the Republic of Türkiye. Any disputes arising from this Agreement shall be subject to the jurisdiction of the Istanbul Central (Çağlayan) Courts and Enforcement Offices. Consumer disputes may also be submitted to the Consumer Arbitration Committees or Consumer Courts as applicable.',
     contactTitle: 'Contact',
-    contactDesc: 'For questions or requests regarding this Agreement, please contact: support@fittrack.app',
+    contactDesc: 'For questions or requests regarding this Agreement, please contact: fittrackaiapp.support@gmail.com',
   },
 
   kvkk: {
@@ -699,7 +699,7 @@ const en: Translations = {
     introTitle: 'Introduction',
     introDesc: 'This Data Protection Notice is prepared in accordance with the Turkish Personal Data Protection Law No. 6698 ("KVKK") to inform you about how your personal data is processed. This notice serves to fulfill our disclosure obligations under Article 10 of the KVKK and applicable data protection regulations.',
     controllerTitle: 'Data Controller',
-    controllerDesc: 'The data controller is the developer and provider of the FitTrack application. Contact: support@fittrack.app. You may submit your requests under applicable data protection laws to this email address.',
+    controllerDesc: 'The data controller is the developer and provider of the FitTrack application. Contact: fittrackaiapp.support@gmail.com. You may submit your requests under applicable data protection laws to this email address.',
     dataTypesTitle: 'Categories of Personal Data Processed',
     dataTypesDesc: 'The following categories of personal data are processed: (a) Identity information (name, age, gender); (b) Physical attributes (height, weight, body measurements); (c) Health data — special category (step count, heart rate, sleep duration, active calories; only HealthKit/Health Connect data you permit); (d) Nutrition data (meal logs, calorie and macro values); (e) Fitness data (exercises, sets, reps, duration); (f) Device information (anonymous device token, language/country setting); (g) Photos taken with camera (barcode scans, food recognition, progress photos — stored only on your device).',
     purposesTitle: 'Processing Purposes',
@@ -711,9 +711,9 @@ const en: Translations = {
     retentionTitle: 'Retention Period',
     retentionDesc: 'Your personal data is retained on your device for as long as you use the Application. All local data is immediately deleted when you uninstall the Application or reset your account. Anonymous device tokens and subscription data stored on the server are retained for a maximum of 12 months after subscription ends and are destroyed upon expiry of legal retention periods.',
     rightsTitle: 'Your Rights under KVKK Article 11',
-    rightsDesc: 'Under KVKK Article 11, you have the following rights: (a) to learn whether your personal data is being processed; (b) to request information if it has been processed; (c) to learn the purpose of processing and whether data is used for its intended purpose; (d) to know third parties to whom data has been transferred domestically or abroad; (e) to request correction of incomplete or inaccurate data; (f) to request deletion or destruction under conditions of KVKK Article 7; (g) to object to adverse outcomes resulting from automated processing; (h) to claim compensation for damages caused by unlawful processing. You may submit your requests to support@fittrack.app and receive a response within 30 days.',
+    rightsDesc: 'Under KVKK Article 11, you have the following rights: (a) to learn whether your personal data is being processed; (b) to request information if it has been processed; (c) to learn the purpose of processing and whether data is used for its intended purpose; (d) to know third parties to whom data has been transferred domestically or abroad; (e) to request correction of incomplete or inaccurate data; (f) to request deletion or destruction under conditions of KVKK Article 7; (g) to object to adverse outcomes resulting from automated processing; (h) to claim compensation for damages caused by unlawful processing. You may submit your requests to fittrackaiapp.support@gmail.com and receive a response within 30 days.',
     contactTitle: 'Contact & Submission',
-    contactDesc: 'You may submit your requests and inquiries under applicable data protection laws to: support@fittrack.app. Your submission will be answered within 30 days in accordance with the Communiqué on Procedures and Principles of Application to the Data Controller.',
+    contactDesc: 'You may submit your requests and inquiries under applicable data protection laws to: fittrackaiapp.support@gmail.com. Your submission will be answered within 30 days in accordance with the Communiqué on Procedures and Principles of Application to the Data Controller.',
   },
 
   privacy: {
@@ -747,7 +747,7 @@ const en: Translations = {
     dataRetention: 'Data Retention',
     dataRetentionDesc: 'Your data is stored on your device for as long as you use the app. When you uninstall the app or reset your account, all local data is permanently deleted.',
     contact: 'Contact',
-    contactDesc: 'For questions about this privacy policy: support@fittrack.app',
+    contactDesc: 'For questions about this privacy policy: fittrackaiapp.support@gmail.com',
     consentTitle: 'Consent',
     consentDesc: 'By using the app, you accept this privacy policy. When using AI features, you acknowledge that your data may be processed by Google Gemini.',
   },

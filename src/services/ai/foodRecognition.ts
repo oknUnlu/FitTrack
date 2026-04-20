@@ -53,8 +53,8 @@ export async function recognizeFoodFromImage(imageUri: string): Promise<Recogniz
       reader.readAsDataURL(blob);
     });
   } else {
-    // Native: use expo-file-system
-    const { readAsStringAsync } = require('expo-file-system');
+    // Native: use expo-file-system legacy API (new File/Directory API doesn't yet expose base64 reads)
+    const { readAsStringAsync } = require('expo-file-system/legacy');
     base64 = await readAsStringAsync(optimizedUri, { encoding: 'base64' });
   }
 
