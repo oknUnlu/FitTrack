@@ -10,12 +10,23 @@ export interface BarcodeSubmission {
   protein: number;
   carbs: number;
   fat: number;
+  deviceId: string;
   submittedAt: number;
 }
 
 const MIN_SUBMISSIONS = 5;
 const MAX_DEVIATION_RATIO = 0.25;
 
+/**
+ * Record a user-submitted barcode entry.
+ *
+ * Dedup: one submission per (barcode, device). If the same phone scans and
+ * submits the same barcode again, we overwrite the previous row instead of
+ * creating a duplicate — only 5 DIFFERENT devices count towards verification.
+ *
+ * Also caches the submission into food_items so the scanner will find the
+ * product locally on the next scan (no re-prompt for the same user).
+ */
 export async function insertBarcodeSubmission(
   barcode: string,
   name: string,
@@ -23,15 +34,41 @@ export async function insertBarcodeSubmission(
   protein: number,
   carbs: number,
   fat: number,
+  deviceId: string = '',
 ): Promise<void> {
-  // Save locally
+  // Save locally — composite id keyed by (barcode, device) ensures dedup.
   const db = await getDatabase();
-  const id = `bs_${barcode}_${Date.now()}`;
+  const id = `bs_${barcode}_${deviceId || 'anon'}`;
   await db.runAsync(
-    `INSERT INTO barcode_submissions (id, barcode, name, calories, protein, carbs, fat, submitted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, barcode, name, calories, protein, carbs, fat, Date.now()],
+    `INSERT OR REPLACE INTO barcode_submissions (id, barcode, name, calories, protein, carbs, fat, device_id, submitted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, barcode, name, calories, protein, carbs, fat, deviceId, Date.now()],
   );
+
+  // Cache into food_items so next scan short-circuits on local DB lookup
+  // (step 1 of the 3-step scan pipeline in CalorieScreen).
+  try {
+    const cached: FoodItem = {
+      id: `manual_${barcode}`,
+      name,
+      nameTr: name,
+      calories,
+      protein,
+      carbs,
+      fat,
+      fiber: null,
+      sugar: null,
+      barcode,
+      servingSize: 100,
+      servingUnit: 'g',
+      isCustom: true,
+      isFavorite: false,
+      source: 'manual',
+    };
+    await insertFoodItem(cached);
+  } catch {
+    // non-fatal — submission is still recorded even if local cache fails.
+  }
 
   // Sync to Firestore (fire-and-forget, no await to avoid blocking)
   submitBarcodeToCloud(barcode, name, calories, protein, carbs, fat).catch(() => {});
@@ -51,6 +88,7 @@ export async function getSubmissionsByBarcode(barcode: string): Promise<BarcodeS
     protein: r.protein,
     carbs: r.carbs,
     fat: r.fat,
+    deviceId: r.device_id || '',
     submittedAt: r.submitted_at,
   }));
 }

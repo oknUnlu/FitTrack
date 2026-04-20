@@ -16,6 +16,12 @@ import {
   FastingLog,
   FastingSettings,
 } from '../../services/fasting/fastingService';
+import {
+  requestLocationAndGetCoords,
+  fetchPrayerTimes,
+  getLastCachedPrayerTimes,
+  PrayerTimes,
+} from '../../services/fasting/prayerTimes';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { generateId, todayString } from '../../utils/helpers';
@@ -35,6 +41,9 @@ export function FastingScreen() {
   const [streak, setStreak] = useState(0);
   const [remainingMinutes, setRemainingMinutes] = useState(0);
   const [profile, setProfile] = useState<User | null>(null);
+  const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // Safety check: block under-18 users and underweight users from fasting.
   const eligibility = fastingEligibility({
@@ -45,16 +54,18 @@ export function FastingScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [s, log, str, u] = await Promise.all([
+      const [s, log, str, u, cachedPT] = await Promise.all([
         getFastingSettings(),
         getTodayFastingLog(),
         getFastingStreak(),
         getUserById(userId),
+        getLastCachedPrayerTimes(),
       ]);
       setSettings(s);
       setTodayLog(log);
       setStreak(str);
       setProfile(u);
+      if (cachedPT) setPrayerTimes(cachedPT);
       if (s && !log?.completed) {
         setRemainingMinutes(getRemainingFastingMinutes(s.defaultEndTime));
       }
@@ -64,6 +75,52 @@ export function FastingScreen() {
   }, [userId]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+
+  // Fetch prayer times from the device's current location. Called from the
+  // "Konumdan güncelle" button. Silent failures (denied / network) show an
+  // inline message but never block the feature — user can still start a
+  // fast with the default/cached times.
+  const handleUpdateFromLocation = useCallback(async () => {
+    if (!settings) return;
+    setLocationLoading(true);
+    setLocationError(null);
+    try {
+      const loc = await requestLocationAndGetCoords();
+      if (loc.status !== 'granted' || !loc.coords) {
+        setLocationError(
+          loc.status === 'denied'
+            ? (t as any).fasting?.locationDenied || 'Konum izni verilmedi.'
+            : (t as any).fasting?.locationUnavailable || 'Konum alınamadı.'
+        );
+        return;
+      }
+      const pt = await fetchPrayerTimes(loc.coords);
+      if (!pt) {
+        setLocationError(
+          (t as any).fasting?.locationUnavailable || 'Konum alınamadı.'
+        );
+        return;
+      }
+      setPrayerTimes(pt);
+      const next: FastingSettings = {
+        ...settings,
+        defaultStartTime: pt.sahur,
+        defaultEndTime: pt.iftar,
+      };
+      await saveFastingSettings(next);
+      setSettings(next);
+      if (!todayLog?.completed) {
+        setRemainingMinutes(getRemainingFastingMinutes(next.defaultEndTime));
+      }
+    } catch (e) {
+      if (__DEV__) console.warn('handleUpdateFromLocation failed:', e);
+      setLocationError(
+        (t as any).fasting?.locationUnavailable || 'Konum alınamadı.'
+      );
+    } finally {
+      setLocationLoading(false);
+    }
+  }, [settings, todayLog, t]);
 
   // Update remaining time every minute
   useEffect(() => {
@@ -266,6 +323,50 @@ export function FastingScreen() {
                   <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{settings.defaultEndTime}</Text>
                 </View>
               </View>
+
+              {/* City / location row */}
+              {prayerTimes?.city ? (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: spacing.sm,
+                  }}
+                >
+                  <MaterialCommunityIcons name="map-marker" size={16} color="#9C27B0" />
+                  <Text style={{ color: colors.textTertiary, fontSize: 12, marginLeft: 4 }}>
+                    {prayerTimes.city}
+                  </Text>
+                </View>
+              ) : null}
+
+              {locationError ? (
+                <Text
+                  style={{
+                    color: '#E65100',
+                    fontSize: 12,
+                    textAlign: 'center',
+                    marginTop: spacing.xs,
+                  }}
+                >
+                  {locationError}
+                </Text>
+              ) : null}
+
+              <Button
+                mode="outlined"
+                onPress={handleUpdateFromLocation}
+                loading={locationLoading}
+                disabled={locationLoading}
+                icon="map-marker-radius"
+                style={{ marginTop: spacing.md }}
+                accessibilityLabel="Update fasting times from location"
+              >
+                {locationLoading
+                  ? (t as any).fasting?.locationUpdating || 'Konum alınıyor…'
+                  : (t as any).fasting?.useDeviceLocation || 'Konumuma göre güncelle'}
+              </Button>
             </Card.Content>
           </Card>
         </>

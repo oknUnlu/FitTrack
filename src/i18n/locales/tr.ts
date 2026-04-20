@@ -598,6 +598,13 @@ const tr: Translations = {
     blockedUnderweight: 'Vücut kütle indeksiniz (BMI) 18.5\'in altında olduğu için oruç özelliği devre dışı bırakıldı. Sağlığınız için lütfen bir sağlık profesyoneline danışın.',
     blockedMinor: '18 yaşından küçük kullanıcılar için oruç takibi kapalıdır.',
     blockedDuration: 'Tek seferde 24 saatten uzun oruç sağlık açısından risk oluşturabilir; lütfen daha kısa bir süre seçin.',
+    locationRequest: 'Konumdan hesapla',
+    locationRequestDesc: 'Bulunduğunuz şehre göre doğru sahur/iftar saatleri için konum izni verin.',
+    locationUpdating: 'Konum alınıyor…',
+    locationUpdated: 'Saatler şu şehre göre güncellendi:',
+    locationDenied: 'Konum izni verilmedi. Varsayılan saatler gösteriliyor.',
+    locationUnavailable: 'Konum alınamadı. Varsayılan saatler gösteriliyor.',
+    useDeviceLocation: 'Konumuma göre güncelle',
   },
 
   referral: {

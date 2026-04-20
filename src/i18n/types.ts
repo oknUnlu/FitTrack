@@ -641,6 +641,14 @@ export interface Translations {
     blockedUnderweight?: string;
     blockedMinor?: string;
     blockedDuration?: string;
+    // Location / prayer-time integration (optional)
+    locationRequest?: string;
+    locationRequestDesc?: string;
+    locationUpdating?: string;
+    locationUpdated?: string;
+    locationDenied?: string;
+    locationUnavailable?: string;
+    useDeviceLocation?: string;
   };
 
   // Referral

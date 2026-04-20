@@ -1,6 +1,5 @@
 import {
   collection,
-  addDoc,
   doc,
   getDoc,
   setDoc,
@@ -60,7 +59,12 @@ export async function submitBarcodeToCloud(
 
   try {
     const deviceId = await getDeviceToken();
-    await addDoc(collection(db, SUBMISSIONS_COL), {
+    // Composite ID (deviceId_barcode) makes each (device, barcode) pair
+    // a single document. Re-submitting the same product from the same
+    // phone overwrites, ensuring the 5-submission verification threshold
+    // counts 5 DISTINCT users, not 5 submissions from one user.
+    const docId = `${deviceId}_${barcode}`;
+    await setDoc(doc(db, SUBMISSIONS_COL, docId), {
       barcode,
       name,
       calories,
@@ -70,6 +74,9 @@ export async function submitBarcodeToCloud(
       deviceId,
       submittedAt: serverTimestamp(),
     });
+    // New verified submission may promote the product to verified_products.
+    // Non-blocking — any failure here just defers verification.
+    checkAndVerifyInCloud(barcode).catch(() => {});
   } catch (e) {
     if (__DEV__) console.warn('submitBarcodeToCloud failed:', e);
   }
@@ -116,10 +123,22 @@ export async function checkAndVerifyInCloud(barcode: string): Promise<boolean> {
     const q = query(collection(db, SUBMISSIONS_COL), where('barcode', '==', barcode));
     const snapshot = await getDocs(q);
 
-    if (snapshot.size < MIN_SUBMISSIONS) return false;
+    // Dedup by deviceId — legacy addDoc rows (pre-migration) could create
+    // multiple docs per device. New code uses setDoc with a composite
+    // `${deviceId}_${barcode}` id so this is mostly a safety net.
+    const byDevice = new Map<string, CloudBarcodeSubmission>();
+    snapshot.forEach((d) => {
+      const data = d.data() as CloudBarcodeSubmission;
+      const key = data.deviceId || d.id;
+      // Keep only the latest per device
+      const existing = byDevice.get(key);
+      if (!existing) {
+        byDevice.set(key, data);
+      }
+    });
+    const submissions: CloudBarcodeSubmission[] = Array.from(byDevice.values());
 
-    const submissions: CloudBarcodeSubmission[] = [];
-    snapshot.forEach((d) => submissions.push(d.data() as CloudBarcodeSubmission));
+    if (submissions.length < MIN_SUBMISSIONS) return false;
 
     const calories = submissions.map((s) => s.calories);
     const protein = submissions.map((s) => s.protein);

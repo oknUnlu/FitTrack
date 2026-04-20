@@ -377,7 +377,21 @@ export function ProfileScreen() {
                   {
                     text: t.common.yes,
                     style: 'destructive',
-                    onPress: () => resetOnboarding(),
+                    onPress: async () => {
+                      try {
+                        // Wipe all local data (SQLite + zustand + AsyncStorage)
+                        // without notifying the server — user may still want to
+                        // re-onboard with the same account.
+                        await deleteAccount({ notifyServer: false });
+                      } catch (e) {
+                        if (__DEV__) console.warn('resetAccount deleteAccount failed:', e);
+                      }
+                      try {
+                        await resetOnboarding();
+                      } catch (e) {
+                        if (__DEV__) console.warn('resetAccount resetOnboarding failed:', e);
+                      }
+                    },
                   },
                 ]
               )

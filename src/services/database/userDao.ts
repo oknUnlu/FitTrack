@@ -54,7 +54,62 @@ export async function insertUser(user: User): Promise<void> {
 }
 
 export async function updateUser(user: User): Promise<void> {
+  // Detect weight change to also record a body_metrics row. This keeps the
+  // Progress screen's weight chart in sync with the Profile screen where
+  // the user actually edits their current weight.
+  let prevWeight: number | null = null;
+  try {
+    const prev = await getUserById(user.id);
+    prevWeight = prev?.weight ?? null;
+  } catch {
+    prevWeight = null;
+  }
+
   await insertUser(user);
+
+  // Only write a body_metrics row when the weight is a valid number and
+  // is either brand-new or has actually changed. Today's row is upserted
+  // (INSERT OR REPLACE via id = `bm_${userId}_${date}`) so the user can
+  // correct their weight multiple times on the same day without piling up
+  // duplicate rows.
+  try {
+    if (
+      typeof user.weight === 'number' &&
+      !isNaN(user.weight) &&
+      user.weight > 0 &&
+      prevWeight !== user.weight
+    ) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const date = `${yyyy}-${mm}-${dd}`;
+
+      // Lazy import to avoid circular dependency: progressDao -> database -> (unchanged)
+      const { insertMetric, getLatestMetric } = await import('./progressDao');
+
+      // Preserve most recent body composition / measurements so the
+      // user's latest body-fat % etc. isn't wiped out when they just
+      // update their weight from the profile screen.
+      const latest = await getLatestMetric(user.id);
+      await insertMetric({
+        id: `bm_${user.id}_${date}`,
+        userId: user.id,
+        date,
+        weight: user.weight,
+        bodyFat: latest?.date === date ? latest.bodyFat : null,
+        waistCm: latest?.date === date ? latest.waistCm : null,
+        hipCm: latest?.date === date ? latest.hipCm : null,
+        chestCm: latest?.date === date ? latest.chestCm : null,
+        bicepCm: latest?.date === date ? latest.bicepCm : null,
+        thighCm: latest?.date === date ? latest.thighCm : null,
+        progressPhotoPath: latest?.date === date ? latest.progressPhotoPath : null,
+      });
+    }
+  } catch (e) {
+    // non-fatal — profile update still succeeds even if metric mirror fails
+    if (__DEV__) console.warn('updateUser body_metrics mirror failed:', e);
+  }
 }
 
 export async function deleteUser(userId: string): Promise<void> {

@@ -28,6 +28,8 @@
         "CAMERA",
         "VIBRATE",
         "NOTIFICATIONS",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_SLEEP",
@@ -56,6 +58,14 @@
         }
       ],
       "expo-iap",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "FitTrack, doğru sahur/iftar saatleri için konumunuzu kullanır.",
+          "locationWhenInUsePermission": "FitTrack, doğru sahur/iftar saatleri için konumunuzu kullanır.",
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
       [
         "react-native-google-mobile-ads",
         {

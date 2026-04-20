@@ -25,6 +25,24 @@ export async function initDatabase(): Promise<void> {
   } catch (_) {
     // Column already exists, ignore
   }
+
+  // Migration: add device_id column to barcode_submissions for dedup logic.
+  // Community barcode DB needs 5 *distinct* devices, not 5 submissions from
+  // the same phone. device_id is the SecureStore device token.
+  try {
+    await database.runAsync(`ALTER TABLE barcode_submissions ADD COLUMN device_id TEXT NOT NULL DEFAULT ''`);
+  } catch (_) {
+    // Column already exists, ignore
+  }
+  // Unique index enforces "one submission per (barcode, device)"; safe to
+  // run repeatedly.
+  try {
+    await database.runAsync(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_barcode_submissions_device ON barcode_submissions(barcode, device_id)`
+    );
+  } catch (_) {
+    // ignore — can fail if duplicate rows exist from pre-migration state
+  }
 }
 
 export async function seedDatabase(): Promise<void> {

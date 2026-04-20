@@ -138,10 +138,12 @@ export const CREATE_TABLES_SQL = `
     protein REAL NOT NULL,
     carbs REAL NOT NULL,
     fat REAL NOT NULL,
+    device_id TEXT NOT NULL DEFAULT '',
     submitted_at INTEGER NOT NULL
   );
 
   CREATE INDEX IF NOT EXISTS idx_barcode_submissions_barcode ON barcode_submissions(barcode);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_barcode_submissions_device ON barcode_submissions(barcode, device_id);
   CREATE INDEX IF NOT EXISTS idx_meal_logs_date ON meal_logs(user_id, date);
   CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(user_id, date);
   CREATE INDEX IF NOT EXISTS idx_exercise_sets_session ON exercise_sets(session_id);

@@ -10,6 +10,7 @@ import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../
 import { searchFoodItems, FoodItem, getFoodByBarcode } from '../../services/database/foodDao';
 import { getProductByBarcode } from '../../services/api/openFoodFacts';
 import { insertBarcodeSubmission, checkAndPromoteBarcode, getVerifiedProductFromCloud } from '../../services/database/barcodeDao';
+import { getDeviceToken } from '../../services/api/apiClient';
 import { BarcodeScanner } from '../../components/BarcodeScanner';
 import { recognizeFoodFromImage, RecognizedFood } from '../../services/ai/foodRecognition';
 import * as ImagePicker from 'expo-image-picker';
@@ -279,10 +280,14 @@ export function CalorieScreen() {
     setManualEntryVisible(false);
     handleAddFood(food);
 
-    // Save submission and check verification in background
+    // Save submission and check verification in background.
+    // Device token is passed so the crowdsourced DB can count DISTINCT
+    // users (5 different phones = promote to verified product), not 5
+    // re-submissions from a single device.
     if (Platform.OS !== 'web') {
       try {
-        await insertBarcodeSubmission(scannedBarcode, name, cal, pro, carb, fat);
+        const deviceId = await getDeviceToken();
+        await insertBarcodeSubmission(scannedBarcode, name, cal, pro, carb, fat, deviceId);
         await checkAndPromoteBarcode(scannedBarcode);
       } catch (e) {
         if (__DEV__) console.warn('Barcode submission failed:', e);

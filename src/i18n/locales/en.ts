@@ -597,6 +597,13 @@ const en: Translations = {
     blockedUnderweight: 'Your BMI is below 18.5, so the fasting feature is disabled. Please consult a healthcare professional for your safety.',
     blockedMinor: 'Fasting tracking is not available for users under 18.',
     blockedDuration: 'Fasting longer than 24 hours in a single session can be risky. Please choose a shorter duration.',
+    locationRequest: 'Calculate from location',
+    locationRequestDesc: 'Grant location permission for accurate sahur/iftar times based on your city.',
+    locationUpdating: 'Getting location…',
+    locationUpdated: 'Times updated for:',
+    locationDenied: 'Location permission denied. Showing default times.',
+    locationUnavailable: 'Could not get location. Showing default times.',
+    useDeviceLocation: 'Update from my location',
   },
 
   referral: {

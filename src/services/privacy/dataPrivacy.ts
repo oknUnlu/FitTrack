@@ -13,9 +13,10 @@ import { useConsentStore } from '../../store/consentStore';
  * KVKK / GDPR right-to-erasure and right-of-access implementation.
  *
  * exportUserData()  — packages all local user data (SQLite + AsyncStorage) into
- *                     a single JSON file and offers it to the user via the
- *                     platform share sheet. This satisfies Article 15 GDPR
- *                     and KVKK Article 11 (right of access / data portability).
+ *                     a multi-sheet .xlsx file and offers it to the user via
+ *                     the platform share sheet. This satisfies Article 15
+ *                     GDPR and KVKK Article 11 (right of access / data
+ *                     portability).
  *
  * deleteAccount()   — wipes local SQLite tables, secure storage, async storage,
  *                     and resets zustand stores. Optionally notifies the
@@ -35,6 +36,18 @@ const USER_TABLES = [
   'ai_conversations',
 ];
 
+// Human-friendly Turkish sheet names — keep ≤ 31 chars (Excel limit).
+const SHEET_LABELS: Record<string, string> = {
+  users: 'Profil',
+  meal_logs: 'Oegunler',
+  water_logs: 'Su Takibi',
+  workout_sessions: 'Antrenmanlar',
+  exercise_sets: 'Set Detaylari',
+  workout_templates: 'Antrenman Sablonlari',
+  body_metrics: 'Vucut Olcumleri',
+  ai_conversations: 'AI Sohbetleri',
+};
+
 async function dumpTable(db: any, table: string): Promise<any[]> {
   try {
     // user-owned rows only — built-in template seed rows skipped for templates.
@@ -47,6 +60,32 @@ async function dumpTable(db: any, table: string): Promise<any[]> {
   }
 }
 
+function tryRequire(mod: string): any {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require(mod);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Export all local user data as a multi-sheet .xlsx workbook.
+ *
+ * Sheets:
+ *   - Ozet          — top-line metadata (app version, export date, platform, premium status, consent)
+ *   - Profil        — users table row
+ *   - Oegunler      — meal_logs
+ *   - Su Takibi     — water_logs
+ *   - Antrenmanlar  — workout_sessions
+ *   - Set Detaylari — exercise_sets
+ *   - Sablonlar     — user-authored workout_templates
+ *   - Vucut Olcumleri — body_metrics
+ *   - AI Sohbetleri — ai_conversations
+ *   - AsyncStorage  — key/value pairs (fittrack_* / user_* / settings_*)
+ *
+ * Returns the absolute path to the written file, or null on fatal failure.
+ */
 export async function exportUserData(): Promise<string | null> {
   try {
     const userState = useUserStore.getState();
@@ -61,42 +100,37 @@ export async function exportUserData(): Promise<string | null> {
       } catch {}
     }
 
-    const dump: Record<string, any> = {
-      exportVersion: 1,
-      exportedAt: new Date().toISOString(),
-      platform: Platform.OS,
-      app: 'FitTrack',
-      user: {
-        userId: userState.userId,
-        isOnboarded: userState.isOnboarded,
-        currentUser,
-      },
-      premium: {
-        plan: premium.plan,
-        expiresAt: premium.expiresAt,
-        isPremium: premium.isPremium,
-      },
-      consents: {
-        version: (consents as any).CONSENT_VERSION || 1,
-        consents: consents.consents,
-        age: consents.age,
-      },
-      database: {} as Record<string, any[]>,
-      asyncStorage: {} as Record<string, string>,
-    };
+    // Summary sheet
+    const summaryRows: Array<{ Alan: string; Deger: any }> = [
+      { Alan: 'Uygulama', Deger: 'FitTrack - AI Fitness Koç' },
+      { Alan: 'Export Versiyonu', Deger: 2 },
+      { Alan: 'Export Tarihi', Deger: new Date().toISOString() },
+      { Alan: 'Platform', Deger: Platform.OS },
+      { Alan: 'Kullanıcı ID', Deger: userState.userId },
+      { Alan: 'Onboarding tamamlandı', Deger: userState.isOnboarded ? 'Evet' : 'Hayır' },
+      { Alan: 'Premium plan', Deger: premium.plan || 'free' },
+      { Alan: 'Premium geçerlilik', Deger: premium.expiresAt ? new Date(premium.expiresAt).toISOString() : '—' },
+      { Alan: 'Premium aktif', Deger: premium.isPremium ? 'Evet' : 'Hayır' },
+      { Alan: 'Consent versiyonu', Deger: (consents as any).CONSENT_VERSION || 1 },
+      { Alan: 'Consent değerleri', Deger: JSON.stringify(consents.consents || {}) },
+      { Alan: 'Yaş', Deger: consents.age ?? '—' },
+    ];
 
+    // Load per-table rows
+    const tableData: Record<string, any[]> = {};
     if (Platform.OS !== 'web') {
       try {
         const db = await getDatabase();
         for (const tbl of USER_TABLES) {
-          dump.database[tbl] = await dumpTable(db, tbl);
+          tableData[tbl] = await dumpTable(db, tbl);
         }
       } catch {
         // continue — partial export is still better than none.
       }
     }
 
-    // AsyncStorage (skip large/binary keys)
+    // AsyncStorage
+    const asyncRows: Array<{ Key: string; Value: string }> = [];
     try {
       const keys = await AsyncStorage.getAllKeys();
       const relevant = keys.filter(
@@ -104,45 +138,93 @@ export async function exportUserData(): Promise<string | null> {
       );
       const entries = await AsyncStorage.multiGet(relevant);
       for (const [k, v] of entries) {
-        if (v != null) dump.asyncStorage[k] = v;
+        if (v != null) asyncRows.push({ Key: k, Value: v });
       }
     } catch {}
 
-    const json = JSON.stringify(dump, null, 2);
+    const XLSX = tryRequire('xlsx');
 
+    // Web: no filesystem — return the JSON so the UI can fall back to a
+    // browser download link.
     if (Platform.OS === 'web') {
-      return json;
+      const jsonDump = {
+        summary: summaryRows,
+        database: tableData,
+        asyncStorage: asyncRows,
+      };
+      return JSON.stringify(jsonDump, null, 2);
     }
 
     const cacheDir = FileSystem.cacheDirectory || '';
-    const path = `${cacheDir}fittrack_export_${Date.now()}.json`;
-    await FileSystem.writeAsStringAsync(path, json, { encoding: FileSystem.EncodingType.UTF8 });
 
-    // Share-sheet is optional: expo-sharing is not required for the legal
-    // right-of-access itself. If the package is present, try to open the
-    // share sheet; otherwise just return the path so the UI can display it.
-    try {
-      // Dynamic, untyped require so TS doesn't require the package to be
-      // installed at build time; at runtime this is a best-effort attempt
-      // to open the platform share sheet.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const Sharing: any = (globalThis as any).require
-        ? (globalThis as any).require('expo-sharing')
-        : null;
-      if (Sharing && typeof Sharing.isAvailableAsync === 'function' && (await Sharing.isAvailableAsync())) {
-        await Sharing.shareAsync(path, {
-          mimeType: 'application/json',
-          dialogTitle: 'FitTrack verileriniz',
-          UTI: 'public.json',
-        });
-      }
-    } catch {
-      // share-sheet failure must not block the legal right.
+    // Fallback: if xlsx isn't available at runtime (module missing, bundler
+    // issue) write a JSON file instead so the user still gets their data.
+    if (!XLSX) {
+      const jsonDump = {
+        summary: summaryRows,
+        database: tableData,
+        asyncStorage: asyncRows,
+      };
+      const jsonPath = `${cacheDir}fittrack_export_${Date.now()}.json`;
+      await FileSystem.writeAsStringAsync(jsonPath, JSON.stringify(jsonDump, null, 2), {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      await tryShare(jsonPath, 'application/json');
+      return jsonPath;
     }
+
+    // Build workbook
+    const wb = XLSX.utils.book_new();
+
+    const append = (name: string, rows: any[]) => {
+      // SheetJS tolerates empty arrays — produce an empty sheet with a
+      // single header row so the export still shows the section.
+      const ws = rows.length
+        ? XLSX.utils.json_to_sheet(rows)
+        : XLSX.utils.aoa_to_sheet([['(boş)']]);
+      XLSX.utils.book_append_sheet(wb, ws, name.substring(0, 31));
+    };
+
+    append('Ozet', summaryRows);
+    for (const tbl of USER_TABLES) {
+      append(SHEET_LABELS[tbl] || tbl, tableData[tbl] || []);
+    }
+    append('AsyncStorage', asyncRows);
+
+    // SheetJS supports a base64 output we can write via expo-file-system.
+    const base64 = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+    const path = `${cacheDir}fittrack_export_${Date.now()}.xlsx`;
+    await FileSystem.writeAsStringAsync(path, base64, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    await tryShare(
+      path,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
     return path;
   } catch (e) {
     if (__DEV__) console.warn('exportUserData failed:', e);
     return null;
+  }
+}
+
+/**
+ * Best-effort share via expo-sharing. Non-fatal if the package is missing
+ * or the share sheet fails — the file is already written to disk.
+ */
+async function tryShare(path: string, mimeType: string): Promise<void> {
+  try {
+    const Sharing: any = tryRequire('expo-sharing');
+    if (Sharing && typeof Sharing.isAvailableAsync === 'function' && (await Sharing.isAvailableAsync())) {
+      await Sharing.shareAsync(path, {
+        mimeType,
+        dialogTitle: 'FitTrack verileriniz',
+        UTI: mimeType === 'application/json' ? 'public.json' : 'org.openxmlformats.spreadsheetml.sheet',
+      });
+    }
+  } catch {
+    // share-sheet failure must not block the legal right.
   }
 }
 
