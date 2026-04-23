@@ -143,7 +143,14 @@ export const CREATE_TABLES_SQL = `
   );
 
   CREATE INDEX IF NOT EXISTS idx_barcode_submissions_barcode ON barcode_submissions(barcode);
-  CREATE UNIQUE INDEX IF NOT EXISTS idx_barcode_submissions_device ON barcode_submissions(barcode, device_id);
+  -- NOTE: the (barcode, device_id) uniqueness index is created in the
+  -- migration block of database.ts, AFTER the ALTER TABLE that adds
+  -- device_id. Putting it here would crash upgrade installs because
+  -- CREATE TABLE IF NOT EXISTS is a no-op when the pre-existing table
+  -- doesn't yet have the device_id column, and the index creation
+  -- then fails with "no such column: device_id" — poisoning the DB
+  -- handle for the rest of the session (NullPointerException on
+  -- prepareAsync).
   CREATE INDEX IF NOT EXISTS idx_meal_logs_date ON meal_logs(user_id, date);
   CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(user_id, date);
   CREATE INDEX IF NOT EXISTS idx_exercise_sets_session ON exercise_sets(session_id);

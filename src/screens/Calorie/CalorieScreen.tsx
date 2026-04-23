@@ -88,6 +88,14 @@ export function CalorieScreen() {
   const [manualCarbs, setManualCarbs] = useState('');
   const [manualFat, setManualFat] = useState('');
 
+  // Bug #13: quantity dialog — every food selection routes through
+  // this dialog so the user can pick exactly how many grams they ate.
+  // Without this, every meal is silently logged at the food's default
+  // serving size, which wildly under/overcounts calories.
+  const [quantityDialogVisible, setQuantityDialogVisible] = useState(false);
+  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+  const [quantityAmount, setQuantityAmount] = useState('');
+
 
   const loadMeals = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -127,16 +135,49 @@ export function CalorieScreen() {
     }
   }, []);
 
-  const handleAddFood = useCallback(async (food: FoodItem) => {
+  // Opens the quantity dialog pre-filled with the food's suggested
+  // serving size. The actual meal insert happens in
+  // `handleConfirmQuantity` after the user confirms a gram amount.
+  const handleAddFood = useCallback((food: FoodItem) => {
     Keyboard.dismiss();
+    setSelectedFood(food);
+    // Default to the food's serving size (typically 100g), or 100g
+    // if none is provided. Kept as a string because TextInput binds
+    // to strings.
+    const defaultAmount = food.servingSize && food.servingSize > 0 ? food.servingSize : 100;
+    setQuantityAmount(String(defaultAmount));
+    // Close any open modal so the dialog sits cleanly on top.
+    setSearchVisible(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setAiModalVisible(false);
+    setAiResults([]);
+    setQuantityDialogVisible(true);
+  }, []);
+
+  // Computes macros proportionally to the chosen gram amount (the
+  // food object stores per-100g values) and inserts the meal log.
+  const handleConfirmQuantity = useCallback(async () => {
+    if (!selectedFood) return;
+    const grams = parseFloat(quantityAmount.replace(',', '.'));
+    if (isNaN(grams) || grams <= 0) {
+      Alert.alert('', t.calorie.quantityInvalid || 'Enter a valid amount');
+      return;
+    }
     try {
+      const ratio = grams / 100;
       const meal: MealLog = {
-        id: generateId(), userId, date, mealType: activeMealType as any,
-        foodItemId: food.nameTr || food.name, servingAmount: food.servingSize, servingUnit: food.servingUnit,
-        caloriesConsumed: food.calories * food.servingSize / 100,
-        proteinConsumed: food.protein * food.servingSize / 100,
-        carbsConsumed: food.carbs * food.servingSize / 100,
-        fatConsumed: food.fat * food.servingSize / 100,
+        id: generateId(),
+        userId,
+        date,
+        mealType: activeMealType as any,
+        foodItemId: selectedFood.nameTr || selectedFood.name,
+        servingAmount: grams,
+        servingUnit: 'g',
+        caloriesConsumed: selectedFood.calories * ratio,
+        proteinConsumed: selectedFood.protein * ratio,
+        carbsConsumed: selectedFood.carbs * ratio,
+        fatConsumed: selectedFood.fat * ratio,
         createdAt: Date.now(),
       };
       if (Platform.OS === 'web') {
@@ -145,13 +186,13 @@ export function CalorieScreen() {
         await insertMealLog(meal);
         loadMeals();
       }
-      setSearchVisible(false);
-      setSearchQuery('');
-      setSearchResults([]);
+      setQuantityDialogVisible(false);
+      setSelectedFood(null);
+      setQuantityAmount('');
     } catch (e) {
-      if (__DEV__) console.warn('handleAddFood failed:', e);
+      if (__DEV__) console.warn('handleConfirmQuantity failed:', e);
     }
-  }, [userId, date, activeMealType, loadMeals]);
+  }, [selectedFood, quantityAmount, userId, date, activeMealType, loadMeals, t]);
 
   const handleDelete = useCallback(async (id: string) => {
     try {
@@ -260,7 +301,7 @@ export function CalorieScreen() {
 
     // Use immediately as meal entry
     const food: FoodItem = {
-      id: `manual_${scannedBarcode}_${Date.now()}`,
+      id: `manual_${scannedBarcode || 'entry'}_${Date.now()}`,
       name,
       nameTr: name,
       calories: cal,
@@ -269,7 +310,7 @@ export function CalorieScreen() {
       fat,
       fiber: null,
       sugar: null,
-      barcode: scannedBarcode,
+      barcode: scannedBarcode || null,
       servingSize: 100,
       servingUnit: 'g',
       isCustom: true,
@@ -278,13 +319,14 @@ export function CalorieScreen() {
     };
 
     setManualEntryVisible(false);
+    // Routes the new food through the quantity dialog so the user
+    // can pick a portion size (defaults to 100g).
     handleAddFood(food);
 
-    // Save submission and check verification in background.
-    // Device token is passed so the crowdsourced DB can count DISTINCT
-    // users (5 different phones = promote to verified product), not 5
-    // re-submissions from a single device.
-    if (Platform.OS !== 'web') {
+    // Save submission and check verification in background — only
+    // meaningful for barcode scans. For standalone manual entries
+    // (scannedBarcode === '') we skip the crowdsourced submission.
+    if (Platform.OS !== 'web' && scannedBarcode) {
       try {
         const deviceId = await getDeviceToken();
         await insertBarcodeSubmission(scannedBarcode, name, cal, pro, carb, fat, deviceId);
@@ -294,6 +336,22 @@ export function CalorieScreen() {
       }
     }
   }, [scannedBarcode, manualName, manualCalories, manualProtein, manualCarbs, manualFat, handleAddFood, t]);
+
+  // Opens the manual-entry dialog WITHOUT a barcode — triggered from
+  // the search modal when the user can't find the food they want.
+  const handleOpenManualEntry = useCallback(() => {
+    Keyboard.dismiss();
+    setSearchVisible(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setScannedBarcode('');
+    setManualName('');
+    setManualCalories('');
+    setManualProtein('');
+    setManualCarbs('');
+    setManualFat('');
+    setManualEntryVisible(true);
+  }, []);
 
   const handlePhotoRecognition = useCallback(async () => {
     if (!checkPremiumAccess('food_recognition')) return;
@@ -610,6 +668,19 @@ export function CalorieScreen() {
                     <MaterialCommunityIcons name="lock" size={12} color={colors.textTertiary} style={{ marginTop: 2 }} />
                   )}
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={handleOpenManualEntry}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Manual entry"
+                  accessibilityRole="button"
+                >
+                  <View style={[styles.actionBtnIcon, { backgroundColor: colors.calorieGreen }]}>
+                    <MaterialCommunityIcons name="pencil-plus-outline" size={22} color="#fff" />
+                  </View>
+                  <Text style={styles.actionBtnLabel}>{t.calorie.manualEntry || 'Manual Entry'}</Text>
+                </TouchableOpacity>
               </View>
             )}
 
@@ -633,7 +704,22 @@ export function CalorieScreen() {
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
-                searchQuery.length >= 2 ? <Text style={styles.modalEmptyText}>{t.calorie.noResults}</Text> : null
+                searchQuery.length >= 2 ? (
+                  <View style={styles.emptyResultsWrap}>
+                    <Text style={styles.modalEmptyText}>{t.calorie.noResults}</Text>
+                    <Text style={styles.modalEmptyHint}>{t.calorie.manualEntryDesc || ''}</Text>
+                    <TouchableOpacity
+                      style={styles.manualEntryCta}
+                      onPress={handleOpenManualEntry}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons name="pencil-plus" size={18} color="#fff" />
+                      <Text style={styles.manualEntryCtaText}>
+                        {t.calorie.addManually || 'Add Manually'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null
               }
             />
           </View>
@@ -693,6 +779,84 @@ export function CalorieScreen() {
           <Dialog.Actions>
             <Button onPress={() => setManualEntryVisible(false)}>{t.common.cancel}</Button>
             <Button mode="contained" onPress={handleManualBarcodeSubmit}>{t.barcode.submit}</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Quantity Dialog — asks the user how much of the selected
+          food they ate, then scales macros proportionally. */}
+      <Portal>
+        <Dialog
+          visible={quantityDialogVisible}
+          onDismiss={() => {
+            setQuantityDialogVisible(false);
+            setSelectedFood(null);
+            setQuantityAmount('');
+          }}
+        >
+          <Dialog.Title>{t.calorie.quantityTitle || 'Quantity'}</Dialog.Title>
+          <Dialog.Content style={{ gap: 8 }}>
+            {selectedFood && (
+              <Text style={styles.quantityFoodName} numberOfLines={2}>
+                {selectedFood.nameTr || selectedFood.name}
+              </Text>
+            )}
+            <TextInput
+              label={`${t.calorie.quantityAmount || 'Amount'} (${t.calorie.quantityUnit || 'grams'})`}
+              value={quantityAmount}
+              onChangeText={setQuantityAmount}
+              keyboardType="numeric"
+              mode="outlined"
+              dense
+              maxLength={6}
+              right={<TextInput.Affix text="g" />}
+            />
+            {selectedFood && (() => {
+              const g = parseFloat((quantityAmount || '0').replace(',', '.'));
+              if (isNaN(g) || g <= 0) return null;
+              const ratio = g / 100;
+              const kcal = Math.round(selectedFood.calories * ratio);
+              const p = Math.round(selectedFood.protein * ratio);
+              const c = Math.round(selectedFood.carbs * ratio);
+              const f = Math.round(selectedFood.fat * ratio);
+              return (
+                <View style={styles.quantityPreview}>
+                  <Text style={styles.quantityPreviewLabel}>
+                    {t.calorie.quantityPreview || 'Estimated'}
+                  </Text>
+                  <Text style={styles.quantityPreviewKcal}>
+                    {kcal} {t.common.kcal}
+                  </Text>
+                  <View style={styles.quantityPreviewRow}>
+                    <Text style={[styles.quantityPreviewMacro, { color: colors.protein }]}>
+                      P:{p}g
+                    </Text>
+                    <Text style={styles.macroDivider}>&middot;</Text>
+                    <Text style={[styles.quantityPreviewMacro, { color: colors.carbs }]}>
+                      K:{c}g
+                    </Text>
+                    <Text style={styles.macroDivider}>&middot;</Text>
+                    <Text style={[styles.quantityPreviewMacro, { color: colors.fat }]}>
+                      Y:{f}g
+                    </Text>
+                  </View>
+                </View>
+              );
+            })()}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => {
+                setQuantityDialogVisible(false);
+                setSelectedFood(null);
+                setQuantityAmount('');
+              }}
+            >
+              {t.common.cancel}
+            </Button>
+            <Button mode="contained" onPress={handleConfirmQuantity}>
+              {t.calorie.addToMeal || t.barcode.submit}
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -927,6 +1091,72 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     paddingVertical: spacing.lg,
     fontSize: 13,
+  },
+
+  // Manual Entry CTA (shown when no search results)
+  emptyResultsWrap: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  modalEmptyHint: {
+    textAlign: 'center',
+    color: colors.textTertiary,
+    fontSize: 12,
+    paddingHorizontal: spacing.md,
+    marginTop: -spacing.md,
+  },
+  manualEntryCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.calorieGreen,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 10,
+    borderRadius: borderRadius.md,
+    gap: 6,
+    marginTop: spacing.sm,
+  },
+  manualEntryCtaText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // Quantity Dialog preview
+  quantityFoodName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  quantityPreview: {
+    alignItems: 'center',
+    backgroundColor: colors.surfaceVariant,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
+    marginTop: spacing.xs,
+  },
+  quantityPreviewLabel: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    marginBottom: 2,
+  },
+  quantityPreviewKcal: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  quantityPreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  quantityPreviewMacro: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   // Search

@@ -8,7 +8,7 @@ import {
   isBillingConfigured,
   getSubscriptions,
   purchaseSubscription,
-  restorePurchases,
+  restorePurchasesInteractive,
   PRODUCT_IDS,
 } from '../services/premium/googleBilling';
 import { colors, spacing, borderRadius } from '../theme/theme';
@@ -97,18 +97,19 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
 
     setIsRestoring(true);
     try {
-      const restored = await restorePurchases();
-      if (restored) {
+      const result = await restorePurchasesInteractive();
+      if (result.restored) {
         Alert.alert(
           t.premium.restore,
           t.premium.restoreSuccess,
           [{ text: 'OK', onPress: onClose }]
         );
+      } else if (result.reason === 'error') {
+        Alert.alert(t.common.error, t.premium.restoreFailed);
       } else {
-        Alert.alert(
-          t.premium.restore,
-          t.premium.restoreNotFound
-        );
+        // 'no-billing' or 'no-purchases' — don't scare the user with an
+        // error; we simply didn't find anything on their Play account.
+        Alert.alert(t.premium.restore, t.premium.restoreNotFound);
       }
     } catch (e) {
       Alert.alert(

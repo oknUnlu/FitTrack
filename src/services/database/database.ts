@@ -2,6 +2,8 @@ import { Platform } from 'react-native';
 import { CREATE_TABLES_SQL } from './schema';
 
 let db: any = null;
+let initPromise: Promise<void> | null = null;
+let initFailed = false;
 
 export async function getDatabase(): Promise<any> {
   if (Platform.OS === 'web') {
@@ -14,35 +16,81 @@ export async function getDatabase(): Promise<any> {
   return db;
 }
 
+export function isDatabaseReady(): boolean {
+  return !!db && !initFailed;
+}
+
+/**
+ * Run every DDL statement in isolation so a single failure can't poison
+ * the native handle (which manifests later as NullPointerException on
+ * prepareAsync). Each CREATE TABLE / INDEX is independently idempotent,
+ * so splitting them costs nothing but buys us resilience.
+ */
+async function execStatements(database: any, sql: string): Promise<void> {
+  // Split on semicolons that end a statement; ignores empty fragments.
+  const statements = sql
+    .split(/;\s*(?=\n|$)/)
+    .map((s) => s.trim())
+    .filter((s) => s && !s.startsWith('--'));
+  for (const stmt of statements) {
+    try {
+      await database.execAsync(stmt);
+    } catch (e) {
+      if (__DEV__) console.warn('DB DDL skipped:', stmt.slice(0, 80), e);
+      // keep going — individual DDL failures must not halt init
+    }
+  }
+}
+
 export async function initDatabase(): Promise<void> {
   if (Platform.OS === 'web') return;
-  const database = await getDatabase();
-  await database.execAsync(CREATE_TABLES_SQL);
+  // De-dupe concurrent calls (App.tsx + any eager DAO) so we only run
+  // migrations once.
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    try {
+      const database = await getDatabase();
+      await execStatements(database, CREATE_TABLES_SQL);
 
-  // Migration: add category column if it doesn't exist
-  try {
-    await database.runAsync(`ALTER TABLE workout_templates ADD COLUMN category TEXT NOT NULL DEFAULT 'equipment'`);
-  } catch (_) {
-    // Column already exists, ignore
-  }
+      // Migration: add category column if it doesn't exist
+      try {
+        await database.runAsync(`ALTER TABLE workout_templates ADD COLUMN category TEXT NOT NULL DEFAULT 'equipment'`);
+      } catch (_) {
+        // Column already exists, ignore
+      }
 
-  // Migration: add device_id column to barcode_submissions for dedup logic.
-  // Community barcode DB needs 5 *distinct* devices, not 5 submissions from
-  // the same phone. device_id is the SecureStore device token.
-  try {
-    await database.runAsync(`ALTER TABLE barcode_submissions ADD COLUMN device_id TEXT NOT NULL DEFAULT ''`);
-  } catch (_) {
-    // Column already exists, ignore
-  }
-  // Unique index enforces "one submission per (barcode, device)"; safe to
-  // run repeatedly.
-  try {
-    await database.runAsync(
-      `CREATE UNIQUE INDEX IF NOT EXISTS idx_barcode_submissions_device ON barcode_submissions(barcode, device_id)`
-    );
-  } catch (_) {
-    // ignore — can fail if duplicate rows exist from pre-migration state
-  }
+      // Migration: add device_id column to barcode_submissions for dedup logic.
+      // Community barcode DB needs 5 *distinct* devices, not 5 submissions from
+      // the same phone. device_id is the SecureStore device token.
+      try {
+        await database.runAsync(`ALTER TABLE barcode_submissions ADD COLUMN device_id TEXT NOT NULL DEFAULT ''`);
+      } catch (_) {
+        // Column already exists, ignore
+      }
+
+      // Index on (barcode, device_id) — NOT unique. The composite primary
+      // key `bs_${barcode}_${deviceId}` combined with `INSERT OR REPLACE`
+      // in barcodeDao.ts already guarantees one row per (barcode, device).
+      // A UNIQUE index here would crash migrations on any DB that has
+      // pre-existing duplicate rows from before device_id tracking existed
+      // (e.g., two submissions for the same barcode where device_id
+      // defaults to ''), which would poison the native handle.
+      try {
+        await database.runAsync(
+          `CREATE INDEX IF NOT EXISTS idx_barcode_submissions_device ON barcode_submissions(barcode, device_id)`
+        );
+      } catch (_) {
+        // ignore — index is an optimisation, not a correctness guarantee
+      }
+    } catch (e) {
+      initFailed = true;
+      if (__DEV__) console.warn('FitTrack: initDatabase failed:', e);
+      // Don't rethrow — callers use try/catch anyway, and an in-flight
+      // DB is better than no app at all. Individual DAO queries will
+      // surface their own errors.
+    }
+  })();
+  return initPromise;
 }
 
 export async function seedDatabase(): Promise<void> {

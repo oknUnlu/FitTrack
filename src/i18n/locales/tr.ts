@@ -83,6 +83,17 @@ const tr: Translations = {
     dinner: 'Akşam Yemeği',
     snack: 'Ara Öğün',
     aiRecognition: 'AI Besin Tanıma',
+    quantityTitle: 'Miktar Seç',
+    quantityAmount: 'Miktar',
+    quantityUnit: 'gram',
+    quantityPreview: 'Tahmini',
+    quantityInvalid: 'Geçerli bir miktar girin',
+    manualEntry: 'Manuel Giriş',
+    manualEntryDesc: 'Aradığın yemeği bulamadın mı? Manuel olarak ekle.',
+    manualFoodName: 'Yemek Adı',
+    manualFoodNameHint: 'Örn. Ev yapımı mercimek çorbası',
+    addManually: 'Manuel Olarak Ekle',
+    addToMeal: 'Öğüne Ekle',
   },
 
   workout: {

@@ -17,6 +17,12 @@ import { initDatabase, seedDatabase } from './src/services/database/database';
 import { getDeviceToken } from './src/services/api/apiClient';
 import { initializeBilling, checkSubscriptionStatus, setupPurchaseListener, endBillingConnection } from './src/services/premium/googleBilling';
 import { initializeAds, loadInterstitial } from './src/services/ads/adService';
+import {
+  getNotificationPreferences,
+  scheduleMealReminders,
+  scheduleWaterReminders,
+  scheduleWorkoutReminder,
+} from './src/services/notifications/notificationService';
 
 // Splash screen'i uygulama hazır olana kadar görünür tut
 SplashScreen.preventAutoHideAsync();
@@ -67,6 +73,18 @@ export default function App() {
         await loadInterstitial();
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: AdMob init failed:', e);
+      }
+      // Reconcile notification preferences with OS-scheduled state.
+      // This guarantees that if the user previously disabled a reminder
+      // category but the OS still has stale scheduled entries (e.g. from
+      // a pre-fix build), those will be cleared on next launch.
+      try {
+        const prefs = await getNotificationPreferences();
+        await scheduleMealReminders(prefs.meal);
+        await scheduleWaterReminders(prefs.water);
+        await scheduleWorkoutReminder(prefs.workout);
+      } catch (e) {
+        if (__DEV__) console.warn('FitTrack: Notification reconcile failed:', e);
       }
       await SplashScreen.hideAsync();
     };

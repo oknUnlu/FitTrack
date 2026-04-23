@@ -6,6 +6,84 @@ const WATER_REMINDER_KEY = 'pref_water_reminder';
 const MEAL_REMINDER_KEY = 'pref_meal_reminder';
 const WORKOUT_REMINDER_KEY = 'pref_workout_reminder';
 
+// We track the OS-generated notification identifiers we schedule, per
+// category, so disabling a category can cancel exactly the notifications
+// we created — even if they were scheduled by an older build that didn't
+// tag `data.type` correctly.
+const WATER_IDS_KEY = 'pref_water_reminder_ids';
+const MEAL_IDS_KEY = 'pref_meal_reminder_ids';
+const WORKOUT_IDS_KEY = 'pref_workout_reminder_ids';
+
+type Category = 'meal_reminder' | 'water_reminder' | 'workout_reminder';
+
+// Human-facing title fragments we use. Cross-checked against scheduled
+// notifications as a belt-and-suspenders fallback when a legacy entry has
+// no `data.type` tag and no stored identifier.
+const TITLE_FRAGMENTS: Record<Category, string[]> = {
+  meal_reminder: ['Breakfast Time', 'Lunch Time', 'Dinner Time'],
+  water_reminder: ['Drink Water'],
+  workout_reminder: ['Workout Time'],
+};
+
+async function loadIds(key: string): Promise<string[]> {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveIds(key: string, ids: string[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(ids));
+  } catch {}
+}
+
+/**
+ * Cancel every scheduled notification that belongs to the given category,
+ * using three fallbacks in order of reliability:
+ *   1. Stored identifiers (most reliable — exact match)
+ *   2. `data.type === category` (works for current code path)
+ *   3. Title fragment match (catches legacy rows that were scheduled
+ *      before `data.type` tagging existed)
+ */
+async function cancelCategory(
+  Notifications: any,
+  category: Category,
+  idsKey: string,
+): Promise<void> {
+  // 1. Cancel by stored identifier.
+  const stored = await loadIds(idsKey);
+  for (const id of stored) {
+    try {
+      await Notifications.cancelScheduledNotificationAsync(id);
+    } catch {}
+  }
+  await AsyncStorage.removeItem(idsKey);
+
+  // 2 + 3. Scan all scheduled and cancel anything else that looks like ours.
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    const fragments = TITLE_FRAGMENTS[category];
+    for (const n of scheduled) {
+      const typeTag = n?.content?.data?.type;
+      const title: string = n?.content?.title || '';
+      const matchesType = typeTag === category;
+      const matchesTitle = fragments.some((f) => title.includes(f));
+      if (matchesType || matchesTitle) {
+        try {
+          await Notifications.cancelScheduledNotificationAsync(n.identifier);
+        } catch {}
+      }
+    }
+  } catch {
+    // non-fatal
+  }
+}
+
 // Check if running in Expo Go (push notifications removed in Expo Go SDK 53+)
 const isExpoGo = Constants.appOwnership === 'expo';
 
@@ -70,12 +148,8 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
   if (!Notifications) return;
 
   try {
-    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-    for (const n of scheduled) {
-      if (n.content.data?.type === 'meal_reminder') {
-        await Notifications.cancelScheduledNotificationAsync(n.identifier);
-      }
-    }
+    // Always cancel first — including legacy entries without data.type tags.
+    await cancelCategory(Notifications, 'meal_reminder', MEAL_IDS_KEY);
 
     if (!enabled) return;
 
@@ -85,8 +159,9 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
       { hour: 19, minute: 0, title: '🍽️ Dinner Time', body: "Don't forget to log your dinner!" },
     ];
 
+    const newIds: string[] = [];
     for (const meal of mealTimes) {
-      await Notifications.scheduleNotificationAsync({
+      const id = await Notifications.scheduleNotificationAsync({
         content: {
           title: meal.title,
           body: meal.body,
@@ -98,7 +173,9 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
           minute: meal.minute,
         },
       });
+      if (id) newIds.push(id);
     }
+    await saveIds(MEAL_IDS_KEY, newIds);
   } catch {
     // Notification scheduling not available
   }
@@ -111,18 +188,14 @@ export async function scheduleWaterReminders(enabled: boolean): Promise<void> {
   if (!Notifications) return;
 
   try {
-    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-    for (const n of scheduled) {
-      if (n.content.data?.type === 'water_reminder') {
-        await Notifications.cancelScheduledNotificationAsync(n.identifier);
-      }
-    }
+    await cancelCategory(Notifications, 'water_reminder', WATER_IDS_KEY);
 
     if (!enabled) return;
 
     const waterHours = [9, 11, 13, 15, 17, 19, 21];
+    const newIds: string[] = [];
     for (const hour of waterHours) {
-      await Notifications.scheduleNotificationAsync({
+      const id = await Notifications.scheduleNotificationAsync({
         content: {
           title: '💧 Drink Water!',
           body: "Don't forget to drink a glass of water. Your body needs hydration!",
@@ -134,7 +207,9 @@ export async function scheduleWaterReminders(enabled: boolean): Promise<void> {
           minute: 0,
         },
       });
+      if (id) newIds.push(id);
     }
+    await saveIds(WATER_IDS_KEY, newIds);
   } catch {
     // Notification scheduling not available
   }
@@ -147,16 +222,11 @@ export async function scheduleWorkoutReminder(enabled: boolean): Promise<void> {
   if (!Notifications) return;
 
   try {
-    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-    for (const n of scheduled) {
-      if (n.content.data?.type === 'workout_reminder') {
-        await Notifications.cancelScheduledNotificationAsync(n.identifier);
-      }
-    }
+    await cancelCategory(Notifications, 'workout_reminder', WORKOUT_IDS_KEY);
 
     if (!enabled) return;
 
-    await Notifications.scheduleNotificationAsync({
+    const id = await Notifications.scheduleNotificationAsync({
       content: {
         title: '💪 Workout Time!',
         body: "You planned a workout today. Let's get moving!",
@@ -168,8 +238,37 @@ export async function scheduleWorkoutReminder(enabled: boolean): Promise<void> {
         minute: 30,
       },
     });
+    if (id) await saveIds(WORKOUT_IDS_KEY, [id]);
   } catch {
     // Notification scheduling not available
+  }
+}
+
+/**
+ * Nuclear option — cancels every scheduled notification the app knows
+ * about (meal, water, workout). Useful as a "master off" or when
+ * disabling notifications at the OS level from the profile screen.
+ */
+export async function cancelAllReminders(): Promise<void> {
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return;
+  try {
+    await cancelCategory(Notifications, 'meal_reminder', MEAL_IDS_KEY);
+    await cancelCategory(Notifications, 'water_reminder', WATER_IDS_KEY);
+    await cancelCategory(Notifications, 'workout_reminder', WORKOUT_IDS_KEY);
+    // As a final safety net, wipe any scheduled notifications that
+    // slipped past all three categorised cancels (e.g. motivation).
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    } catch {}
+    // Reset prefs so UI reflects disabled state on next load.
+    await AsyncStorage.multiSet([
+      [MEAL_REMINDER_KEY, 'false'],
+      [WATER_REMINDER_KEY, 'false'],
+      [WORKOUT_REMINDER_KEY, 'false'],
+    ]);
+  } catch {
+    // non-fatal
   }
 }
 

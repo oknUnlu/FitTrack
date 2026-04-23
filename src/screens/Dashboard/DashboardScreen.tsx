@@ -33,13 +33,22 @@ export function DashboardScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]} showsVerticalScrollIndicator={false}>
-        {/* Header */}
+        {/* Header — logo, greeting, and a compact streak chip
+            aligned to the right so the streak is surfaced first
+            without introducing a chunky card at the top of the list. */}
         <View style={styles.headerRow}>
           <Logo size={44} />
           <Text variant="headlineSmall" style={styles.headerText} accessibilityRole="header">
             {t.dashboard.greeting} 👋
           </Text>
+          <View style={{ flex: 1 }} />
+          <StreakChip streak={summary.streakDays} />
         </View>
+
+        {/* Week activity strip — thin, no card chrome, sits right
+            under the header. Shows which days of the current week
+            the user was active. */}
+        <WeekActivityStrip weeklyActive={summary.weeklyActiveDays} />
 
         {/* Calorie Ring Card */}
         <CalorieRingCard summary={summary} />
@@ -63,8 +72,8 @@ export function DashboardScreen() {
           onStart={() => navigation.navigate('Workout')}
         />
 
-        {/* Streak Card */}
-        <StreakCard streak={summary.streakDays} weeklyActive={summary.weeklyActiveDays} />
+        {/* Streak moved to the top header (StreakChip + WeekActivityStrip).
+            The old StreakCard is kept defined below in case it's reused. */}
 
         {/* Supplements Card */}
         <QuickNavCard
@@ -350,8 +359,80 @@ function WorkoutCard({ summary, onStart }: { summary: DailySummary; onStart: () 
 }
 
 // ═════════════════════════════════════════
-// STREAK CARD
+// STREAK CHIP (compact, rides in the header)
 // ═════════════════════════════════════════
+function StreakChip({ streak }: { streak: number }) {
+  const { t } = useLanguage();
+  const active = streak > 0;
+  return (
+    <View
+      style={[
+        styles.streakChip,
+        active
+          ? { backgroundColor: 'rgba(255,152,0,0.12)', borderColor: 'rgba(255,152,0,0.35)' }
+          : { backgroundColor: 'rgba(0,0,0,0.04)', borderColor: colors.border },
+      ]}
+      accessibilityLabel={`${streak} ${t.dashboard.dayStreak}`}
+    >
+      <Text style={{ fontSize: 14, opacity: active ? 1 : 0.4 }}>🔥</Text>
+      <Text style={[styles.streakChipNum, { color: active ? '#E65100' : colors.textTertiary }]}>
+        {streak}
+      </Text>
+    </View>
+  );
+}
+
+// ═════════════════════════════════════════
+// WEEK ACTIVITY STRIP (thin row under the header)
+// ═════════════════════════════════════════
+function WeekActivityStrip({ weeklyActive }: { weeklyActive: boolean[] }) {
+  const { t } = useLanguage();
+  const daysArray = [
+    t.daysShort.mon, t.daysShort.tue, t.daysShort.wed,
+    t.daysShort.thu, t.daysShort.fri, t.daysShort.sat, t.daysShort.sun,
+  ];
+  // Map a JS Date.getDay() (Sun=0..Sat=6) to our Mon..Sun index.
+  const jsDay = new Date().getDay();
+  const todayIdx = jsDay === 0 ? 6 : jsDay - 1;
+
+  return (
+    <View style={styles.weekStrip}>
+      {weeklyActive.map((active, i) => {
+        const isToday = i === todayIdx;
+        return (
+          <View key={i} style={styles.weekStripCell}>
+            <View
+              style={[
+                styles.weekStripDot,
+                active
+                  ? { backgroundColor: colors.primary }
+                  : { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border },
+                isToday && !active && { borderColor: colors.primary, borderWidth: 1.5 },
+              ]}
+            >
+              {active && (
+                <MaterialCommunityIcons name="check" size={12} color="#fff" />
+              )}
+            </View>
+            <Text
+              style={[
+                styles.weekStripLabel,
+                isToday && { color: colors.primary, fontWeight: '700' },
+              ]}
+            >
+              {daysArray[i]}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+// ═════════════════════════════════════════
+// STREAK CARD (legacy, no longer rendered — kept for reference)
+// ═════════════════════════════════════════
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StreakCard({ streak, weeklyActive }: { streak: number; weeklyActive: boolean[] }) {
   const { t } = useLanguage();
   const daysArray = [t.daysShort.mon, t.daysShort.tue, t.daysShort.wed, t.daysShort.thu, t.daysShort.fri, t.daysShort.sat, t.daysShort.sun];
@@ -543,7 +624,9 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { padding: spacing.md, paddingBottom: 100 },
   header: { fontWeight: 'bold', marginBottom: spacing.md },
-  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, gap: spacing.sm },
+  // Slightly tighter gap under the header so the WeekActivityStrip
+  // feels like a continuation of it instead of a separate block.
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm, gap: spacing.sm },
   headerText: { fontWeight: 'bold' },
   card: { borderRadius: borderRadius.lg, marginBottom: spacing.md },
   cardTitle: { fontWeight: 'bold', marginBottom: spacing.sm },
@@ -626,6 +709,45 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   dayDot: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  // Streak chip (header right side)
+  streakChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  streakChipNum: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  // Week activity strip (below header)
+  weekStrip: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    paddingHorizontal: 2,
+  },
+  weekStripCell: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 4,
+  },
+  weekStripDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  weekStripLabel: {
+    fontSize: 10,
+    color: colors.textTertiary,
+    fontWeight: '600',
+  },
   proBadge: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,

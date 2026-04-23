@@ -83,6 +83,17 @@ const en: Translations = {
     dinner: 'Dinner',
     snack: 'Snack',
     aiRecognition: 'AI Food Recognition',
+    quantityTitle: 'Select Quantity',
+    quantityAmount: 'Amount',
+    quantityUnit: 'grams',
+    quantityPreview: 'Estimated',
+    quantityInvalid: 'Enter a valid amount',
+    manualEntry: 'Manual Entry',
+    manualEntryDesc: "Can't find what you're looking for? Add manually.",
+    manualFoodName: 'Food Name',
+    manualFoodNameHint: 'e.g. Homemade lentil soup',
+    addManually: 'Add Manually',
+    addToMeal: 'Add to Meal',
   },
 
   workout: {

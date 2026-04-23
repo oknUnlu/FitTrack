@@ -104,6 +104,18 @@ export interface Translations {
     dinner: string;
     snack: string;
     aiRecognition: string;
+    // Quantity / manual entry (optional for backwards compat)
+    quantityTitle?: string;
+    quantityAmount?: string;
+    quantityUnit?: string;
+    quantityPreview?: string;
+    quantityInvalid?: string;
+    manualEntry?: string;
+    manualEntryDesc?: string;
+    manualFoodName?: string;
+    manualFoodNameHint?: string;
+    addManually?: string;
+    addToMeal?: string;
   };
 
   // Workout Screen

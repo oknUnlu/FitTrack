@@ -128,8 +128,30 @@ export async function purchaseSubscription(productId: string): Promise<string | 
 }
 
 /**
- * Restore previous purchases.
- * Returns true if premium was restored.
+ * IAP-backed plan types — the ones that come from Google Play.
+ * Non-IAP plans ('promo', 'trial', 'referral') must never be overwritten
+ * or cleared by Play Billing logic, because the Play Store has no record
+ * of them.
+ */
+const IAP_PLANS: readonly string[] = ['monthly', 'quarterly', 'yearly'];
+
+/**
+ * Restore previous purchases — SAFE VERSION (CRITICAL, used on app startup).
+ *
+ * This function NEVER clears premium, because:
+ *   - A promo / trial / referral user has no Google Play purchase, so
+ *     `getAvailablePurchases()` returns empty for them. Clearing in that
+ *     case wipes the user's legit premium every app launch.
+ *   - Even paid users can see transient empty responses (Play Store cache
+ *     sync delay, offline startup, network flake). Downgrading them to
+ *     free on a false negative is unacceptable.
+ *
+ * Behaviour:
+ *   - If we find an active IAP subscription → refresh local premium state
+ *     with it (overwrites any non-IAP plan; IAP is more authoritative).
+ *   - Otherwise → leave state untouched.
+ *
+ * Returns true only when an IAP subscription was found and applied.
  */
 export async function restorePurchases(): Promise<boolean> {
   const iap = getIap();
@@ -139,20 +161,21 @@ export async function restorePurchases(): Promise<boolean> {
     const purchases = await iap.getAvailablePurchases();
 
     if (purchases && purchases.length > 0) {
-      // Find the most recent active subscription
       const activeSub = purchases.find((p: any) =>
-        ALL_PRODUCT_IDS.includes(p.productId)
+        ALL_PRODUCT_IDS.includes(p.productId),
       );
 
       if (activeSub) {
         const plan = getPlanFromProductId(activeSub.productId);
         const expiresAt = Date.now() + getDurationDays(plan) * 24 * 60 * 60 * 1000;
-        usePremiumStore.getState().setPremium(plan, expiresAt);
+        await usePremiumStore.getState().setPremium(plan, expiresAt);
         return true;
       }
     }
 
-    usePremiumStore.getState().clearPremium();
+    // DO NOT clear here. The user may legitimately be on a non-IAP plan
+    // (promo/trial/referral), or Play Store may have returned empty due
+    // to a transient sync issue. Silently return false.
     return false;
   } catch (e) {
     if (__DEV__) console.warn('GoogleBilling: Restore failed', e);
@@ -161,8 +184,53 @@ export async function restorePurchases(): Promise<boolean> {
 }
 
 /**
- * Check current subscription status.
- * Call on app launch to sync.
+ * Explicit user-initiated restore — called when the user taps "Restore
+ * Purchases" in the paywall. Same safety rule as above: we NEVER clear a
+ * non-IAP plan. We return a structured result so the UI can tell the user
+ * whether anything was actually restored.
+ */
+export async function restorePurchasesInteractive(): Promise<{
+  restored: boolean;
+  reason?: 'no-billing' | 'no-purchases' | 'error';
+}> {
+  const iap = getIap();
+  if (!iap || !isInitialized) return { restored: false, reason: 'no-billing' };
+
+  try {
+    const purchases = await iap.getAvailablePurchases();
+    const activeSub = (purchases || []).find((p: any) =>
+      ALL_PRODUCT_IDS.includes(p.productId),
+    );
+
+    if (activeSub) {
+      const plan = getPlanFromProductId(activeSub.productId);
+      const expiresAt = Date.now() + getDurationDays(plan) * 24 * 60 * 60 * 1000;
+      await usePremiumStore.getState().setPremium(plan, expiresAt);
+      return { restored: true };
+    }
+
+    // No active IAP found. Check if the user currently has an IAP plan
+    // locally cached — if so, Play Store now says they don't, which
+    // usually means the subscription was cancelled & grace period ended.
+    // Only in that narrow case do we clear; never touch non-IAP plans.
+    const current = usePremiumStore.getState();
+    if (current.isPremium && IAP_PLANS.includes(current.plan)) {
+      await usePremiumStore.getState().clearPremium();
+    }
+    return { restored: false, reason: 'no-purchases' };
+  } catch (e) {
+    if (__DEV__) console.warn('GoogleBilling: Interactive restore failed', e);
+    return { restored: false, reason: 'error' };
+  }
+}
+
+/**
+ * Check current subscription status on app launch.
+ *
+ * IMPORTANT: this is the silent/background sync path. It MUST NOT clear
+ * premium under any circumstance — transient Play Store responses (empty
+ * result on cold start, offline launch) used to wipe promo / trial /
+ * referral premium on every restart.
  */
 export async function checkSubscriptionStatus(): Promise<boolean> {
   return restorePurchases();
