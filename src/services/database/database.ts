@@ -5,7 +5,13 @@ let db: any = null;
 let initPromise: Promise<void> | null = null;
 let initFailed = false;
 
-export async function getDatabase(): Promise<any> {
+/**
+ * Internal: just open the SQLite handle. Used by both initDatabase (which
+ * needs the raw handle to run DDL on) and the public getDatabase wrapper.
+ * Does NOT run migrations — callers that need a *ready* DB go through
+ * getDatabase() instead.
+ */
+async function openDb(): Promise<any> {
   if (Platform.OS === 'web') {
     throw new Error('SQLite is not available on web');
   }
@@ -14,6 +20,33 @@ export async function getDatabase(): Promise<any> {
     db = await SQLite.openDatabaseAsync('fittrack.db');
   }
   return db;
+}
+
+/**
+ * Public DB accessor used by every DAO. CRITICAL: this awaits the
+ * initDatabase() promise before returning the handle, so DAOs can never
+ * see a half-initialised database.
+ *
+ * Why this matters: App.tsx flips `isLoading` to false as soon as the
+ * onboarding state finishes loading from AsyncStorage, which happens
+ * BEFORE initDatabase() resolves. The navigator then mounts and the
+ * Dashboard / Progress screens fire their useEffect data loaders
+ * immediately. Without this gate, those DAO calls hit a SQLite handle
+ * whose tables haven't been CREATEd yet, and the Android native module
+ * surfaces the failure as `NullPointerException` on prepareAsync — the
+ * exact crash users were seeing on cold-start.
+ *
+ * initDatabase() is idempotent (de-duped via initPromise), so calling it
+ * from every DAO is essentially free after the first call.
+ */
+export async function getDatabase(): Promise<any> {
+  if (Platform.OS === 'web') {
+    throw new Error('SQLite is not available on web');
+  }
+  // Make sure migrations have run. After the first call this resolves
+  // synchronously off the cached initPromise.
+  await initDatabase();
+  return openDb();
 }
 
 export function isDatabaseReady(): boolean {
@@ -49,7 +82,9 @@ export async function initDatabase(): Promise<void> {
   if (initPromise) return initPromise;
   initPromise = (async () => {
     try {
-      const database = await getDatabase();
+      // Use openDb() here, NOT getDatabase() — getDatabase() awaits
+      // initDatabase() and would deadlock the init promise on itself.
+      const database = await openDb();
       await execStatements(database, CREATE_TABLES_SQL);
 
       // Migration: add category column if it doesn't exist

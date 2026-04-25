@@ -10,6 +10,7 @@ import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../
 import { searchFoodItems, FoodItem, getFoodByBarcode } from '../../services/database/foodDao';
 import { getProductByBarcode } from '../../services/api/openFoodFacts';
 import { insertBarcodeSubmission, checkAndPromoteBarcode, getVerifiedProductFromCloud } from '../../services/database/barcodeDao';
+import { searchFoodsInCloud } from '../../services/firebase/foodFirestore';
 import { getDeviceToken } from '../../services/api/apiClient';
 import { BarcodeScanner } from '../../components/BarcodeScanner';
 import { recognizeFoodFromImage, RecognizedFood } from '../../services/ai/foodRecognition';
@@ -117,21 +118,48 @@ export function CalorieScreen() {
   useEffect(() => { loadMeals(); }, [loadMeals]);
 
 
+  // Tracks the query that kicked off the most recent search so async
+  // results from stale keystrokes can't stomp on fresher ones. Without
+  // this, a slow Firestore round-trip for "piz" could overwrite the
+  // local results already rendered for "pizza".
+  const searchSeqRef = useRef(0);
+
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
-    if (query.length >= 2) {
-      try {
-        if (Platform.OS === 'web') {
-          setSearchResults(searchFoodsLocal(query));
-        } else {
-          const results = await searchFoodItems(query);
-          setSearchResults(results);
-        }
-      } catch (e) {
-        if (__DEV__) console.warn('searchFoodItems failed:', e);
-      }
-    } else {
+    if (query.length < 2) {
       setSearchResults([]);
+      return;
+    }
+
+    const mySeq = ++searchSeqRef.current;
+    try {
+      let results: FoodItem[] = [];
+      if (Platform.OS === 'web') {
+        results = searchFoodsLocal(query);
+      } else {
+        results = await searchFoodItems(query);
+      }
+      // Publish local results immediately — they're fast, the user
+      // shouldn't have to wait for a network round-trip for the common
+      // case where the food is already cached.
+      if (mySeq === searchSeqRef.current) {
+        setSearchResults(results);
+      }
+
+      // Cloud fallback: if local returned nothing, hit Firestore's
+      // `food_library` collection. The seed script populates this with
+      // 5000+ verified entries (USDA + curated Turkish). Hits are
+      // cached back into local SQLite so the next search short-circuits.
+      if (results.length === 0) {
+        const cloudResults = await searchFoodsInCloud(query);
+        // Only render if the user is still looking for the same query —
+        // otherwise they've already moved on.
+        if (mySeq === searchSeqRef.current && cloudResults.length > 0) {
+          setSearchResults(cloudResults);
+        }
+      }
+    } catch (e) {
+      if (__DEV__) console.warn('searchFoodItems failed:', e);
     }
   }, []);
 

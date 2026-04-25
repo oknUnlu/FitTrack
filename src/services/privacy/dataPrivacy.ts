@@ -60,10 +60,27 @@ async function dumpTable(db: any, table: string): Promise<any[]> {
   }
 }
 
-function tryRequire(mod: string): any {
+// Metro (the React Native bundler) does static dependency analysis and will
+// reject `require(variable)` at bundle time with
+// "Invalid call at line N: require(mod)". Only string-literal requires can
+// be resolved into the bundle graph. That means we can't have a single
+// `tryRequire(mod)` helper — we need one dedicated helper per module so the
+// bundler sees a literal path it can trace. The try/catch still lets us
+// degrade gracefully at runtime if the module is missing (e.g. xlsx failing
+// to load on web builds, or expo-sharing stripped from a managed workflow).
+function tryRequireXlsx(): any {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require(mod);
+    return require('xlsx');
+  } catch {
+    return null;
+  }
+}
+
+function tryRequireSharing(): any {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require('expo-sharing');
   } catch {
     return null;
   }
@@ -142,7 +159,7 @@ export async function exportUserData(): Promise<string | null> {
       }
     } catch {}
 
-    const XLSX = tryRequire('xlsx');
+    const XLSX = tryRequireXlsx();
 
     // Web: no filesystem — return the JSON so the UI can fall back to a
     // browser download link.
@@ -215,7 +232,7 @@ export async function exportUserData(): Promise<string | null> {
  */
 async function tryShare(path: string, mimeType: string): Promise<void> {
   try {
-    const Sharing: any = tryRequire('expo-sharing');
+    const Sharing: any = tryRequireSharing();
     if (Sharing && typeof Sharing.isAvailableAsync === 'function' && (await Sharing.isAvailableAsync())) {
       await Sharing.shareAsync(path, {
         mimeType,
