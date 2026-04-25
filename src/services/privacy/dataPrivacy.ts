@@ -119,7 +119,7 @@ export async function exportUserData(): Promise<string | null> {
 
     // Summary sheet
     const summaryRows: Array<{ Alan: string; Deger: any }> = [
-      { Alan: 'Uygulama', Deger: 'FitTrack - AI Fitness Koç' },
+      { Alan: 'Uygulama', Deger: 'FitTrack: Kalori & Fitness AI' },
       { Alan: 'Export Versiyonu', Deger: 2 },
       { Alan: 'Export Tarihi', Deger: new Date().toISOString() },
       { Alan: 'Platform', Deger: Platform.OS },
