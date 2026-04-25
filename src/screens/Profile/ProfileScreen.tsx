@@ -21,6 +21,7 @@ import {
 } from '../../services/notifications/notificationService';
 import { validatePromoCode } from '../../services/api/promoService';
 import { exportUserData, deleteAccount } from '../../services/privacy/dataPrivacy';
+import { useConsentStore, type ConsentKey } from '../../store/consentStore';
 
 const NOTIF_MEAL_KEY = 'pref_meal_reminder';
 const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
@@ -47,6 +48,24 @@ export function ProfileScreen() {
   const premiumPlan = usePremiumStore((s) => s.plan);
   const premiumExpiresAt = usePremiumStore((s) => s.expiresAt);
   const setPremium = usePremiumStore((s) => s.setPremium);
+
+  // Granular privacy preferences (optional consents). Required consents
+  // (privacyPolicy, termsOfService, kvkk, medicalDisclaimerAcknowledged)
+  // are captured during onboarding and cannot be revoked from here — they
+  // are a precondition for using the app at all. The six toggles below
+  // map to KVKK m.5/m.6 + GDPR Art. 6/9 optional bases.
+  const consents = useConsentStore((s) => s.consents);
+  const setConsent = useConsentStore((s) => s.setConsent);
+  const togglePrivacyConsent = useCallback(
+    async (key: ConsentKey, value: boolean) => {
+      try {
+        await setConsent(key, value);
+      } catch (e) {
+        if (__DEV__) console.warn('setConsent failed:', key, e);
+      }
+    },
+    [setConsent]
+  );
 
   const GOAL_LABELS: Record<string, string> = {
     lose: t.profile.loseWeight, gain: t.profile.gainWeight, muscle: t.profile.buildMuscle, maintain: t.profile.maintainWeight,
@@ -312,6 +331,100 @@ export function ProfileScreen() {
         </List.Section>
       </Card>
 
+      {/* Privacy preferences — granular optional consents (KVKK m.5 / GDPR Art. 6/9).
+          Pulls labels from the same `legal.consent` i18n bundle the standalone
+          ConsentScreen used to render, so re-translation is centralized. */}
+      {(() => {
+        const L = (t as any)?.legal?.consent || {};
+        return (
+          <Card style={styles.card} mode="elevated">
+            <Card.Content style={{ paddingBottom: 0 }}>
+              <Text style={styles.sectionLabel}>
+                {(t as any).profile?.privacyPreferences || 'Gizlilik Tercihleri'}
+              </Text>
+              <Text style={styles.privacyHint}>
+                {(t as any).profile?.privacyPreferencesHint ||
+                  'İzinleri istediğiniz zaman değiştirebilirsiniz. Değişiklikler hemen uygulanır.'}
+              </Text>
+            </Card.Content>
+            <List.Section style={{ marginTop: 0 }}>
+              <List.Item
+                title={L.aiDataSharing || 'AI Veri Paylaşımı'}
+                description={L.aiDataSharingDesc || ''}
+                descriptionNumberOfLines={3}
+                left={(props) => <List.Icon {...props} icon="robot" />}
+                right={() => (
+                  <Switch
+                    value={!!consents.aiDataSharing?.granted}
+                    onValueChange={(v) => togglePrivacyConsent('aiDataSharing', v)}
+                  />
+                )}
+              />
+              <List.Item
+                title={L.healthData || 'Sağlık Verileri'}
+                description={L.healthDataDesc || ''}
+                descriptionNumberOfLines={3}
+                left={(props) => <List.Icon {...props} icon="heart-pulse" />}
+                right={() => (
+                  <Switch
+                    value={!!consents.healthData?.granted}
+                    onValueChange={(v) => togglePrivacyConsent('healthData', v)}
+                  />
+                )}
+              />
+              <List.Item
+                title={L.analytics || 'Analitik'}
+                description={L.analyticsDesc || ''}
+                descriptionNumberOfLines={2}
+                left={(props) => <List.Icon {...props} icon="chart-line" />}
+                right={() => (
+                  <Switch
+                    value={!!consents.analytics?.granted}
+                    onValueChange={(v) => togglePrivacyConsent('analytics', v)}
+                  />
+                )}
+              />
+              <List.Item
+                title={L.crashReports || 'Çökme Raporları'}
+                description={L.crashReportsDesc || ''}
+                descriptionNumberOfLines={2}
+                left={(props) => <List.Icon {...props} icon="alert-circle-outline" />}
+                right={() => (
+                  <Switch
+                    value={!!consents.crashReports?.granted}
+                    onValueChange={(v) => togglePrivacyConsent('crashReports', v)}
+                  />
+                )}
+              />
+              <List.Item
+                title={L.marketing || 'Pazarlama İletişimi'}
+                description={L.marketingDesc || ''}
+                descriptionNumberOfLines={2}
+                left={(props) => <List.Icon {...props} icon="email-outline" />}
+                right={() => (
+                  <Switch
+                    value={!!consents.marketing?.granted}
+                    onValueChange={(v) => togglePrivacyConsent('marketing', v)}
+                  />
+                )}
+              />
+              <List.Item
+                title={L.personalizedAds || 'Kişiselleştirilmiş Reklam'}
+                description={L.personalizedAdsDesc || ''}
+                descriptionNumberOfLines={2}
+                left={(props) => <List.Icon {...props} icon="bullhorn-outline" />}
+                right={() => (
+                  <Switch
+                    value={!!consents.personalizedAds?.granted}
+                    onValueChange={(v) => togglePrivacyConsent('personalizedAds', v)}
+                  />
+                )}
+              />
+            </List.Section>
+          </Card>
+        );
+      })()}
+
       {/* Privacy: export + delete (KVKK/GDPR rights) */}
       <Card style={styles.card} mode="elevated">
         <List.Section>
@@ -567,4 +680,12 @@ const styles = StyleSheet.create({
   // Macro Goals
   sectionLabel: { fontWeight: 'bold', fontSize: 13, marginBottom: spacing.sm, color: colors.textSecondary },
   macroRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.xs },
+
+  // Privacy preferences
+  privacyHint: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    marginBottom: spacing.xs,
+    lineHeight: 16,
+  },
 });

@@ -7,9 +7,7 @@ import { useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OnboardingScreen } from '../screens/Onboarding/OnboardingScreen';
-import { ConsentScreen } from '../screens/Legal/ConsentScreen';
 import { useUserStore } from '../store/userStore';
-import { useConsentStore } from '../store/consentStore';
 import { DashboardScreen } from '../screens/Dashboard/DashboardScreen';
 import { CalorieScreen } from '../screens/Calorie/CalorieScreen';
 import { WorkoutScreen } from '../screens/Workout/WorkoutScreen';
@@ -32,7 +30,6 @@ import { KvkkNoticeScreen } from '../screens/Legal/KvkkNoticeScreen';
 import { useLanguage } from '../i18n';
 
 export type RootStackParamList = {
-  Consent: undefined;
   Onboarding: undefined;
   MainTabs: undefined;
   AICoach: undefined;
@@ -123,21 +120,14 @@ function MainTabs() {
 function AppStack() {
   const { t } = useLanguage();
   const isOnboarded = useUserStore((s) => s.isOnboarded);
-  const hasConsent = useConsentStore((s) => s.hasCompletedInitialConsent());
-  const refreshConsents = useConsentStore((s) => s.loadConsents);
 
-  // Render the consent gate first. Wrapped in a memoized child so we can
-  // trigger a re-render after acceptance.
-  const ConsentGate = React.useCallback(
-    () => <ConsentScreen onAccept={() => refreshConsents()} />,
-    [refreshConsents]
-  );
-
+  // Single gate: onboarding. The standalone ConsentScreen has been retired
+  // — required consents (privacy policy, ToS, KVKK aydınlatma, medical
+  // disclaimer) are now captured via click-to-consent on the welcome step
+  // of OnboardingScreen, with optional preferences exposed in Profile.
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!hasConsent ? (
-        <Stack.Screen name="Consent" component={ConsentGate} />
-      ) : !isOnboarded ? (
+      {!isOnboarded ? (
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animationTypeForReplace: 'push' }} />
       ) : null}
       <Stack.Screen name="MainTabs" component={MainTabs} />
@@ -244,10 +234,9 @@ const linking: any = {
 
 export function AppNavigation() {
   const isOnboarded = useUserStore((s) => s.isOnboarded);
-  const hasConsent = useConsentStore((s) => s.hasCompletedInitialConsent());
   return (
     <NavigationContainer
-      key={`${hasConsent ? 'c' : 'nc'}-${isOnboarded ? 'on' : 'off'}`}
+      key={isOnboarded ? 'on' : 'off'}
       linking={linking}
     >
       <AppStack />

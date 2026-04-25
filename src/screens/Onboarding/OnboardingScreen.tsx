@@ -9,11 +9,13 @@ import {
   Platform,
   Alert,
   Animated,
+  Linking,
 } from 'react-native';
 import { Text, TextInput, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserStore } from '../../store/userStore';
+import { useConsentStore } from '../../store/consentStore';
 import { insertUser } from '../../services/database/userDao';
 import {
   calculateBMR,
@@ -25,6 +27,13 @@ import {
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { Logo } from '../../components/Logo';
+
+// Legal links — same hosted policy URLs the standalone ConsentScreen used.
+// Keeping these inline (not from i18n) so the URL itself never gets
+// localised by accident; only the link labels are translated.
+const PRIVACY_URL = 'https://fittrack-a958c.web.app/privacy';
+const TERMS_URL = 'https://fittrack-a958c.web.app/terms';
+const KVKK_URL = 'https://fittrack-a958c.web.app/kvkk';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -40,6 +49,13 @@ export function OnboardingScreen() {
   const { t } = useLanguage();
   const setOnboarded = useUserStore((s) => s.setOnboarded);
   const userId = useUserStore((s) => s.userId);
+  // Consent recording is folded into onboarding now — there is no separate
+  // ConsentScreen anymore. Tapping "Hadi Başlayalım" on welcome counts as
+  // the unambiguous affirmative action required by GDPR Art. 7 / KVKK
+  // Madde 5, provided the disclosure text + policy links are visible above
+  // the button (which they are; see renderWelcome).
+  const setConsents = useConsentStore((s) => s.setConsents);
+  const setConsentAge = useConsentStore((s) => s.setAge);
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
@@ -111,6 +127,15 @@ export function OnboardingScreen() {
         );
         return;
       }
+      // Persist the verified age to the consent store. This used to be
+      // collected separately on the standalone ConsentScreen via a
+      // stepper; now that consent is folded into onboarding, the age
+      // attestation lives here. Fire-and-forget: we don't await because
+      // step transitions shouldn't block on AsyncStorage and the next
+      // step already validated everything we need.
+      setConsentAge(parsedAge).catch((e) => {
+        if (__DEV__) console.warn('consentStore.setAge failed:', e);
+      });
     }
     if (step === 2) {
       if (!height.trim() || !weight.trim()) {
@@ -151,6 +176,36 @@ export function OnboardingScreen() {
 
   const goBack = () => {
     if (step > 0) animateTransition(step - 1);
+  };
+
+  // Welcome → Personal info transition. Records the four KVKK/GDPR
+  // mandatory consents (Privacy Policy, ToS, KVKK aydınlatma, medical
+  // disclaimer) before any personal data is collected on subsequent steps.
+  // The disclosure text + policy links shown directly above the button
+  // satisfy the prior-information duty (KVKK Madde 10 / GDPR Art. 13).
+  const handleStartFromWelcome = async () => {
+    try {
+      await setConsents({
+        privacyPolicy: true,
+        termsOfService: true,
+        kvkk: true,
+        medicalDisclaimerAcknowledged: true,
+      });
+    } catch (e) {
+      if (__DEV__) console.warn('Welcome consent persist failed:', e);
+      // Non-fatal — the user can still proceed; the consent record will
+      // be retried on next state mutation. We do NOT block onboarding on
+      // an AsyncStorage write error.
+    }
+    animateTransition(1);
+  };
+
+  const openLegalUrl = async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(t.common.error, (t as any).legal?.linkOpenError || 'Bağlantı açılamadı.');
+    }
   };
 
   const handleFinish = async () => {
@@ -233,27 +288,60 @@ export function OnboardingScreen() {
     );
   };
 
-  const renderWelcome = () => (
-    <View style={styles.welcomeContainer}>
-      <View style={styles.welcomeIconContainer}>
-        <Logo size={80} />
-      </View>
-      <Text style={styles.welcomeTitle}>{t.onboarding.welcome}</Text>
-      <Text style={styles.welcomeSubtitle}>{t.onboarding.welcomeSubtitle}</Text>
+  const renderWelcome = () => {
+    // Legal-disclosure strings — fall back to Turkish defaults if the
+    // active locale doesn't ship onboarding.legal.* keys. The text MUST
+    // be visible above the action button so tapping it is informed
+    // consent (GDPR Art. 7 / KVKK Madde 5).
+    const L = (t as any)?.onboarding?.legal || {};
+    const disclosureText =
+      L.disclosure ||
+      'Devam ederek 13 yaşın üzerinde olduğunu beyan eder; Gizlilik Politikası, Kullanım Şartları ve KVKK Aydınlatma Metni\'ni okuduğunu ve kabul ettiğini onaylarsın. Bu uygulama tıbbi tavsiye, teşhis veya tedavi yerine geçmez — sağlık kararların için hekim/diyetisyenine danış.';
+    const lblPrivacy = L.privacyPolicy || 'Gizlilik Politikası';
+    const lblTerms = L.termsOfService || 'Kullanım Şartları';
+    const lblKvkk = L.kvkk || 'KVKK Aydınlatma Metni';
 
-      <View style={styles.welcomeFeatures}>
-        <FeatureItem icon="fire" text={t.onboarding.dailyCalories} />
-        <FeatureItem icon="food-apple" text={t.onboarding.protein + ' / ' + t.onboarding.carbs + ' / ' + t.onboarding.fat} />
-        <FeatureItem icon="water" text={t.onboarding.water} />
-        <FeatureItem icon="dumbbell" text={t.onboarding.stepGoal} />
-      </View>
+    return (
+      <View style={styles.welcomeContainer}>
+        <View style={styles.welcomeIconContainer}>
+          <Logo size={80} />
+        </View>
+        <Text style={styles.welcomeTitle}>{t.onboarding.welcome}</Text>
+        <Text style={styles.welcomeSubtitle}>{t.onboarding.welcomeSubtitle}</Text>
 
-      <TouchableOpacity style={styles.primaryButton} onPress={() => animateTransition(1)} activeOpacity={0.8}>
-        <Text style={styles.primaryButtonText}>{t.onboarding.letsStart}</Text>
-        <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
-      </TouchableOpacity>
-    </View>
-  );
+        <View style={styles.welcomeFeatures}>
+          <FeatureItem icon="fire" text={t.onboarding.dailyCalories} />
+          <FeatureItem icon="food-apple" text={t.onboarding.protein + ' / ' + t.onboarding.carbs + ' / ' + t.onboarding.fat} />
+          <FeatureItem icon="water" text={t.onboarding.water} />
+          <FeatureItem icon="dumbbell" text={t.onboarding.stepGoal} />
+        </View>
+
+        {/* Consent disclosure — must render BEFORE the action button so
+            the user has read it by the time they tap "Hadi Başlayalım". */}
+        <View style={styles.legalBox}>
+          <Text style={styles.legalText}>{disclosureText}</Text>
+          <View style={styles.legalLinkRow}>
+            <TouchableOpacity onPress={() => openLegalUrl(PRIVACY_URL)} hitSlop={8}>
+              <Text style={styles.legalLink}>{lblPrivacy}</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalLinkSep}>·</Text>
+            <TouchableOpacity onPress={() => openLegalUrl(TERMS_URL)} hitSlop={8}>
+              <Text style={styles.legalLink}>{lblTerms}</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalLinkSep}>·</Text>
+            <TouchableOpacity onPress={() => openLegalUrl(KVKK_URL)} hitSlop={8}>
+              <Text style={styles.legalLink}>{lblKvkk}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.primaryButton} onPress={handleStartFromWelcome} activeOpacity={0.8}>
+          <Text style={styles.primaryButtonText}>{t.onboarding.letsStart}</Text>
+          <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const renderPersonalInfo = () => (
     <View style={styles.formContainer}>
@@ -697,6 +785,39 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 15,
     color: '#555',
+  },
+
+  // Legal disclosure on welcome step (replaces standalone ConsentScreen).
+  // Kept low-contrast so it reads as fine print but stays accessible —
+  // 12pt with adequate line-height clears WCAG AA on the chosen colours.
+  legalBox: {
+    width: '100%',
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  legalText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  legalLinkRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legalLink: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  legalLinkSep: {
+    fontSize: 12,
+    color: '#999',
   },
 
   // Form
