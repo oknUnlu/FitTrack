@@ -64,6 +64,8 @@ export async function insertBarcodeSubmission(
       isCustom: true,
       isFavorite: false,
       source: 'manual',
+      category: null,
+      commonPortions: null,
     };
     await insertFoodItem(cached);
   } catch {
@@ -132,6 +134,8 @@ export async function getVerifiedProductFromCloud(barcode: string): Promise<Food
       isCustom: false,
       isFavorite: false,
       source: 'community',
+      category: null,
+      commonPortions: null,
     };
 
     // Cache locally for offline access
@@ -181,6 +185,8 @@ export async function checkAndPromoteBarcode(barcode: string): Promise<boolean> 
     isCustom: false,
     isFavorite: false,
     source: 'community',
+    category: null,
+    commonPortions: null,
   };
 
   await insertFoodItem(food);

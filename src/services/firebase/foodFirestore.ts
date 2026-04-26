@@ -8,7 +8,7 @@ import {
   limit as fbLimit,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './config';
-import { FoodItem, insertFoodItem } from '../database/foodDao';
+import { FoodItem, FoodPortion, insertFoodItem } from '../database/foodDao';
 
 /**
  * Cloud food library — an "endless kitchen" hosted in Firestore that the
@@ -58,6 +58,13 @@ export interface CloudFoodDoc {
   search_tokens: string[];
   verified: boolean;
   updated_at: number;
+  /**
+   * Hand-curated household-measure presets shown as quick-pick chips in the
+   * quantity dialog. Each entry maps a localized label like "1 dilim" or
+   * "1 büyük bardak" to the gram/ml value used to compute macros. Optional —
+   * foods without curated presets fall back to category-based defaults.
+   */
+  common_portions?: FoodPortion[] | null;
 }
 
 /**
@@ -87,6 +94,15 @@ function normalizeToken(s: string): string {
 }
 
 function docToFoodItem(d: CloudFoodDoc): FoodItem {
+  // Filter out malformed portion entries — Firestore is schemaless so a
+  // typo in the seed script could otherwise sneak a NaN into the meal log.
+  const portions: FoodPortion[] | null = Array.isArray(d.common_portions)
+    ? d.common_portions
+        .filter(
+          (p): p is FoodPortion =>
+            !!p && typeof p.label === 'string' && typeof p.grams === 'number' && p.grams > 0
+        )
+    : null;
   return {
     id: `cloud_${d.id}`,
     name: d.name,
@@ -103,6 +119,8 @@ function docToFoodItem(d: CloudFoodDoc): FoodItem {
     isCustom: false,
     isFavorite: false,
     source: 'cloud',
+    category: d.category ?? null,
+    commonPortions: portions && portions.length > 0 ? portions : null,
   };
 }
 

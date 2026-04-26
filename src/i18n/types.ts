@@ -106,16 +106,53 @@ export interface Translations {
     aiRecognition: string;
     // Quantity / manual entry (optional for backwards compat)
     quantityTitle?: string;
+    quantityPickerTitle?: string;
     quantityAmount?: string;
     quantityUnit?: string;
     quantityPreview?: string;
     quantityInvalid?: string;
+    useManualMode?: string;
+    usePresetMode?: string;
     manualEntry?: string;
     manualEntryDesc?: string;
     manualFoodName?: string;
     manualFoodNameHint?: string;
     addManually?: string;
     addToMeal?: string;
+    /**
+     * Household-measure portion preset labels for the quantity picker. Keys
+     * are the canonical preset names from `src/utils/portions.ts`. Optional
+     * across the bundle — when a locale lacks an entry the utility falls
+     * back to the Turkish source string.
+     */
+    portions?: {
+      half_slice?: string;
+      slice?: string;
+      two_slices?: string;
+      three_slices?: string;
+      whole?: string;
+      small_glass?: string;
+      large_glass?: string;
+      bottle_500ml?: string;
+      bottle_1l?: string;
+      half_bowl?: string;
+      bowl?: string;
+      large_bowl?: string;
+      two_bowls?: string;
+      tea_spoon?: string;
+      table_spoon?: string;
+      two_table_spoons?: string;
+      small_handful?: string;
+      one_handful?: string;
+      one_package?: string;
+      small_piece?: string;
+      medium_piece?: string;
+      large_piece?: string;
+      half_portion?: string;
+      one_portion?: string;
+      two_portions?: string;
+      three_portions?: string;
+    };
   };
 
   // Workout Screen

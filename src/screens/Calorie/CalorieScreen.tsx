@@ -8,6 +8,7 @@ import { useMealStore } from '../../store/mealStore';
 import { getUserById, User } from '../../services/database/userDao';
 import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../services/database/mealDao';
 import { searchFoodItems, FoodItem, getFoodByBarcode } from '../../services/database/foodDao';
+import { getPortionPresets, pickDefaultPreset, type ResolvedPortion } from '../../utils/portions';
 import { getProductByBarcode } from '../../services/api/openFoodFacts';
 import { insertBarcodeSubmission, checkAndPromoteBarcode, getVerifiedProductFromCloud } from '../../services/database/barcodeDao';
 import { searchFoodsInCloud } from '../../services/firebase/foodFirestore';
@@ -37,6 +38,8 @@ function searchFoodsLocal(query: string, limit = 20): FoodItem[] {
       fiber: f.fiber, sugar: f.sugar, barcode: null,
       servingSize: f.servingSize, servingUnit: f.servingUnit,
       isCustom: false, isFavorite: false, source: 'local',
+      category: f.category ?? null,
+      commonPortions: Array.isArray(f.commonPortions) ? f.commonPortions : null,
     }));
 }
 
@@ -93,8 +96,18 @@ export function CalorieScreen() {
   // this dialog so the user can pick exactly how many grams they ate.
   // Without this, every meal is silently logged at the food's default
   // serving size, which wildly under/overcounts calories.
+  //
+  // The dialog has two modes:
+  //   - chip mode (default): household-measure quick picks ("1 dilim",
+  //     "1 kase", "1 büyük bardak") computed by `getPortionPresets` from
+  //     the food's curated portions or category-based defaults.
+  //   - manual mode: classic gram TextInput, kept for power users / edge
+  //     foods. Toggled with a "Tam gramajı biliyorum" link.
   const [quantityDialogVisible, setQuantityDialogVisible] = useState(false);
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+  const [quantityPresets, setQuantityPresets] = useState<ResolvedPortion[]>([]);
+  const [selectedPortionIdx, setSelectedPortionIdx] = useState<number>(-1);
+  const [manualMode, setManualMode] = useState(false);
   const [quantityAmount, setQuantityAmount] = useState('');
 
 
@@ -163,17 +176,29 @@ export function CalorieScreen() {
     }
   }, []);
 
-  // Opens the quantity dialog pre-filled with the food's suggested
-  // serving size. The actual meal insert happens in
-  // `handleConfirmQuantity` after the user confirms a gram amount.
+  // Opens the quantity dialog. We compute the household-measure presets
+  // upfront (curated portions → category defaults → portion multipliers)
+  // and pre-select the one closest to the food's stated serving size, so
+  // the user can confirm with a single tap when the default is right.
+  // The actual meal insert happens in `handleConfirmQuantity` after the
+  // user picks a chip or manually overrides the gram amount.
   const handleAddFood = useCallback((food: FoodItem) => {
     Keyboard.dismiss();
     setSelectedFood(food);
-    // Default to the food's serving size (typically 100g), or 100g
-    // if none is provided. Kept as a string because TextInput binds
-    // to strings.
-    const defaultAmount = food.servingSize && food.servingSize > 0 ? food.servingSize : 100;
-    setQuantityAmount(String(defaultAmount));
+
+    const presets = getPortionPresets(food, t);
+    const defaultIdx = pickDefaultPreset(presets, food.servingSize);
+    setQuantityPresets(presets);
+    setSelectedPortionIdx(defaultIdx);
+    // Manual mode is opt-in — start with chip mode every time.
+    setManualMode(false);
+    // Seed the manual-mode input with the default preset's grams (or the
+    // food's serving size as a fallback) so the field isn't empty if the
+    // user toggles into manual mode.
+    const seedAmount =
+      defaultIdx >= 0 ? presets[defaultIdx].grams : food.servingSize && food.servingSize > 0 ? food.servingSize : 100;
+    setQuantityAmount(String(seedAmount));
+
     // Close any open modal so the dialog sits cleanly on top.
     setSearchVisible(false);
     setSearchQuery('');
@@ -181,13 +206,27 @@ export function CalorieScreen() {
     setAiModalVisible(false);
     setAiResults([]);
     setQuantityDialogVisible(true);
-  }, []);
+  }, [t]);
+
+  /**
+   * Resolves the gram amount currently selected in the dialog. In chip mode
+   * we trust the preset; in manual mode we parse the TextInput, accepting
+   * either "120" or "120,5" since Turkish locale uses commas. Returns NaN
+   * if the input is unusable, which the caller surfaces as an alert.
+   */
+  const resolveSelectedGrams = useCallback((): number => {
+    if (manualMode) {
+      return parseFloat(quantityAmount.replace(',', '.'));
+    }
+    const preset = quantityPresets[selectedPortionIdx];
+    return preset ? preset.grams : NaN;
+  }, [manualMode, quantityAmount, quantityPresets, selectedPortionIdx]);
 
   // Computes macros proportionally to the chosen gram amount (the
   // food object stores per-100g values) and inserts the meal log.
   const handleConfirmQuantity = useCallback(async () => {
     if (!selectedFood) return;
-    const grams = parseFloat(quantityAmount.replace(',', '.'));
+    const grams = resolveSelectedGrams();
     if (isNaN(grams) || grams <= 0) {
       Alert.alert('', t.calorie.quantityInvalid || 'Enter a valid amount');
       return;
@@ -216,11 +255,14 @@ export function CalorieScreen() {
       }
       setQuantityDialogVisible(false);
       setSelectedFood(null);
+      setQuantityPresets([]);
+      setSelectedPortionIdx(-1);
+      setManualMode(false);
       setQuantityAmount('');
     } catch (e) {
       if (__DEV__) console.warn('handleConfirmQuantity failed:', e);
     }
-  }, [selectedFood, quantityAmount, userId, date, activeMealType, loadMeals, t]);
+  }, [selectedFood, resolveSelectedGrams, userId, date, activeMealType, loadMeals, t, addWebMeal]);
 
   const handleDelete = useCallback(async (id: string) => {
     try {
@@ -286,6 +328,8 @@ export function CalorieScreen() {
           isCustom: false,
           isFavorite: false,
           source: 'openfoodfacts',
+          category: null,
+          commonPortions: null,
         };
         setBarcodeVisible(false);
         setBarcodeLoading(false);
@@ -344,6 +388,8 @@ export function CalorieScreen() {
       isCustom: true,
       isFavorite: false,
       source: 'manual',
+      category: null,
+      commonPortions: null,
     };
 
     setManualEntryVisible(false);
@@ -426,6 +472,8 @@ export function CalorieScreen() {
       isCustom: false,
       isFavorite: false,
       source: 'ai_recognition',
+      category: null,
+      commonPortions: null,
     };
     handleAddFood(foodItem);
     setAiModalVisible(false);
@@ -811,36 +859,90 @@ export function CalorieScreen() {
         </Dialog>
       </Portal>
 
-      {/* Quantity Dialog — asks the user how much of the selected
-          food they ate, then scales macros proportionally. */}
+      {/* Quantity Dialog — asks the user how much of the selected food they
+          ate. Default mode is a row of household-measure chips ("1 dilim",
+          "1 kase"); a "Tam gramajı biliyorum" toggle reveals a manual gram
+          TextInput for foods that don't fit a preset. Either way the
+          underlying gram amount is what gets logged so macro math stays
+          consistent with the per-100g reference values stored on FoodItem. */}
       <Portal>
         <Dialog
           visible={quantityDialogVisible}
           onDismiss={() => {
             setQuantityDialogVisible(false);
             setSelectedFood(null);
+            setQuantityPresets([]);
+            setSelectedPortionIdx(-1);
+            setManualMode(false);
             setQuantityAmount('');
           }}
         >
-          <Dialog.Title>{t.calorie.quantityTitle || 'Quantity'}</Dialog.Title>
-          <Dialog.Content style={{ gap: 8 }}>
+          <Dialog.Title>{(t as any).calorie?.quantityPickerTitle || t.calorie.quantityTitle || 'Ne kadar yedin?'}</Dialog.Title>
+          <Dialog.Content style={{ gap: 10 }}>
             {selectedFood && (
               <Text style={styles.quantityFoodName} numberOfLines={2}>
                 {selectedFood.nameTr || selectedFood.name}
               </Text>
             )}
-            <TextInput
-              label={`${t.calorie.quantityAmount || 'Amount'} (${t.calorie.quantityUnit || 'grams'})`}
-              value={quantityAmount}
-              onChangeText={setQuantityAmount}
-              keyboardType="numeric"
-              mode="outlined"
-              dense
-              maxLength={6}
-              right={<TextInput.Affix text="g" />}
-            />
+
+            {/* Chip grid — only shown in chip mode. */}
+            {!manualMode && quantityPresets.length > 0 && (
+              <View style={styles.portionChipRow}>
+                {quantityPresets.map((p, i) => {
+                  const active = i === selectedPortionIdx;
+                  return (
+                    <TouchableOpacity
+                      key={`${p.label}-${i}`}
+                      onPress={() => setSelectedPortionIdx(i)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      style={[
+                        styles.portionChip,
+                        active && {
+                          backgroundColor: theme.colors.primaryContainer,
+                          borderColor: theme.colors.primary,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.portionChipText,
+                          active && { color: theme.colors.primary, fontWeight: '600' },
+                        ]}
+                      >
+                        {p.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* Manual gram input — collapsed by default. */}
+            {manualMode && (
+              <TextInput
+                label={`${t.calorie.quantityAmount || 'Miktar'} (${t.calorie.quantityUnit || 'gram'})`}
+                value={quantityAmount}
+                onChangeText={setQuantityAmount}
+                keyboardType="numeric"
+                mode="outlined"
+                dense
+                maxLength={6}
+                right={<TextInput.Affix text={selectedFood?.servingUnit || 'g'} />}
+              />
+            )}
+
+            {/* Live preview — recomputed whenever the active preset or the
+                manual input changes. Mirrors the preview chip in the design
+                mockup; gives users immediate feedback on the calorie cost
+                of each portion option. */}
             {selectedFood && (() => {
-              const g = parseFloat((quantityAmount || '0').replace(',', '.'));
+              const g = (() => {
+                if (manualMode) return parseFloat((quantityAmount || '0').replace(',', '.'));
+                const preset = quantityPresets[selectedPortionIdx];
+                return preset ? preset.grams : NaN;
+              })();
               if (isNaN(g) || g <= 0) return null;
               const ratio = g / 100;
               const kcal = Math.round(selectedFood.calories * ratio);
@@ -850,33 +952,47 @@ export function CalorieScreen() {
               return (
                 <View style={styles.quantityPreview}>
                   <Text style={styles.quantityPreviewLabel}>
-                    {t.calorie.quantityPreview || 'Estimated'}
+                    {t.calorie.quantityPreview || 'Tahmini'}
                   </Text>
                   <Text style={styles.quantityPreviewKcal}>
                     {kcal} {t.common.kcal}
                   </Text>
                   <View style={styles.quantityPreviewRow}>
-                    <Text style={[styles.quantityPreviewMacro, { color: colors.protein }]}>
-                      P:{p}g
-                    </Text>
+                    <Text style={[styles.quantityPreviewMacro, { color: colors.protein }]}>P:{p}g</Text>
                     <Text style={styles.macroDivider}>&middot;</Text>
-                    <Text style={[styles.quantityPreviewMacro, { color: colors.carbs }]}>
-                      K:{c}g
-                    </Text>
+                    <Text style={[styles.quantityPreviewMacro, { color: colors.carbs }]}>K:{c}g</Text>
                     <Text style={styles.macroDivider}>&middot;</Text>
-                    <Text style={[styles.quantityPreviewMacro, { color: colors.fat }]}>
-                      Y:{f}g
-                    </Text>
+                    <Text style={[styles.quantityPreviewMacro, { color: colors.fat }]}>Y:{f}g</Text>
+                    <Text style={styles.macroDivider}>&middot;</Text>
+                    <Text style={styles.quantityPreviewMacro}>{Math.round(g)} {selectedFood.servingUnit || 'g'}</Text>
                   </View>
                 </View>
               );
             })()}
+
+            {/* Mode toggle — links into manual entry for power users, or
+                back to chips so a typo in manual mode doesn't trap them. */}
+            <TouchableOpacity
+              onPress={() => setManualMode((m) => !m)}
+              activeOpacity={0.6}
+              accessibilityRole="button"
+              style={styles.portionModeToggle}
+            >
+              <Text style={[styles.portionModeToggleText, { color: theme.colors.primary }]}>
+                {manualMode
+                  ? (t as any).calorie?.usePresetMode || 'Hazır porsiyonlara dön ▴'
+                  : (t as any).calorie?.useManualMode || 'Tam gramajı biliyorum ▾'}
+              </Text>
+            </TouchableOpacity>
           </Dialog.Content>
           <Dialog.Actions>
             <Button
               onPress={() => {
                 setQuantityDialogVisible(false);
                 setSelectedFood(null);
+                setQuantityPresets([]);
+                setSelectedPortionIdx(-1);
+                setManualMode(false);
                 setQuantityAmount('');
               }}
             >
@@ -1185,6 +1301,38 @@ const styles = StyleSheet.create({
   quantityPreviewMacro: {
     fontSize: 12,
     fontWeight: '600',
+  },
+
+  // Portion picker chips — household-measure quick selects shown above the
+  // preview ("1 dilim", "1 kase", "1 büyük bardak"). The active chip uses
+  // the theme's primaryContainer fill via inline style; default state is
+  // a thin neutral border so the row reads as a tag cloud, not buttons.
+  portionChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: spacing.xs,
+  },
+  portionChip: {
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.12)',
+    backgroundColor: 'transparent',
+  },
+  portionChipText: {
+    fontSize: 12,
+    color: colors.textPrimary,
+  },
+  portionModeToggle: {
+    alignSelf: 'center',
+    paddingVertical: 4,
+    marginTop: 2,
+  },
+  portionModeToggleText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 
   // Search

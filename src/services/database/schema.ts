@@ -32,7 +32,9 @@ export const CREATE_TABLES_SQL = `
     serving_unit TEXT NOT NULL,
     is_custom INTEGER NOT NULL DEFAULT 0,
     is_favorite INTEGER NOT NULL DEFAULT 0,
-    source TEXT NOT NULL
+    source TEXT NOT NULL,
+    category TEXT,
+    common_portions TEXT
   );
 
   CREATE TABLE IF NOT EXISTS meal_logs (

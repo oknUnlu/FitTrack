@@ -103,6 +103,21 @@ export async function initDatabase(): Promise<void> {
         // Column already exists, ignore
       }
 
+      // Migration: add category + common_portions columns to food_items so the
+      // portion picker can show household-measure chips ("1 dilim", "1 kase")
+      // instead of asking for raw grams. Both columns are nullable — existing
+      // local-seed foods stay valid while cloud-fetched foods bring richer data.
+      try {
+        await database.runAsync(`ALTER TABLE food_items ADD COLUMN category TEXT`);
+      } catch (_) {
+        // Column already exists, ignore
+      }
+      try {
+        await database.runAsync(`ALTER TABLE food_items ADD COLUMN common_portions TEXT`);
+      } catch (_) {
+        // Column already exists, ignore
+      }
+
       // Index on (barcode, device_id) — NOT unique. The composite primary
       // key `bs_${barcode}_${deviceId}` combined with `INSERT OR REPLACE`
       // in barcodeDao.ts already guarantees one row per (barcode, device).
