@@ -4,7 +4,6 @@ import { Text, Card, Searchbar, useTheme, Dialog, Portal, TextInput, Button } fr
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '../../store/userStore';
-import { useConsentStore } from '../../store/consentStore';
 import { useMealStore } from '../../store/mealStore';
 import { getUserById, User } from '../../services/database/userDao';
 import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../services/database/mealDao';
@@ -429,19 +428,6 @@ export function CalorieScreen() {
   }, []);
 
   const handlePhotoRecognition = useCallback(async () => {
-    // Consent gate before paywall — KVKK m.9 + GDPR Art. 7(3): if the user
-    // revoked AI data sharing in Profile, we MUST NOT send the photo to
-    // Gemini. Surface a friendly "go to settings" prompt instead.
-    const aiAllowed = !!useConsentStore.getState().consents.aiDataSharing?.granted;
-    if (!aiAllowed) {
-      Alert.alert(
-        (t as any).calorie?.aiDisabledTitle || 'AI özellikleri kapalı',
-        (t as any).calorie?.aiDisabledBody ||
-          'AI besin tanımayı kullanmak için Profil > Gizlilik\'ten "AI özelliklerini kullan"\'ı aç.',
-      );
-      return;
-    }
-
     if (!checkPremiumAccess('food_recognition')) return;
 
     const { allowed } = await checkDailyLimit('food_recognition');
