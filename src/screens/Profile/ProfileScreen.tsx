@@ -21,7 +21,6 @@ import {
 } from '../../services/notifications/notificationService';
 import { validatePromoCode } from '../../services/api/promoService';
 import { exportUserData, deleteAccount } from '../../services/privacy/dataPrivacy';
-import { useConsentStore, type ConsentKey } from '../../store/consentStore';
 import { resetAdConsent } from '../../services/ads/adService';
 
 export function ProfileScreen() {
@@ -46,24 +45,6 @@ export function ProfileScreen() {
   const premiumPlan = usePremiumStore((s) => s.plan);
   const premiumExpiresAt = usePremiumStore((s) => s.expiresAt);
   const setPremium = usePremiumStore((s) => s.setPremium);
-
-  // Granular privacy preferences (optional consents). Required consents
-  // (privacyPolicy, termsOfService, kvkk, medicalDisclaimerAcknowledged)
-  // are captured during onboarding and cannot be revoked from here — they
-  // are a precondition for using the app at all. The six toggles below
-  // map to KVKK m.5/m.6 + GDPR Art. 6/9 optional bases.
-  const consents = useConsentStore((s) => s.consents);
-  const setConsent = useConsentStore((s) => s.setConsent);
-  const togglePrivacyConsent = useCallback(
-    async (key: ConsentKey, value: boolean) => {
-      try {
-        await setConsent(key, value);
-      } catch (e) {
-        if (__DEV__) console.warn('setConsent failed:', key, e);
-      }
-    },
-    [setConsent]
-  );
 
   const GOAL_LABELS: Record<string, string> = {
     lose: t.profile.loseWeight, gain: t.profile.gainWeight, muscle: t.profile.buildMuscle, maintain: t.profile.maintainWeight,
@@ -329,77 +310,14 @@ export function ProfileScreen() {
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => (navigation as any).navigate('Terms')}
           />
-        </List.Section>
-      </Card>
-
-      {/* Privacy card — lean version after the audit.
-          We keep ONE real toggle (aiDataSharing) because KVKK m.9 + Art. 7(3)
-          legally require a one-tap revocation path for the cross-border AI
-          data transfer captured at onboarding. Health permissions and ad
-          personalisation are surfaced as deep-links: HealthKit / Health
-          Connect already enforce consent at the OS level, and Google's UMP
-          SDK keeps its own TCF v2.2 consent storage. Crash reports and
-          analytics are NOT shown here — they ride on legitimate-interest
-          basis and the right-to-object is documented in the privacy policy
-          as an email contact. Less surface, fewer dishonest toggles. */}
-      <Card style={styles.card} mode="elevated">
-        <Card.Content style={{ paddingBottom: 0 }}>
-          <Text style={styles.sectionLabel}>
-            {(t as any).profile?.privacyPreferences || 'Gizlilik'}
-          </Text>
-          <Text style={styles.privacyHint}>
-            {(t as any).profile?.privacyPreferencesHint ||
-              'Bu tercihleri istediğin zaman değiştirebilirsin.'}
-          </Text>
-        </Card.Content>
-        <List.Section style={{ marginTop: 0 }}>
+          {/* Reklam tercihleri — Google AdMob'un UMP TOS'u, kullanıcının
+              consent form'unu yeniden açabilmesini zorunlu kılıyor. Bu
+              satır o gerekliliği karşılıyor; bilinçli olarak Yasal kartının
+              içine yerleştirildi (Privacy/KVKK/Terms ile aynı tematik
+              bağlam) — ayrı bir "Gizlilik" kartı kurmadan tek satırla
+              compliance sağlanır. */}
           <List.Item
-            title={(t as any).profile?.aiDataSharingTitle || 'AI özelliklerini kullan'}
-            description={
-              (t as any).profile?.aiDataSharingDesc ||
-              'AI Koç ve besin tanıma için Google Gemini hizmetine veri gönderilir (ABD).'
-            }
-            descriptionNumberOfLines={3}
-            left={(props) => <List.Icon {...props} icon="robot" />}
-            right={() => (
-              <Switch
-                value={!!consents.aiDataSharing?.granted}
-                onValueChange={(v) => togglePrivacyConsent('aiDataSharing', v)}
-              />
-            )}
-          />
-          <List.Item
-            title={(t as any).profile?.healthPermissionsTitle || 'Sağlık verisi izinleri'}
-            description={
-              (t as any).profile?.healthPermissionsDesc ||
-              'HealthKit / Health Connect üzerinden cihaz ayarlarından yönet.'
-            }
-            descriptionNumberOfLines={2}
-            left={(props) => <List.Icon {...props} icon="heart-pulse" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={async () => {
-              try {
-                if (Platform.OS === 'ios') {
-                  // Deep-links to the app's Settings page where HealthKit
-                  // permissions live. iOS doesn't expose Health.app directly.
-                  await Linking.openURL('app-settings:');
-                } else {
-                  // Android: open the app's settings page; from there the
-                  // user reaches Permissions → Health Connect.
-                  await Linking.openSettings();
-                }
-              } catch (e) {
-                if (__DEV__) console.warn('Health settings deep-link failed:', e);
-              }
-            }}
-          />
-          <List.Item
-            title={(t as any).profile?.adPreferencesTitle || 'Reklam tercihlerimi düzenle'}
-            description={
-              (t as any).profile?.adPreferencesDesc ||
-              'Kişiselleştirilmiş reklam tercih ekranını yeniden aç.'
-            }
-            descriptionNumberOfLines={2}
+            title={(t as any).profile?.adPreferencesTitle || 'Reklam tercihleri'}
             left={(props) => <List.Icon {...props} icon="bullhorn-outline" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={async () => {
@@ -671,12 +589,4 @@ const styles = StyleSheet.create({
   // Macro Goals
   sectionLabel: { fontWeight: 'bold', fontSize: 13, marginBottom: spacing.sm, color: colors.textSecondary },
   macroRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.xs },
-
-  // Privacy preferences
-  privacyHint: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    marginBottom: spacing.xs,
-    lineHeight: 16,
-  },
 });
