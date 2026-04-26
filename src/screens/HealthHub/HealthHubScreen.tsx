@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, Share, Platform, ActivityIndicator } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, Share, Platform, ActivityIndicator, Linking } from 'react-native';
 import { Text, Card, useTheme, Button, Portal, Dialog, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -248,13 +248,36 @@ export function HealthHubScreen() {
             )}
           </View>
 
-          {/* Disconnect option */}
+          {/* Disconnect + OS settings shortcuts. Both rendered as low-key
+              text links so they don't compete with the primary Connect CTA.
+              The OS link is the canonical way for the user to revoke
+              individual data-type permissions (e.g. share Steps but not
+              Heart Rate) — something HealthKit/Health Connect expose at the
+              OS level but the in-app disconnect button can't toggle. */}
           {config.isConnected && (
-            <TouchableOpacity onPress={handleDisconnect} style={{ marginTop: spacing.sm }}>
-              <Text style={{ color: colors.textTertiary, fontSize: 12, textDecorationLine: 'underline' }}>
-                {healthTexts.disconnect}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.healthFooterRow}>
+              <TouchableOpacity onPress={handleDisconnect}>
+                <Text style={styles.healthFooterLink}>{healthTexts.disconnect}</Text>
+              </TouchableOpacity>
+              <Text style={styles.healthFooterDivider}>·</Text>
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    if (Platform.OS === 'ios') {
+                      await Linking.openURL('app-settings:');
+                    } else {
+                      await Linking.openSettings();
+                    }
+                  } catch (e) {
+                    if (__DEV__) console.warn('OS settings deep-link failed:', e);
+                  }
+                }}
+              >
+                <Text style={styles.healthFooterLink}>
+                  {(healthTexts as any).manageInOsSettings || 'OS ayarlarında yönet'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* Connection error */}
@@ -406,4 +429,9 @@ const styles = StyleSheet.create({
   dataCard: { width: '48%', flexGrow: 1 },
   statsGrid: { flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap' },
   statItem: { alignItems: 'center', minWidth: 70 },
+
+  // Health connection footer — disconnect / OS settings deep-link links.
+  healthFooterRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.sm },
+  healthFooterLink: { color: colors.textTertiary, fontSize: 12, textDecorationLine: 'underline' },
+  healthFooterDivider: { color: colors.textTertiary, fontSize: 12 },
 });

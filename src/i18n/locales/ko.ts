@@ -82,7 +82,7 @@ const ko: Translations = {
     lunch: '점심',
     dinner: '저녁',
     snack: '간식',
-    aiRecognition: 'AI 음식 인식',
+    aiRecognition: 'AI 칼로리 인식',
   },
 
   workout: {

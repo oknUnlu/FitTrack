@@ -82,7 +82,7 @@ const ar: Translations = {
     lunch: 'غداء',
     dinner: 'عشاء',
     snack: 'وجبة خفيفة',
-    aiRecognition: 'التعرف على الطعام بالذكاء الاصطناعي',
+    aiRecognition: 'التعرف على السعرات الحرارية بالذكاء الاصطناعي',
   },
 
   workout: {

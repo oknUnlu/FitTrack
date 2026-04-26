@@ -82,7 +82,7 @@ const it: Translations = {
     lunch: 'Pranzo',
     dinner: 'Cena',
     snack: 'Spuntino',
-    aiRecognition: 'Riconoscimento Alimenti IA',
+    aiRecognition: 'Riconoscimento Calorie IA',
   },
 
   workout: {

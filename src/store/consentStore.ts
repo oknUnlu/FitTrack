@@ -4,19 +4,32 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 /**
  * Open-consent (açık rıza) state.
  *
- * KVKK (Law 6698) and GDPR both require informed, granular, and revocable
- * opt-in for each distinct data-processing purpose. This store tracks:
+ * KVKK (Law 6698) and GDPR both require informed, specific, freely-given,
+ * and revocable consent for each data-processing purpose that needs explicit
+ * opt-in. This store tracks the FIVE consents that genuinely require
+ * explicit opt-in under those laws:
  *
- *   - privacyPolicy / termsOfService: hard requirement to use the app at all.
- *   - kvkk: local-Turkish consent for processing personal data.
- *   - aiDataSharing: opt-in to send prompts/images to Gemini (Google) —
- *     this is an international transfer so it must be explicit.
- *   - healthData: consent for HealthKit / Health Connect integration.
- *   - analytics / crashReports: optional telemetry.
- *   - marketing / personalizedAds: optional; AdMob personalization.
+ *   - privacyPolicy / termsOfService: hard requirement to use the app.
+ *   - kvkk: local-Turkish aydınlatma + rıza for personal data processing.
  *   - medicalDisclaimerAcknowledged: user confirmed the app is not a medical
  *     device and does not replace a healthcare professional.
- *   - ageVerified: user confirmed >=13 for app, >=18 for supplements/fasting.
+ *   - aiDataSharing: opt-in to send prompts/images to Google Gemini (USA) —
+ *     KVKK m.9 (international transfer) + m.6 (special category, since
+ *     prompts contain health-related text/photos) require explicit consent.
+ *
+ * Everything else has been moved out of the consent model:
+ *   - healthData → handled by OS-level HealthKit / Health Connect prompts.
+ *     We don't keep a duplicate consent in-app; the OS already enforces it.
+ *   - analytics / crashReports → processed under "legitimate interest"
+ *     (GDPR Art. 6(1)(f), KVKK m.5(2)(f)). No in-app toggle; opt-out path
+ *     is documented in the privacy policy as an email contact, satisfying
+ *     the right-to-object (Art. 21 / m.11) without UI clutter.
+ *   - marketing → no marketing infrastructure today. When introduced, a
+ *     dedicated opt-in checkbox at the relevant signup form will capture
+ *     consent contextually.
+ *   - personalizedAds → handled by Google's User Messaging Platform (UMP)
+ *     SDK, which delivers a TCF v2.2-compliant form to EU/TR users and
+ *     persists the choice in AdMob's own consent storage.
  *
  * Every change is timestamped and version-stamped so we can re-prompt when
  * policy changes, and persist an audit trail for legal compliance.
@@ -30,13 +43,8 @@ export type ConsentKey =
   | 'privacyPolicy'
   | 'termsOfService'
   | 'kvkk'
-  | 'aiDataSharing'
-  | 'healthData'
-  | 'analytics'
-  | 'crashReports'
-  | 'marketing'
-  | 'personalizedAds'
-  | 'medicalDisclaimerAcknowledged';
+  | 'medicalDisclaimerAcknowledged'
+  | 'aiDataSharing';
 
 interface ConsentRecord {
   granted: boolean;

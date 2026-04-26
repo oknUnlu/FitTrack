@@ -82,7 +82,7 @@ const id: Translations = {
     lunch: 'Makan Siang',
     dinner: 'Makan Malam',
     snack: 'Camilan',
-    aiRecognition: 'Pengenalan Makanan AI',
+    aiRecognition: 'Pengenalan Kalori AI',
   },
 
   workout: {

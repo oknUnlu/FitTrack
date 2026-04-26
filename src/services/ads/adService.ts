@@ -93,6 +93,61 @@ export async function initializeAds(): Promise<void> {
 }
 
 /**
+ * Run Google's User Messaging Platform (UMP) consent flow before any ads
+ * load. UMP is the official IAB TCF v2.2-compliant consent dialog that
+ * AdMob expects for EU/UK/Switzerland users — and increasingly for any
+ * region where regulators apply ePrivacy-style rules (Türkiye trends this
+ * way under KVKK).
+ *
+ * The flow is:
+ *   1. `requestInfoUpdate` — asks Google whether the user needs to be
+ *      shown a consent form (geo-aware: returns "not required" for users
+ *      outside regulated regions, so non-EU users see nothing).
+ *   2. `loadAndShowConsentFormIfRequired` — renders the form if needed.
+ *      This is a no-op for non-regulated users.
+ *
+ * After this completes, the AdMob SDK reads the persisted TCF string from
+ * device storage and tags every ad request with the correct
+ * personalization signal. We don't need to manually pass `npa=1`.
+ *
+ * Failures are non-fatal — better to load contextual (non-personalised)
+ * ads than to block the app on a flaky consent server.
+ */
+export async function setupAdConsent(): Promise<void> {
+  if (Platform.OS === 'web' || !isNativeModuleAvailable) return;
+  try {
+    const { AdsConsent } = require('react-native-google-mobile-ads');
+    await AdsConsent.requestInfoUpdate();
+    await AdsConsent.loadAndShowConsentFormIfRequired();
+  } catch (e) {
+    if (__DEV__) console.warn('UMP: setup failed (non-fatal):', e);
+  }
+}
+
+/**
+ * Lets the user re-open the UMP consent form from Profile → "Reklam
+ * tercihlerimi düzenle". Internally this resets the persisted TCF string
+ * and immediately re-runs the consent flow so the form actually appears
+ * (otherwise UMP would just say "no update required" for the same user).
+ *
+ * Returns true if the form was shown (or attempted), false on Expo Go /
+ * web / unavailable native module.
+ */
+export async function resetAdConsent(): Promise<boolean> {
+  if (Platform.OS === 'web' || !isNativeModuleAvailable) return false;
+  try {
+    const { AdsConsent } = require('react-native-google-mobile-ads');
+    AdsConsent.reset();
+    await AdsConsent.requestInfoUpdate();
+    await AdsConsent.loadAndShowConsentFormIfRequired();
+    return true;
+  } catch (e) {
+    if (__DEV__) console.warn('UMP: reset failed:', e);
+    return false;
+  }
+}
+
+/**
  * Interstitial reklam yükle (antrenman bitişi için)
  */
 let interstitialLoaded = false;

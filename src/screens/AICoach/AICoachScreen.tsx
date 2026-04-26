@@ -3,7 +3,9 @@ import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, ScrollView,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, TextInput, IconButton, Chip, useTheme, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useUserStore } from '../../store/userStore';
+import { useConsentStore } from '../../store/consentStore';
 import { sendMessage, getChatHistory, requestPlan } from '../../services/ai';
 import { ConversationMessage } from '../../services/ai/types';
 import { getUserById } from '../../services/database/userDao';
@@ -27,6 +29,13 @@ export function AICoachScreen() {
   const userId = useUserStore((s) => s.userId);
   const theme = useTheme();
   const { t } = useLanguage();
+  const navigation = useNavigation();
+  // AI consent gate — granted at onboarding (welcome step's click-to-consent
+  // captures aiDataSharing alongside the four required consents). If the
+  // user later revokes it from Profile → Privacy, this screen flips to a
+  // placeholder that points them back. Kept reactive so toggling in
+  // settings updates without a tab switch.
+  const aiConsent = useConsentStore((s) => !!s.consents.aiDataSharing?.granted);
   const flatListRef = useRef<FlatList>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [input, setInput] = useState('');
@@ -201,6 +210,35 @@ export function AICoachScreen() {
     }
   };
 
+  // Consent gate — if the user revoked AI data sharing from Profile, show
+  // a placeholder pointing them back instead of letting Gemini calls fire.
+  // KVKK m.9 + GDPR Art. 7(3): no consent → no processing.
+  if (!aiConsent) {
+    return (
+      <View style={[styles.gateContainer, { backgroundColor: theme.colors.background }]}>
+        <MaterialCommunityIcons
+          name="robot-off-outline"
+          size={56}
+          color={theme.colors.onSurfaceVariant}
+        />
+        <Text style={[styles.gateTitle, { color: theme.colors.onBackground }]}>
+          {(t as any).aiCoach?.gateTitle || 'AI özellikleri kapalı'}
+        </Text>
+        <Text style={[styles.gateBody, { color: theme.colors.onSurfaceVariant }]}>
+          {(t as any).aiCoach?.gateBody ||
+            'AI Koç\'u kullanmak için Profil > Gizlilik bölümünden "AI özelliklerini kullan"\'ı aç.'}
+        </Text>
+        <Button
+          mode="contained"
+          onPress={() => (navigation as any).navigate('MainTabs', { screen: 'Profile' })}
+          style={{ marginTop: spacing.md }}
+        >
+          {(t as any).aiCoach?.gateAction || 'Gizlilik ayarlarına git'}
+        </Button>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -346,4 +384,14 @@ const styles = StyleSheet.create({
   sourceTag: { fontSize: 10, color: colors.textTertiary, marginTop: 4, textAlign: 'right' },
   inputRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, borderTopWidth: 1, borderTopColor: colors.divider },
   textInput: { flex: 1 },
+
+  // Consent gate placeholder — shown when aiDataSharing is revoked.
+  gateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  gateTitle: { fontSize: 18, fontWeight: '600', marginTop: spacing.md, textAlign: 'center' },
+  gateBody: { fontSize: 14, lineHeight: 20, marginTop: spacing.sm, textAlign: 'center' },
 });

@@ -5,26 +5,38 @@ import { checkRateLimit } from './_lib/rateLimit';
 import { verifyPremiumStatus } from './_lib/premiumVerifier';
 import type { FoodRecognitionRequest, RecognizedFood } from './_lib/types';
 
-const FOOD_PROMPT = `Analyze this food image and identify all food items visible.
-For each item, estimate the nutritional values per serving.
+const FOOD_PROMPT = `You are a Turkish nutrition assistant. Analyze this food photo and estimate the TOTAL calorie value of the food actually visible in the picture.
 
-Return ONLY a valid JSON array with this format (no markdown, no explanation):
+For each distinct food item you see, return ONE entry with the TOTAL nutritional values for what is in the photo (NOT per-100g, NOT per-recipe).
+
+How to estimate:
+- Identify the food, then judge its visible portion size from common Turkish servings.
+- Typical references: pizza dilimi ~120g, pilav porsiyon ~150g, çorba kase ~250g, salata kase ~150g, ekmek dilimi ~30g, döner porsiyon ~200g, ayran bardak ~200ml, çay bardak ~150ml.
+- "calories", "protein", "carbs", "fat" are TOTALS for the visible portion.
+- "servingSize" is the estimated weight (or volume) of the visible portion.
+- "servingDescription" is a short Turkish phrase describing the portion (e.g. "1 dilim", "1 kase", "1 porsiyon", "1 büyük bardak").
+
+Return ONLY a valid JSON array (no markdown, no explanation):
 [
   {
-    "name": "Food name in Turkish",
-    "calories": 250,
-    "protein": 15,
-    "carbs": 30,
-    "fat": 8,
-    "servingSize": 100,
+    "name": "Yemeğin Türkçe adı",
+    "calories": 320,
+    "protein": 14,
+    "carbs": 42,
+    "fat": 12,
+    "servingSize": 120,
     "servingUnit": "g",
+    "servingDescription": "1 dilim",
     "confidence": "high"
   }
 ]
 
-If no food is detected, return an empty array: []
-Confidence can be "high", "medium", or "low".
-Always respond with ONLY the JSON array, nothing else.`;
+Rules:
+- If no food is visible, return [].
+- servingUnit is "g" for solids, "ml" for liquids.
+- confidence is "high", "medium", or "low".
+- If multiple items are visible (e.g. plate of pilav with chicken and salad), return one entry per distinct item.
+- Always respond with ONLY the JSON array, nothing else.`;
 
 // Images are inlined as base64 — keep the payload ceiling a bit above 8 MB of
 // raw image bytes so we don't accidentally reject legitimate iOS HEIC photos.

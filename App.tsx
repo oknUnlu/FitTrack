@@ -16,7 +16,7 @@ import { lightTheme, darkTheme } from './src/theme/theme';
 import { initDatabase, seedDatabase } from './src/services/database/database';
 import { getDeviceToken } from './src/services/api/apiClient';
 import { initializeBilling, checkSubscriptionStatus, setupPurchaseListener, endBillingConnection } from './src/services/premium/googleBilling';
-import { initializeAds, loadInterstitial } from './src/services/ads/adService';
+import { initializeAds, loadInterstitial, setupAdConsent } from './src/services/ads/adService';
 import {
   getNotificationPreferences,
   scheduleMealReminders,
@@ -73,8 +73,12 @@ export default function App() {
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: Google Billing init failed:', e);
       }
-      // Initialize AdMob
+      // Initialize AdMob — UMP consent flow runs FIRST so AdMob picks up the
+      // correct TCF v2.2 consent string before requesting any ad. For users
+      // outside regulated regions UMP is a fast no-op; for EU/UK/CH/TR users
+      // (depending on Google's geo flags) it shows the standardized form.
       try {
+        await setupAdConsent();
         await initializeAds();
         await loadInterstitial();
       } catch (e) {

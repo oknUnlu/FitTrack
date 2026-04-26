@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, Platform, Alert, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, Alert, TouchableOpacity, Linking } from 'react-native';
 import { Text, Card, List, Switch, Button, Divider, useTheme, Dialog, Portal, TextInput, RadioButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ import {
 import { validatePromoCode } from '../../services/api/promoService';
 import { exportUserData, deleteAccount } from '../../services/privacy/dataPrivacy';
 import { useConsentStore, type ConsentKey } from '../../store/consentStore';
+import { resetAdConsent } from '../../services/ads/adService';
 
 export function ProfileScreen() {
   const theme = useTheme();
@@ -331,99 +332,89 @@ export function ProfileScreen() {
         </List.Section>
       </Card>
 
-      {/* Privacy preferences — granular optional consents (KVKK m.5 / GDPR Art. 6/9).
-          Pulls labels from the same `legal.consent` i18n bundle the standalone
-          ConsentScreen used to render, so re-translation is centralized. */}
-      {(() => {
-        const L = (t as any)?.legal?.consent || {};
-        return (
-          <Card style={styles.card} mode="elevated">
-            <Card.Content style={{ paddingBottom: 0 }}>
-              <Text style={styles.sectionLabel}>
-                {(t as any).profile?.privacyPreferences || 'Gizlilik Tercihleri'}
-              </Text>
-              <Text style={styles.privacyHint}>
-                {(t as any).profile?.privacyPreferencesHint ||
-                  'İzinleri istediğiniz zaman değiştirebilirsiniz. Değişiklikler hemen uygulanır.'}
-              </Text>
-            </Card.Content>
-            <List.Section style={{ marginTop: 0 }}>
-              <List.Item
-                title={L.aiDataSharing || 'AI Veri Paylaşımı'}
-                description={L.aiDataSharingDesc || ''}
-                descriptionNumberOfLines={3}
-                left={(props) => <List.Icon {...props} icon="robot" />}
-                right={() => (
-                  <Switch
-                    value={!!consents.aiDataSharing?.granted}
-                    onValueChange={(v) => togglePrivacyConsent('aiDataSharing', v)}
-                  />
-                )}
+      {/* Privacy card — lean version after the audit.
+          We keep ONE real toggle (aiDataSharing) because KVKK m.9 + Art. 7(3)
+          legally require a one-tap revocation path for the cross-border AI
+          data transfer captured at onboarding. Health permissions and ad
+          personalisation are surfaced as deep-links: HealthKit / Health
+          Connect already enforce consent at the OS level, and Google's UMP
+          SDK keeps its own TCF v2.2 consent storage. Crash reports and
+          analytics are NOT shown here — they ride on legitimate-interest
+          basis and the right-to-object is documented in the privacy policy
+          as an email contact. Less surface, fewer dishonest toggles. */}
+      <Card style={styles.card} mode="elevated">
+        <Card.Content style={{ paddingBottom: 0 }}>
+          <Text style={styles.sectionLabel}>
+            {(t as any).profile?.privacyPreferences || 'Gizlilik'}
+          </Text>
+          <Text style={styles.privacyHint}>
+            {(t as any).profile?.privacyPreferencesHint ||
+              'Bu tercihleri istediğin zaman değiştirebilirsin.'}
+          </Text>
+        </Card.Content>
+        <List.Section style={{ marginTop: 0 }}>
+          <List.Item
+            title={(t as any).profile?.aiDataSharingTitle || 'AI özelliklerini kullan'}
+            description={
+              (t as any).profile?.aiDataSharingDesc ||
+              'AI Koç ve besin tanıma için Google Gemini hizmetine veri gönderilir (ABD).'
+            }
+            descriptionNumberOfLines={3}
+            left={(props) => <List.Icon {...props} icon="robot" />}
+            right={() => (
+              <Switch
+                value={!!consents.aiDataSharing?.granted}
+                onValueChange={(v) => togglePrivacyConsent('aiDataSharing', v)}
               />
-              <List.Item
-                title={L.healthData || 'Sağlık Verileri'}
-                description={L.healthDataDesc || ''}
-                descriptionNumberOfLines={3}
-                left={(props) => <List.Icon {...props} icon="heart-pulse" />}
-                right={() => (
-                  <Switch
-                    value={!!consents.healthData?.granted}
-                    onValueChange={(v) => togglePrivacyConsent('healthData', v)}
-                  />
-                )}
-              />
-              <List.Item
-                title={L.analytics || 'Analitik'}
-                description={L.analyticsDesc || ''}
-                descriptionNumberOfLines={2}
-                left={(props) => <List.Icon {...props} icon="chart-line" />}
-                right={() => (
-                  <Switch
-                    value={!!consents.analytics?.granted}
-                    onValueChange={(v) => togglePrivacyConsent('analytics', v)}
-                  />
-                )}
-              />
-              <List.Item
-                title={L.crashReports || 'Çökme Raporları'}
-                description={L.crashReportsDesc || ''}
-                descriptionNumberOfLines={2}
-                left={(props) => <List.Icon {...props} icon="alert-circle-outline" />}
-                right={() => (
-                  <Switch
-                    value={!!consents.crashReports?.granted}
-                    onValueChange={(v) => togglePrivacyConsent('crashReports', v)}
-                  />
-                )}
-              />
-              <List.Item
-                title={L.marketing || 'Pazarlama İletişimi'}
-                description={L.marketingDesc || ''}
-                descriptionNumberOfLines={2}
-                left={(props) => <List.Icon {...props} icon="email-outline" />}
-                right={() => (
-                  <Switch
-                    value={!!consents.marketing?.granted}
-                    onValueChange={(v) => togglePrivacyConsent('marketing', v)}
-                  />
-                )}
-              />
-              <List.Item
-                title={L.personalizedAds || 'Kişiselleştirilmiş Reklam'}
-                description={L.personalizedAdsDesc || ''}
-                descriptionNumberOfLines={2}
-                left={(props) => <List.Icon {...props} icon="bullhorn-outline" />}
-                right={() => (
-                  <Switch
-                    value={!!consents.personalizedAds?.granted}
-                    onValueChange={(v) => togglePrivacyConsent('personalizedAds', v)}
-                  />
-                )}
-              />
-            </List.Section>
-          </Card>
-        );
-      })()}
+            )}
+          />
+          <List.Item
+            title={(t as any).profile?.healthPermissionsTitle || 'Sağlık verisi izinleri'}
+            description={
+              (t as any).profile?.healthPermissionsDesc ||
+              'HealthKit / Health Connect üzerinden cihaz ayarlarından yönet.'
+            }
+            descriptionNumberOfLines={2}
+            left={(props) => <List.Icon {...props} icon="heart-pulse" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={async () => {
+              try {
+                if (Platform.OS === 'ios') {
+                  // Deep-links to the app's Settings page where HealthKit
+                  // permissions live. iOS doesn't expose Health.app directly.
+                  await Linking.openURL('app-settings:');
+                } else {
+                  // Android: open the app's settings page; from there the
+                  // user reaches Permissions → Health Connect.
+                  await Linking.openSettings();
+                }
+              } catch (e) {
+                if (__DEV__) console.warn('Health settings deep-link failed:', e);
+              }
+            }}
+          />
+          <List.Item
+            title={(t as any).profile?.adPreferencesTitle || 'Reklam tercihlerimi düzenle'}
+            description={
+              (t as any).profile?.adPreferencesDesc ||
+              'Kişiselleştirilmiş reklam tercih ekranını yeniden aç.'
+            }
+            descriptionNumberOfLines={2}
+            left={(props) => <List.Icon {...props} icon="bullhorn-outline" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={async () => {
+              const ok = await resetAdConsent();
+              if (!ok) {
+                Alert.alert(
+                  '',
+                  (t as any).profile?.adPreferencesUnavailable ||
+                    'Bu özellik şu an cihazında kullanılamıyor.'
+                );
+              }
+            }}
+          />
+        </List.Section>
+      </Card>
 
       {/* Privacy: export + delete (KVKK/GDPR rights) */}
       <Card style={styles.card} mode="elevated">

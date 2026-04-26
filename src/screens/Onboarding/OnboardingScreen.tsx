@@ -178,11 +178,24 @@ export function OnboardingScreen() {
     if (step > 0) animateTransition(step - 1);
   };
 
-  // Welcome → Personal info transition. Records the four KVKK/GDPR
-  // mandatory consents (Privacy Policy, ToS, KVKK aydınlatma, medical
-  // disclaimer) before any personal data is collected on subsequent steps.
-  // The disclosure text + policy links shown directly above the button
-  // satisfy the prior-information duty (KVKK Madde 10 / GDPR Art. 13).
+  // Welcome → Personal info transition. Records the FIVE consents that
+  // genuinely require KVKK/GDPR explicit opt-in:
+  //
+  //   Required-for-app-use (4): privacyPolicy, termsOfService, kvkk,
+  //     medicalDisclaimerAcknowledged. App refuses to function without these.
+  //
+  //   AI data transfer (1): aiDataSharing. Special category data + Türkiye→USA
+  //     transfer means KVKK m.6 + m.9 require explicit consent. Bundling it
+  //     into the welcome click is defensible because the disclosure text
+  //     renders directly above the button (visible & specific) and the user
+  //     retains a one-tap revocation path in Profile → Privacy. Removing the
+  //     toggle later is "as easy to withdraw as to give" per GDPR Art. 7(3).
+  //
+  // Crash + analytics are NOT in this set — they ride on legitimate interest
+  // (Art. 6(1)(f) / KVKK m.5/2-f) and the right-to-object is satisfied via
+  // the email contact documented in the privacy policy. Health data is
+  // gated by OS-level prompts (HealthKit / Health Connect). Personalised ads
+  // go through Google's UMP SDK which keeps its own consent storage.
   const handleStartFromWelcome = async () => {
     try {
       await setConsents({
@@ -190,6 +203,7 @@ export function OnboardingScreen() {
         termsOfService: true,
         kvkk: true,
         medicalDisclaimerAcknowledged: true,
+        aiDataSharing: true,
       });
     } catch (e) {
       if (__DEV__) console.warn('Welcome consent persist failed:', e);
@@ -296,7 +310,7 @@ export function OnboardingScreen() {
     const L = (t as any)?.onboarding?.legal || {};
     const disclosureText =
       L.disclosure ||
-      'Devam ederek 13 yaşın üzerinde olduğunu beyan eder; Gizlilik Politikası, Kullanım Şartları ve KVKK Aydınlatma Metni\'ni okuduğunu ve kabul ettiğini onaylarsın. Bu uygulama tıbbi tavsiye, teşhis veya tedavi yerine geçmez — sağlık kararların için hekim/diyetisyenine danış.';
+      'Devam ederek 13 yaşın üzerinde olduğunu beyan eder; Gizlilik Politikası, Kullanım Şartları ve KVKK Aydınlatma Metni\'ni okuduğunu ve kabul ettiğini onaylarsın. AI Koç ve besin tanıma özelliklerini kullandığında mesaj ve fotoğraflarının Google Gemini hizmetine (ABD) iletileceğini bilir, buna açık rıza verirsin. Bu uygulama tıbbi tavsiye, teşhis veya tedavi yerine geçmez — sağlık kararların için hekim/diyetisyenine danış.';
     const lblPrivacy = L.privacyPolicy || 'Gizlilik Politikası';
     const lblTerms = L.termsOfService || 'Kullanım Şartları';
     const lblKvkk = L.kvkk || 'KVKK Aydınlatma Metni';

@@ -82,7 +82,7 @@ const ja: Translations = {
     lunch: '昼食',
     dinner: '夕食',
     snack: '間食',
-    aiRecognition: 'AI食品認識',
+    aiRecognition: 'AIカロリー認識',
   },
 
   workout: {

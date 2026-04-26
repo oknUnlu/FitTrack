@@ -2,6 +2,16 @@ import { Platform } from 'react-native';
 import { apiPost } from '../api/apiClient';
 import { API_ENDPOINTS } from '../../config/api';
 
+/**
+ * AI Calorie Recognition response — every numeric is the TOTAL for the
+ * portion visible in the photo (not per-100g). See the matching server
+ * type at `functions/src/_lib/types.ts` for the full contract.
+ *
+ * `servingDescription` is the short Turkish phrase the model used to
+ * describe the visible portion ("1 dilim", "1 kase"); surfaced verbatim
+ * in the AI estimation modal. Optional because legacy responses from
+ * pre-refactor builds may not include it.
+ */
 export interface RecognizedFood {
   name: string;
   calories: number;
@@ -10,6 +20,7 @@ export interface RecognizedFood {
   fat: number;
   servingSize: number;
   servingUnit: string;
+  servingDescription?: string;
   confidence: string;
 }
 

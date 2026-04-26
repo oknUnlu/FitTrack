@@ -82,7 +82,7 @@ const fr: Translations = {
     lunch: 'Déjeuner',
     dinner: 'Dîner',
     snack: 'Collation',
-    aiRecognition: 'Reconnaissance Alimentaire IA',
+    aiRecognition: 'Reconnaissance Calorique IA',
   },
 
   workout: {

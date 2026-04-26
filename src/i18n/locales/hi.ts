@@ -82,7 +82,7 @@ const hi: Translations = {
     lunch: 'दोपहर का खाना',
     dinner: 'रात का खाना',
     snack: 'स्नैक',
-    aiRecognition: 'AI भोजन पहचान',
+    aiRecognition: 'AI कैलोरी पहचान',
   },
 
   workout: {

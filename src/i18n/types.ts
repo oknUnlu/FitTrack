@@ -119,6 +119,11 @@ export interface Translations {
     manualFoodNameHint?: string;
     addManually?: string;
     addToMeal?: string;
+    // AI Calorie Recognition flow — total estimate shown to the user
+    aiEstimateBadge?: string;
+    aiTotalLabel?: string;
+    aiDisabledTitle?: string;
+    aiDisabledBody?: string;
     /**
      * Household-measure portion preset labels for the quantity picker. Keys
      * are the canonical preset names from `src/utils/portions.ts`. Optional

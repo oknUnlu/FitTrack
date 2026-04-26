@@ -4,6 +4,7 @@ import { Text, Card, Searchbar, useTheme, Dialog, Portal, TextInput, Button } fr
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '../../store/userStore';
+import { useConsentStore } from '../../store/consentStore';
 import { useMealStore } from '../../store/mealStore';
 import { getUserById, User } from '../../services/database/userDao';
 import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../services/database/mealDao';
@@ -428,6 +429,19 @@ export function CalorieScreen() {
   }, []);
 
   const handlePhotoRecognition = useCallback(async () => {
+    // Consent gate before paywall — KVKK m.9 + GDPR Art. 7(3): if the user
+    // revoked AI data sharing in Profile, we MUST NOT send the photo to
+    // Gemini. Surface a friendly "go to settings" prompt instead.
+    const aiAllowed = !!useConsentStore.getState().consents.aiDataSharing?.granted;
+    if (!aiAllowed) {
+      Alert.alert(
+        (t as any).calorie?.aiDisabledTitle || 'AI özellikleri kapalı',
+        (t as any).calorie?.aiDisabledBody ||
+          'AI besin tanımayı kullanmak için Profil > Gizlilik\'ten "AI özelliklerini kullan"\'ı aç.',
+      );
+      return;
+    }
+
     if (!checkPremiumAccess('food_recognition')) return;
 
     const { allowed } = await checkDailyLimit('food_recognition');
@@ -455,30 +469,58 @@ export function CalorieScreen() {
     }
   }, [t, isPremium]);
 
+  /**
+   * Routes an AI calorie estimate into the same quantity dialog used for
+   * typed/searched foods, so confirmation, multi-portion editing, and the
+   * macro preview all stay in one place.
+   *
+   * The wire shape from Gemini is "TOTALS for the visible portion" (post
+   * AI Kalori Tanıma refactor). FoodItem internally stores per-100g
+   * because the portion picker scales `grams / 100`. We do the conversion
+   * here once: per-100g = total / (estimatedGrams / 100).
+   *
+   * The AI's portion estimate is surfaced as a single curated chip in the
+   * portion picker (e.g. "AI tahmini · 1 dilim") so the user can confirm
+   * with one tap. The "Tam gramajı biliyorum" toggle still gives a manual
+   * escape hatch when the estimate is off.
+   */
   const handleAddAiFood = useCallback((food: RecognizedFood) => {
+    const visibleGrams = food.servingSize > 0 ? food.servingSize : 100;
+    const ratio = visibleGrams / 100;
+    // Convert AI's totals back to per-100g representation for FoodItem.
+    // Guard against divide-by-zero by enforcing ratio>0 above.
+    const per100 = (n: number): number => (ratio > 0 ? n / ratio : n);
+
+    const aiLabel = food.servingDescription
+      ? `${(t as any).calorie?.aiEstimateBadge || 'AI tahmini'} · ${food.servingDescription}`
+      : (t as any).calorie?.aiEstimateBadge || 'AI tahmini';
+
     const foodItem: FoodItem = {
       id: `ai_${Date.now()}_${food.name}`,
       name: food.name,
       nameTr: food.name,
-      calories: food.calories,
-      protein: food.protein,
-      carbs: food.carbs,
-      fat: food.fat,
+      calories: per100(food.calories),
+      protein: per100(food.protein),
+      carbs: per100(food.carbs),
+      fat: per100(food.fat),
       fiber: null,
       sugar: null,
       barcode: null,
-      servingSize: food.servingSize,
-      servingUnit: food.servingUnit,
+      servingSize: visibleGrams,
+      servingUnit: food.servingUnit || 'g',
       isCustom: false,
       isFavorite: false,
       source: 'ai_recognition',
       category: null,
-      commonPortions: null,
+      // Single curated portion chip carrying the AI's estimate. The portion
+      // picker will also surface a "Tam gramajı biliyorum" toggle for users
+      // who want to override.
+      commonPortions: [{ label: aiLabel, grams: visibleGrams }],
     };
     handleAddFood(foodItem);
     setAiModalVisible(false);
     setAiResults([]);
-  }, [handleAddFood]);
+  }, [handleAddFood, t]);
 
   const dailyTarget = user?.tdee ?? 2000;
 
@@ -644,9 +686,25 @@ export function CalorieScreen() {
                 keyExtractor={(_, i) => `ai_${i}`}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="on-drag"
+                ListHeaderComponent={
+                  // Sum tile — when the AI returns multiple items (a plate
+                  // with rice + chicken + salad), show their combined total
+                  // so the user sees "the meal as a whole is ~620 kcal"
+                  // before they tap individual entries.
+                  aiResults.length > 1 ? (
+                    <View style={styles.aiTotalTile}>
+                      <Text style={styles.aiTotalLabel}>
+                        {(t as any).calorie?.aiTotalLabel || 'Tabağın toplamı'}
+                      </Text>
+                      <Text style={styles.aiTotalKcal}>
+                        {Math.round(aiResults.reduce((s, r) => s + (r.calories || 0), 0))} {t.common.kcal}
+                      </Text>
+                    </View>
+                  ) : null
+                }
                 renderItem={({ item }) => (
-                  <TouchableOpacity onPress={() => handleAddAiFood(item)} style={styles.searchResultItem} activeOpacity={0.7}>
-                    <View style={styles.searchResultInfo}>
+                  <TouchableOpacity onPress={() => handleAddAiFood(item)} style={styles.aiResultRow} activeOpacity={0.7}>
+                    <View style={{ flex: 1 }}>
                       <View style={styles.searchResultNameRow}>
                         <Text style={styles.searchResultName}>{item.name}</Text>
                         <View style={[
@@ -661,8 +719,18 @@ export function CalorieScreen() {
                           </Text>
                         </View>
                       </View>
-                      <Text style={styles.searchResultMacro}>
-                        {item.calories} {t.common.kcal} &middot; P:{item.protein}g &middot; K:{item.carbs}g &middot; Y:{item.fat}g
+                      {/* Headline: total estimated calories for what the AI
+                          saw — the whole point of this feature. */}
+                      <Text style={styles.aiResultKcal}>
+                        ~{Math.round(item.calories)} {t.common.kcal}
+                      </Text>
+                      <Text style={styles.aiResultPortion}>
+                        {item.servingDescription
+                          ? `${item.servingDescription} · ~${Math.round(item.servingSize)} ${item.servingUnit || 'g'}`
+                          : `~${Math.round(item.servingSize)} ${item.servingUnit || 'g'}`}
+                      </Text>
+                      <Text style={styles.aiResultMacros}>
+                        P:{Math.round(item.protein)}g &middot; K:{Math.round(item.carbs)}g &middot; Y:{Math.round(item.fat)}g
                       </Text>
                     </View>
                     <View style={styles.addCircle}>
@@ -1413,5 +1481,52 @@ const styles = StyleSheet.create({
   confidenceText: {
     fontSize: 9,
     fontWeight: '600',
+  },
+
+  // AI Calorie Recognition modal — total estimate display
+  aiTotalTile: {
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    alignItems: 'center',
+  },
+  aiTotalLabel: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  aiTotalKcal: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    marginTop: 2,
+  },
+  aiResultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors.divider,
+  },
+  aiResultKcal: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primary,
+    marginTop: 4,
+  },
+  aiResultPortion: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  aiResultMacros: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    marginTop: 2,
   },
 });
