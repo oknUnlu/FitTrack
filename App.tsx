@@ -34,11 +34,17 @@ export default function App() {
   const isLoading = useUserStore((s) => s.isLoading);
   const loadPremiumState = usePremiumStore((s) => s.loadPremiumState);
   const loadConsents = useConsentStore((s) => s.loadConsents);
+  // Theme persistence — without this hydrate call the app boots in light
+  // mode every time, even when the user has previously toggled dark.
+  const loadDarkMode = useThemeStore((s) => s.loadDarkMode);
 
   useEffect(() => {
     let cleanupListener: (() => void) | undefined;
 
     const init = async () => {
+      // Theme runs first so the splash → first-paint transition matches the
+      // user's saved preference and avoids a one-frame light flash.
+      await loadDarkMode();
       await loadOnboardingState();
       await loadPremiumState();
       await loadConsents();

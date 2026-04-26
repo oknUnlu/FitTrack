@@ -3,7 +3,6 @@ import { View, ScrollView, StyleSheet, Platform, Alert, TouchableOpacity } from 
 import { Text, Card, List, Switch, Button, Divider, useTheme, Dialog, Portal, TextInput, RadioButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeStore } from '../../store/themeStore';
 import { useUserStore } from '../../store/userStore';
 import { getUserById, User } from '../../services/database/userDao';
@@ -18,13 +17,11 @@ import {
   scheduleMealReminders,
   scheduleWaterReminders,
   scheduleWorkoutReminder,
+  getNotificationPreferences,
 } from '../../services/notifications/notificationService';
 import { validatePromoCode } from '../../services/api/promoService';
 import { exportUserData, deleteAccount } from '../../services/privacy/dataPrivacy';
 import { useConsentStore, type ConsentKey } from '../../store/consentStore';
-
-const NOTIF_MEAL_KEY = 'pref_meal_reminder';
-const NOTIF_WORKOUT_KEY = 'pref_workout_reminder';
 
 export function ProfileScreen() {
   const theme = useTheme();
@@ -76,12 +73,15 @@ export function ProfileScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [meal, workout] = await Promise.all([
-        AsyncStorage.getItem(NOTIF_MEAL_KEY),
-        AsyncStorage.getItem(NOTIF_WORKOUT_KEY),
-      ]);
-      setMealReminder(meal === 'true');
-      setWorkoutReminder(workout === 'true');
+      // Pull every reminder pref from the single source of truth in
+      // notificationService. Previously we read meal+workout directly from
+      // AsyncStorage and silently dropped water — meaning water reminders
+      // could be scheduled but the toggle UI showed disabled, leaving the
+      // user with phantom notifications they couldn't see how to cancel.
+      const prefs = await getNotificationPreferences();
+      setMealReminder(prefs.meal);
+      setWaterReminder(prefs.water);
+      setWorkoutReminder(prefs.workout);
       if (Platform.OS !== 'web') {
         const u = await getUserById(userId);
         setUser(u);
