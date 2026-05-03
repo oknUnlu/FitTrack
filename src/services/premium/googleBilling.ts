@@ -80,8 +80,39 @@ export async function purchaseSubscription(productId: string): Promise<string | 
   if (!iap || !isInitialized) return null;
 
   try {
+    // Google Play Billing v5+ requires the caller to pass an offerToken alongside
+    // each SKU when starting a subscription purchase. The offerToken comes from
+    // the product details that the Play Store returns for the SKU. Without it
+    // the purchase fails immediately with E_SKU_OFFER_MISMATCH (no Google UI ever
+    // appears).
+    const products = await iap.fetchProducts({ skus: [productId], type: 'subs' });
+    const product = Array.isArray(products) ? products[0] : products;
+    if (!product) {
+      throw new Error(
+        `Subscription "${productId}" not found in Play Console. ` +
+          'Verify the product is Active and the build is signed with the same key.',
+      );
+    }
+
+    // Pick the first available offer (base plan). If you later add intro/promo
+    // offers, surface a picker to the user and pass their selection here.
+    const offerToken =
+      product.subscriptionOfferDetailsAndroid?.[0]?.offerToken ??
+      product.subscriptionOfferDetails?.[0]?.offerToken;
+    if (!offerToken) {
+      throw new Error(
+        `No offerToken found for "${productId}". ` +
+          'Make sure the base plan is Active in Play Console.',
+      );
+    }
+
     const purchase = await iap.requestPurchase({
-      request: { android: { skus: [productId] } },
+      request: {
+        android: {
+          skus: [productId],
+          subscriptionOffers: [{ sku: productId, offerToken }],
+        },
+      },
       type: 'subs',
     });
 
