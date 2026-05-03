@@ -164,9 +164,15 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
         onClose();
       }
     } catch (e: any) {
+      // Show the actual error message during testing so we can debug failures.
+      // Google Play returns codes like E_ITEM_UNAVAILABLE, E_USER_CANCELLED,
+      // E_BILLING_RESPONSE_JSON_PARSE_ERROR, E_DEVELOPER_ERROR, etc.
+      const debugMsg = e?.code
+        ? `${e.code}: ${e.message || 'No message'}`
+        : (e?.message || String(e));
       Alert.alert(
         t.common.error,
-        t.premium.purchaseFailed
+        `${t.premium.purchaseFailed}\n\n[Debug]: ${debugMsg}`,
       );
     }
     setIsPurchasing(false);

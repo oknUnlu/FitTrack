@@ -708,7 +708,7 @@ const tr: Translations = {
     activate: 'Etkinleştir',
     // TKHK 6502 consumer-right disclosures
     preContractualTitle: 'Ön Bilgilendirme',
-    preContractualBody: 'Abonelik ücretleri ekranda gösterilen fiyatlar üzerinden Google Play (Android) veya App Store (iOS) tarafından tahsil edilir. Fiyatlara geçerli KDV dahildir. Abonelik iptal edilmediği sürece aynı süre ile otomatik olarak yenilenir ve ödeme her dönem sonunda mağaza hesabınızdan otomatik olarak alınır. İptal için: Google Play > Abonelikler veya App Store > Abonelikler.',
+    preContractualBody: 'Abonelik ücretleri, ekranda gösterilen fiyatlar üzerinden Google Play tarafından tahsil edilir. Fiyatlara geçerli KDV dahildir. Abonelik iptal edilmediği sürece aynı süre ile otomatik olarak yenilenir ve ödeme her dönem sonunda Google Play hesabınızdan otomatik olarak alınır. İptal etmek için: Google Play uygulaması > Profil > Ödemeler ve abonelikler > Abonelikler > FitTrack > Aboneliği iptal et.',
     withdrawalTitle: 'Cayma Hakkı',
     withdrawalBody: '6502 sayılı Tüketicinin Korunması Hakkında Kanun kapsamında 14 gün içinde gerekçe göstermeksizin cayma hakkınız bulunmaktadır. Premium özellikler satın alma anında anında açıldığından, dijital içeriğin ifası ile birlikte cayma hakkınız sona erer.',
     consumerRightAck: 'Ön bilgilendirmeyi okudum; dijital içeriğin anında ifası ile cayma hakkımın sona ereceğini kabul ediyorum.',
@@ -727,7 +727,7 @@ const tr: Translations = {
     partiesTitle: 'Taraflar',
     partiesDesc: 'Bu Sözleşme, FitTrack uygulamasını geliştiren ve sunan tarafından ("Hizmet Sağlayıcı") ile uygulamayı kullanan gerçek kişi ("Kullanıcı") arasında akdedilmiştir. İletişim: fittrackaiapp.support@gmail.com',
     serviceTitle: 'Hizmet Tanımı',
-    serviceDesc: 'FitTrack; kalori takibi, makro besin hesaplama, antrenman kaydı, vücut ölçümü takibi, su takibi, yapay zeka destekli beslenme ve antrenman önerisi, barkod ile ürün tanıma ve sağlık uygulamaları (Apple HealthKit / Google Health Connect) entegrasyonu gibi özellikler sunan bir fitness ve beslenme takip uygulamasıdır. Uygulama 12 dilde kullanılabilir.',
+    serviceDesc: 'FitTrack; kalori takibi, makro besin hesaplama, antrenman kaydı, vücut ölçümü takibi, su takibi, yapay zeka destekli beslenme ve antrenman önerisi, barkod ile ürün tanıma ve Google Health Connect entegrasyonu gibi özellikler sunan bir fitness ve beslenme takip uygulamasıdır. Uygulama 12 dilde kullanılabilir.',
     userObligationsTitle: 'Kullanıcı Yükümlülükleri',
     userObligationsDesc: 'Kullanıcı; (a) uygulamayı yalnızca yasal amaçlarla kullanacağını, (b) kayıt sırasında doğru ve güncel bilgiler sunacağını, (c) uygulama kodunu tersine mühendislik yapmayacağını, değiştirmeyeceğini veya dağıtmayacağını, (d) uygulamayı diğer kullanıcıların veya Hizmet Sağlayıcı\'nın zararına sebep olacak şekilde kullanmayacağını, (e) Hizmet Sağlayıcı\'nın önceden yazılı izni olmadan uygulama içeriğini ticari amaçla kullanmayacağını kabul ve taahhüt eder.',
     premiumTitle: 'Premium Abonelik',
