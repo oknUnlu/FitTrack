@@ -119,11 +119,11 @@ export function OnboardingScreen() {
         Alert.alert('', (t as any).onboarding.ageInvalid || 'Lütfen geçerli bir yaş girin.');
         return;
       }
-      if (parsedAge < 13) {
+      if (parsedAge < 18) {
         Alert.alert(
           (t as any).legal?.ageRestrictionTitle || 'Yaş Sınırı',
           (t as any).legal?.ageRestrictionBody ||
-            'Bu uygulama 13 yaşın altındaki çocukların kullanımına uygun değildir. Lütfen bir ebeveyne veya yasal vasiye danışın.',
+            'Bu uygulama 18 yaşın altındaki kullanıcıların kullanımına uygun değildir. Lütfen bir ebeveyne veya yasal vasiye danışın.',
         );
         return;
       }
