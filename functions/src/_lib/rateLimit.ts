@@ -3,9 +3,9 @@ import { FieldValue } from 'firebase-admin/firestore';
 import type { RateLimitConfig } from './types';
 
 const LIMITS: Record<string, { free: number; premium: number }> = {
-  ai_coach: { free: 10, premium: 250 },
-  food_recognition: { free: 3, premium: 999999 },
-  plan: { free: 10, premium: 250 },
+  ai_coach: { free: 0, premium: 10 },
+  food_recognition: { free: 0, premium: 7 },
+  plan: { free: 0, premium: 10 },
 };
 
 function getSecondsUntilMidnightUTC(): number {

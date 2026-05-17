@@ -54,7 +54,7 @@ export function isProgressRangeAvailable(range: string): boolean {
  */
 export function getAvailableProgramCount(): number {
   const { isPremium } = usePremiumStore.getState();
-  return isPremium ? Infinity : 3;
+  return isPremium ? Infinity : 6;
 }
 
 /**
