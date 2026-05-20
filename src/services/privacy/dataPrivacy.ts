@@ -8,6 +8,7 @@ import { getUserById } from '../database/userDao';
 import { useUserStore } from '../../store/userStore';
 import { usePremiumStore } from '../../store/premiumStore';
 import { useConsentStore } from '../../store/consentStore';
+import { cancelAllReminders } from '../notifications/notificationService';
 
 /**
  * KVKK / GDPR right-to-erasure and right-of-access implementation.
@@ -264,7 +265,10 @@ export async function deleteAccount(options?: { notifyServer?: boolean }): Promi
     }
   }
 
-  // 2. Clear SQLite tables (user data only)
+  // 2. Cancel all scheduled notifications
+  try { await cancelAllReminders(); } catch {}
+
+  // 3. Clear SQLite tables (user data only)
   if (Platform.OS !== 'web') {
     try {
       const db = await getDatabase();
@@ -280,7 +284,7 @@ export async function deleteAccount(options?: { notifyServer?: boolean }): Promi
     } catch {}
   }
 
-  // 3. Clear zustand stores
+  // 4. Clear zustand stores
   try { await usePremiumStore.getState().clearPremium(); } catch {}
   try { await useConsentStore.getState().clearAll(); } catch {}
   try {
@@ -292,11 +296,11 @@ export async function deleteAccount(options?: { notifyServer?: boolean }): Promi
     }
   } catch {}
 
-  // 4. Clear AsyncStorage
+  // 5. Clear AsyncStorage
   try {
     const keys = await AsyncStorage.getAllKeys();
     const toRemove = keys.filter(
-      (k) => k.startsWith('fittrack_') || k.startsWith('user_') || k.startsWith('settings_')
+      (k) => k.startsWith('fittrack_') || k.startsWith('user_') || k.startsWith('settings_') || k.startsWith('pref_')
     );
     if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
   } catch {}

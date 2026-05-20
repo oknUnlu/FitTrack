@@ -4,7 +4,16 @@
     "slug": "fittrack",
     "version": "1.0.0",
     "description": "Yapay zeka destekli kalori sayacı ve fitness asistanı. Barkodlu yemek tanıma, AI antrenman programları, makro & su takibi, vücut ölçümleri ve sağlık entegrasyonu. HealthKit & Health Connect desteğiyle tüm sağlık verileriniz tek uygulamada. 12 dilde kullanılabilir.",
-    "orientation": "portrait",
+    "orientation": "default",
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "transparent",
+      "translucent": true
+    },
+    "androidNavigationBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "transparent"
+    },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "fittrack",

@@ -76,21 +76,30 @@ export function ProfileScreen() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const toggleMealReminder = async (val: boolean) => {
-    if (val) await requestNotificationPermission();
-    setMealReminder(val);
+    if (val) {
+      const granted = await requestNotificationPermission();
+      if (!granted) return;
+    }
     await scheduleMealReminders(val);
+    setMealReminder(val);
   };
 
   const toggleWorkoutReminder = async (val: boolean) => {
-    if (val) await requestNotificationPermission();
-    setWorkoutReminder(val);
+    if (val) {
+      const granted = await requestNotificationPermission();
+      if (!granted) return;
+    }
     await scheduleWorkoutReminder(val);
+    setWorkoutReminder(val);
   };
 
   const toggleWaterReminder = async (val: boolean) => {
-    if (val) await requestNotificationPermission();
-    setWaterReminder(val);
+    if (val) {
+      const granted = await requestNotificationPermission();
+      if (!granted) return;
+    }
     await scheduleWaterReminders(val);
+    setWaterReminder(val);
   };
 
   const handlePromoSubmit = async () => {

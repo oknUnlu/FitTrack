@@ -114,7 +114,7 @@ export default function App() {
         <SafeAreaProvider>
           <PaperProvider theme={theme}>
             <LanguageProvider>
-              <StatusBar style={isDark ? 'light' : 'dark'} translucent={false} />
+              <StatusBar style={isDark ? 'light' : 'dark'} translucent={true} />
               <AppNavigation />
             </LanguageProvider>
           </PaperProvider>
