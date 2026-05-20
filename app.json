@@ -7,12 +7,10 @@
     "orientation": "default",
     "androidStatusBar": {
       "barStyle": "dark-content",
-      "backgroundColor": "transparent",
       "translucent": true
     },
     "androidNavigationBar": {
-      "barStyle": "dark-content",
-      "backgroundColor": "transparent"
+      "barStyle": "dark-content"
     },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -88,7 +86,8 @@
           "android": {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
-            "minSdkVersion": 26
+            "minSdkVersion": 26,
+            "buildToolsVersion": "35.0.0"
           }
         }
       ]
