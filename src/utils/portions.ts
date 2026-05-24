@@ -16,6 +16,8 @@ import type { FoodItem, FoodPortion } from '../services/database/foodDao';
  * the primary market.
  */
 
+export type UnitType = 'piece' | 'spoon' | 'cup' | 'bowl' | 'slice' | 'handful' | 'portion' | 'gram';
+
 export interface ResolvedPortion {
   /** Human label shown on the chip, already localised. */
   label: string;
@@ -25,6 +27,11 @@ export interface ResolvedPortion {
    * is unit-agnostic).
    */
   grams: number;
+  /**
+   * Optional unit type — used by the UI to group chips into tabs.
+   * Absent on legacy curated portions that pre-date this field.
+   */
+  unitType?: UnitType;
 }
 
 // ── Preset key catalogue ────────────────────────────────────────────────
@@ -32,68 +39,161 @@ export interface ResolvedPortion {
 // The fixed grams are used when the preset is selected category-wide; when
 // a preset is a multiplier (½ porsiyon), grams are computed at runtime.
 
-type FixedPreset = { key: string; grams: number };
-type MultiplierPreset = { key: string; multiplier: number };
+type FixedPreset = { key: string; grams: number; unitType: UnitType };
+type MultiplierPreset = { key: string; multiplier: number; unitType: UnitType };
 
 const BEVERAGE_PRESETS: FixedPreset[] = [
-  { key: 'small_glass', grams: 200 },
-  { key: 'large_glass', grams: 300 },
-  { key: 'bottle_500ml', grams: 500 },
-  { key: 'bottle_1l', grams: 1000 },
+  { key: 'tea_glass', grams: 150, unitType: 'cup' },
+  { key: 'small_glass', grams: 200, unitType: 'cup' },
+  { key: 'large_glass', grams: 300, unitType: 'cup' },
+  { key: 'bottle_500ml', grams: 500, unitType: 'cup' },
+  { key: 'bottle_1l', grams: 1000, unitType: 'cup' },
 ];
 
 const SOUP_PRESETS: FixedPreset[] = [
-  { key: 'half_bowl', grams: 125 },
-  { key: 'bowl', grams: 250 },
-  { key: 'large_bowl', grams: 400 },
-  { key: 'two_bowls', grams: 500 },
+  { key: 'half_bowl', grams: 125, unitType: 'bowl' },
+  { key: 'bowl', grams: 250, unitType: 'bowl' },
+  { key: 'large_bowl', grams: 400, unitType: 'bowl' },
+  { key: 'two_bowls', grams: 500, unitType: 'bowl' },
 ];
 
 const BREAD_PRESETS: FixedPreset[] = [
-  { key: 'slice', grams: 30 },
-  { key: 'two_slices', grams: 60 },
-  { key: 'three_slices', grams: 90 },
+  { key: 'slice', grams: 30, unitType: 'slice' },
+  { key: 'two_slices', grams: 60, unitType: 'slice' },
+  { key: 'three_slices', grams: 90, unitType: 'slice' },
 ];
 
 const CONDIMENT_PRESETS: FixedPreset[] = [
-  { key: 'tea_spoon', grams: 5 },
-  { key: 'table_spoon', grams: 15 },
-  { key: 'two_table_spoons', grams: 30 },
+  { key: 'tea_spoon', grams: 5, unitType: 'spoon' },
+  { key: 'table_spoon', grams: 15, unitType: 'spoon' },
+  { key: 'two_table_spoons', grams: 30, unitType: 'spoon' },
 ];
 
-const FRUIT_PRESETS: FixedPreset[] = [
-  { key: 'small_piece', grams: 100 },
-  { key: 'medium_piece', grams: 150 },
-  { key: 'large_piece', grams: 200 },
+// Fruits and vegetables support both piece (adet) and gram selection.
+const FRUIT_PIECE_PRESETS: FixedPreset[] = [
+  { key: 'small_piece_adet', grams: 60, unitType: 'piece' },
+  { key: 'medium_piece_adet', grams: 120, unitType: 'piece' },
+  { key: 'large_piece_adet', grams: 200, unitType: 'piece' },
+];
+
+const FRUIT_GRAM_PRESETS: FixedPreset[] = [
+  { key: 'gram_50', grams: 50, unitType: 'gram' },
+  { key: 'gram_100', grams: 100, unitType: 'gram' },
+  { key: 'gram_150', grams: 150, unitType: 'gram' },
+  { key: 'gram_200', grams: 200, unitType: 'gram' },
+];
+
+const VEGETABLE_PRESETS: FixedPreset[] = [
+  { key: 'small_piece_adet', grams: 50, unitType: 'piece' },
+  { key: 'medium_piece_adet', grams: 100, unitType: 'piece' },
+  { key: 'large_piece_adet', grams: 180, unitType: 'piece' },
+  { key: 'gram_100', grams: 100, unitType: 'gram' },
+  { key: 'gram_200', grams: 200, unitType: 'gram' },
+];
+
+const MEAT_PRESETS: FixedPreset[] = [
+  { key: 'small_piece_adet', grams: 80, unitType: 'piece' },
+  { key: 'medium_piece_adet', grams: 150, unitType: 'piece' },
+  { key: 'large_piece_adet', grams: 250, unitType: 'piece' },
+  { key: 'gram_100', grams: 100, unitType: 'gram' },
+  { key: 'gram_200', grams: 200, unitType: 'gram' },
+];
+
+const DAIRY_PRESETS: FixedPreset[] = [
+  { key: 'tea_spoon', grams: 5, unitType: 'spoon' },
+  { key: 'table_spoon', grams: 15, unitType: 'spoon' },
+  { key: 'tea_glass', grams: 150, unitType: 'cup' },
+  { key: 'small_glass', grams: 200, unitType: 'cup' },
+  { key: 'gram_100', grams: 100, unitType: 'gram' },
+];
+
+const LEGUME_PRESETS: FixedPreset[] = [
+  { key: 'table_spoon', grams: 15, unitType: 'spoon' },
+  { key: 'two_table_spoons', grams: 30, unitType: 'spoon' },
+  { key: 'half_bowl', grams: 125, unitType: 'bowl' },
+  { key: 'bowl', grams: 250, unitType: 'bowl' },
+];
+
+const GRAIN_PRESETS: FixedPreset[] = [
+  { key: 'table_spoon', grams: 15, unitType: 'spoon' },
+  { key: 'half_bowl', grams: 100, unitType: 'bowl' },
+  { key: 'bowl', grams: 200, unitType: 'bowl' },
+  { key: 'large_bowl', grams: 350, unitType: 'bowl' },
+];
+
+const EGG_PRESETS: FixedPreset[] = [
+  { key: 'small_piece_adet', grams: 45, unitType: 'piece' },
+  { key: 'medium_piece_adet', grams: 55, unitType: 'piece' },
+  { key: 'large_piece_adet', grams: 65, unitType: 'piece' },
+];
+
+const NUT_PRESETS: FixedPreset[] = [
+  { key: 'small_handful', grams: 15, unitType: 'handful' },
+  { key: 'one_handful', grams: 30, unitType: 'handful' },
+  { key: 'gram_50', grams: 50, unitType: 'gram' },
+  { key: 'gram_100', grams: 100, unitType: 'gram' },
 ];
 
 const SNACK_PRESETS: FixedPreset[] = [
-  { key: 'small_handful', grams: 30 },
-  { key: 'one_handful', grams: 50 },
-  { key: 'one_package', grams: 100 },
+  { key: 'small_handful', grams: 30, unitType: 'handful' },
+  { key: 'one_handful', grams: 50, unitType: 'handful' },
+  { key: 'one_package', grams: 100, unitType: 'portion' },
 ];
 
 // Generic multipliers used when no category match — anchored to the food's
 // own `servingSize` so "1 porsiyon" actually means what the food says it
 // means (e.g. 200 g for pilav, 120 g for pizza, etc.).
 const PORTION_MULTIPLIERS: MultiplierPreset[] = [
-  { key: 'half_portion', multiplier: 0.5 },
-  { key: 'one_portion', multiplier: 1 },
-  { key: 'two_portions', multiplier: 2 },
-  { key: 'three_portions', multiplier: 3 },
+  { key: 'half_portion', multiplier: 0.5, unitType: 'portion' },
+  { key: 'one_portion', multiplier: 1, unitType: 'portion' },
+  { key: 'two_portions', multiplier: 2, unitType: 'portion' },
+  { key: 'three_portions', multiplier: 3, unitType: 'portion' },
 ];
 
 const CATEGORY_TABLE: Record<string, FixedPreset[]> = {
+  // Beverages
   beverage: BEVERAGE_PRESETS,
   drink: BEVERAGE_PRESETS,
+  // Soups
   soup: SOUP_PRESETS,
+  // Breads & Bakery
   bread: BREAD_PRESETS,
   bakery: BREAD_PRESETS,
+  // Condiments & Sauces
   condiment: CONDIMENT_PRESETS,
   sauce: CONDIMENT_PRESETS,
-  fruit: FRUIT_PRESETS,
+  oil: CONDIMENT_PRESETS,
+  // Fruits
+  fruit: [...FRUIT_PIECE_PRESETS, ...FRUIT_GRAM_PRESETS],
+  // Vegetables
+  vegetable: VEGETABLE_PRESETS,
+  salad: VEGETABLE_PRESETS,
+  // Meat, Poultry & Fish
+  meat: MEAT_PRESETS,
+  poultry: MEAT_PRESETS,
+  fish: MEAT_PRESETS,
+  seafood: MEAT_PRESETS,
+  // Dairy
+  dairy: DAIRY_PRESETS,
+  cheese: DAIRY_PRESETS,
+  yogurt: DAIRY_PRESETS,
+  // Legumes
+  legume: LEGUME_PRESETS,
+  beans: LEGUME_PRESETS,
+  // Grains, Rice & Pasta
+  grain: GRAIN_PRESETS,
+  rice: GRAIN_PRESETS,
+  pasta: GRAIN_PRESETS,
+  cereal: GRAIN_PRESETS,
+  // Eggs
+  egg: EGG_PRESETS,
+  // Nuts & Seeds
+  nut: NUT_PRESETS,
+  seed: NUT_PRESETS,
+  // Snacks & Candy
   snack: SNACK_PRESETS,
   candy: SNACK_PRESETS,
+  dessert: SNACK_PRESETS,
 };
 
 // Default Turkish labels — used when the i18n bundle has no override. Kept
@@ -105,6 +205,7 @@ const DEFAULT_LABELS: Record<string, string> = {
   two_slices: '2 dilim',
   three_slices: '3 dilim',
   whole: 'Tamamı',
+  tea_glass: '1 çay bardağı',
   small_glass: 'Küçük bardak',
   large_glass: 'Büyük bardak',
   bottle_500ml: '1 şişe (500ml)',
@@ -119,9 +220,20 @@ const DEFAULT_LABELS: Record<string, string> = {
   small_handful: '1 küçük avuç',
   one_handful: '1 avuç',
   one_package: '1 paket',
+  // Legacy gram-labelled piece keys (kept for backward compat with existing curated portions)
   small_piece: '1 küçük',
   medium_piece: '1 orta',
   large_piece: '1 büyük',
+  // New adet (piece count) keys
+  small_piece_adet: '1 küçük adet',
+  medium_piece_adet: '1 orta adet',
+  large_piece_adet: '1 büyük adet',
+  // Gram shortcuts
+  gram_50: '50 g',
+  gram_100: '100 g',
+  gram_150: '150 g',
+  gram_200: '200 g',
+  // Portions
   half_portion: '½ porsiyon',
   one_portion: '1 porsiyon',
   two_portions: '2 porsiyon',
@@ -156,11 +268,11 @@ export function getPortionPresets(food: FoodItem, t: any): ResolvedPortion[] {
     if (cleaned.length > 0) return cleaned;
   }
 
-  // 2. Category-based fixed presets (bowl, glass, slice, ...).
+  // 2. Category-based fixed presets (bowl, glass, slice, adet, ...).
   const categoryKey = (food.category || '').toLowerCase();
   const fixed = CATEGORY_TABLE[categoryKey];
   if (fixed) {
-    return fixed.map((p) => ({ label: localiseKey(p.key, t), grams: p.grams }));
+    return fixed.map((p) => ({ label: localiseKey(p.key, t), grams: p.grams, unitType: p.unitType }));
   }
 
   // 3. Multiplier fallback anchored to the food's serving size. If the food
@@ -170,7 +282,24 @@ export function getPortionPresets(food: FoodItem, t: any): ResolvedPortion[] {
   return PORTION_MULTIPLIERS.map((p) => ({
     label: localiseKey(p.key, t),
     grams: Math.round(anchor * p.multiplier),
+    unitType: p.unitType,
   }));
+}
+
+/**
+ * Returns the distinct unit types present in a preset list, in display order.
+ * Used by the UI to render the unit-type tab bar.
+ */
+export function getUnitTypes(presets: ResolvedPortion[]): UnitType[] {
+  const seen = new Set<UnitType>();
+  const order: UnitType[] = [];
+  for (const p of presets) {
+    if (p.unitType && !seen.has(p.unitType)) {
+      seen.add(p.unitType);
+      order.push(p.unitType);
+    }
+  }
+  return order;
 }
 
 /**

@@ -8,7 +8,7 @@ import { useMealStore } from '../../store/mealStore';
 import { getUserById, User } from '../../services/database/userDao';
 import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../services/database/mealDao';
 import { searchFoodItems, FoodItem, getFoodByBarcode } from '../../services/database/foodDao';
-import { getPortionPresets, pickDefaultPreset, type ResolvedPortion } from '../../utils/portions';
+import { getPortionPresets, getUnitTypes, pickDefaultPreset, type ResolvedPortion, type UnitType } from '../../utils/portions';
 import { getProductByBarcode } from '../../services/api/openFoodFacts';
 import { insertBarcodeSubmission, checkAndPromoteBarcode, getVerifiedProductFromCloud } from '../../services/database/barcodeDao';
 import { searchFoodsInCloud } from '../../services/firebase/foodFirestore';
@@ -107,6 +107,7 @@ export function CalorieScreen() {
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [quantityPresets, setQuantityPresets] = useState<ResolvedPortion[]>([]);
   const [selectedPortionIdx, setSelectedPortionIdx] = useState<number>(-1);
+  const [selectedUnitType, setSelectedUnitType] = useState<UnitType | null>(null);
   const [manualMode, setManualMode] = useState(false);
   const [quantityAmount, setQuantityAmount] = useState('');
 
@@ -190,6 +191,12 @@ export function CalorieScreen() {
     const defaultIdx = pickDefaultPreset(presets, food.servingSize);
     setQuantityPresets(presets);
     setSelectedPortionIdx(defaultIdx);
+    // Set initial unit type tab to the one that contains the default preset.
+    const unitTypes = getUnitTypes(presets);
+    const defaultUnitType = unitTypes.length > 1
+      ? (defaultIdx >= 0 && presets[defaultIdx].unitType) || unitTypes[0]
+      : null;
+    setSelectedUnitType(defaultUnitType);
     // Manual mode is opt-in — start with chip mode every time.
     setManualMode(false);
     // Seed the manual-mode input with the default preset's grams (or the
@@ -743,7 +750,7 @@ export function CalorieScreen() {
       {searchVisible && (
         <KeyboardAvoidingView
           style={styles.modalOverlay}
-          behavior="padding"
+          behavior="height"
         >
           <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setSearchVisible(false); }}>
             <View style={styles.modalBackdrop} />
@@ -820,6 +827,7 @@ export function CalorieScreen() {
               keyExtractor={(item) => item.id}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
+              style={{ flex: 1 }}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => handleAddFood(item)} style={styles.searchResultItem} activeOpacity={0.7}>
                   <View style={styles.searchResultInfo}>
@@ -927,6 +935,7 @@ export function CalorieScreen() {
             setSelectedFood(null);
             setQuantityPresets([]);
             setSelectedPortionIdx(-1);
+            setSelectedUnitType(null);
             setManualMode(false);
             setQuantityAmount('');
           }}
@@ -940,38 +949,98 @@ export function CalorieScreen() {
             )}
 
             {/* Chip grid — only shown in chip mode. */}
-            {!manualMode && quantityPresets.length > 0 && (
-              <View style={styles.portionChipRow}>
-                {quantityPresets.map((p, i) => {
-                  const active = i === selectedPortionIdx;
-                  return (
-                    <TouchableOpacity
-                      key={`${p.label}-${i}`}
-                      onPress={() => setSelectedPortionIdx(i)}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: active }}
-                      style={[
-                        styles.portionChip,
-                        active && {
-                          backgroundColor: theme.colors.primaryContainer,
-                          borderColor: theme.colors.primary,
-                        },
-                      ]}
+            {!manualMode && quantityPresets.length > 0 && (() => {
+              const unitTypes = getUnitTypes(quantityPresets);
+              const hasMultipleTypes = unitTypes.length > 1;
+              const visiblePresets = hasMultipleTypes && selectedUnitType
+                ? quantityPresets.filter((p) => p.unitType === selectedUnitType)
+                : quantityPresets;
+
+              const UNIT_TYPE_LABELS: Record<UnitType, string> = {
+                piece: 'Adet',
+                spoon: 'Kaşık',
+                cup: 'Bardak',
+                bowl: 'Kase',
+                slice: 'Dilim',
+                handful: 'Avuç',
+                portion: 'Porsiyon',
+                gram: 'Gram',
+              };
+
+              return (
+                <View style={{ gap: 8 }}>
+                  {/* Unit type tab bar — only rendered when >1 type exists */}
+                  {hasMultipleTypes && (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.unitTypeTabRow}
                     >
-                      <Text
-                        style={[
-                          styles.portionChipText,
-                          active && { color: theme.colors.primary, fontWeight: '600' },
-                        ]}
-                      >
-                        {p.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
+                      {unitTypes.map((ut) => {
+                        const active = ut === selectedUnitType;
+                        return (
+                          <TouchableOpacity
+                            key={ut}
+                            onPress={() => {
+                              setSelectedUnitType(ut);
+                              // Auto-select first chip of the new type.
+                              const firstIdx = quantityPresets.findIndex((p) => p.unitType === ut);
+                              if (firstIdx >= 0) setSelectedPortionIdx(firstIdx);
+                            }}
+                            activeOpacity={0.7}
+                            style={[
+                              styles.unitTypeTab,
+                              active && {
+                                backgroundColor: theme.colors.primary,
+                                borderColor: theme.colors.primary,
+                              },
+                            ]}
+                          >
+                            <Text style={[
+                              styles.unitTypeTabText,
+                              active && { color: '#fff', fontWeight: '600' },
+                            ]}>
+                              {UNIT_TYPE_LABELS[ut] ?? ut}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+
+                  {/* Portion chips filtered to the active unit type */}
+                  <View style={styles.portionChipRow}>
+                    {visiblePresets.map((p) => {
+                      const globalIdx = quantityPresets.indexOf(p);
+                      const active = globalIdx === selectedPortionIdx;
+                      return (
+                        <TouchableOpacity
+                          key={`${p.label}-${globalIdx}`}
+                          onPress={() => setSelectedPortionIdx(globalIdx)}
+                          activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: active }}
+                          style={[
+                            styles.portionChip,
+                            active && {
+                              backgroundColor: theme.colors.primaryContainer,
+                              borderColor: theme.colors.primary,
+                            },
+                          ]}
+                        >
+                          <Text style={[
+                            styles.portionChipText,
+                            active && { color: theme.colors.primary, fontWeight: '600' },
+                          ]}>
+                            {p.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })()}
 
             {/* Manual gram input — collapsed by default. */}
             {manualMode && (
@@ -1033,7 +1102,7 @@ export function CalorieScreen() {
               style={styles.portionModeToggle}
             >
               <Text style={[styles.portionModeToggleText, { color: theme.colors.primary }]}>
-                {manualMode
+                {manualMode 
                   ? (t as any).calorie?.usePresetMode || 'Hazır porsiyonlara dön ▴'
                   : (t as any).calorie?.useManualMode || 'Tam gramajı biliyorum ▾'}
               </Text>
@@ -1046,6 +1115,7 @@ export function CalorieScreen() {
                 setSelectedFood(null);
                 setQuantityPresets([]);
                 setSelectedPortionIdx(-1);
+                setSelectedUnitType(null);
                 setManualMode(false);
                 setQuantityAmount('');
               }}
@@ -1233,7 +1303,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-    maxHeight: '85%',
+    flexShrink: 1,
   },
   sheetHandle: {
     width: 36,
@@ -1361,6 +1431,23 @@ const styles = StyleSheet.create({
   // preview ("1 dilim", "1 kase", "1 büyük bardak"). The active chip uses
   // the theme's primaryContainer fill via inline style; default state is
   // a thin neutral border so the row reads as a tag cloud, not buttons.
+  unitTypeTabRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  unitTypeTab: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: 'transparent',
+  },
+  unitTypeTabText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
   portionChipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

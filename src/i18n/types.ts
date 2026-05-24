@@ -157,6 +157,14 @@ export interface Translations {
       one_portion?: string;
       two_portions?: string;
       three_portions?: string;
+      tea_glass?: string;
+      small_piece_adet?: string;
+      medium_piece_adet?: string;
+      large_piece_adet?: string;
+      gram_50?: string;
+      gram_100?: string;
+      gram_150?: string;
+      gram_200?: string;
     };
   };
 

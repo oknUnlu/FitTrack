@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"PID: $!\")",
+      "Bash(curl -s http://localhost:8082)",
+      "Bash(curl -s --max-time 5 http://localhost:8082)",
+      "Bash(npx playwright *)",
+      "Bash(ls /Users/okanu/Desktop/Android/FitTrack/node_modules/.bin/playwright 2>/dev/null && echo \"found\" || echo \"not found\" *)",
+      "Read(//Users/okanu/Library/Caches/ms-playwright/**)",
+      "Bash(mkdir -p /tmp/pw-test)",
+      "Read(//tmp/**)",
+      "Bash(npm init *)",
+      "Bash(curl -s http://localhost:8082/index.html)",
+      "Bash(curl -s http://localhost:8082/_expo/static/js/web/index.js)",
+      "Bash(curl -s \"http://localhost:8082/app\" -L)",
+      "Bash(curl -s \"http://localhost:8082/__expo/fingerprint\" -I)",
+      "Bash(npx serve *)",
+      "Bash(curl -s http://localhost:8083)"
+    ]
+  }
+}
