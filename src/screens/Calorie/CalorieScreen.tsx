@@ -1303,7 +1303,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-    flexShrink: 1,
+    flex: 1,
+    maxHeight: '85%',
   },
   sheetHandle: {
     width: 36,

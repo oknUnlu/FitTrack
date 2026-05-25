@@ -15,7 +15,8 @@
       "Bash(curl -s \"http://localhost:8082/app\" -L)",
       "Bash(curl -s \"http://localhost:8082/__expo/fingerprint\" -I)",
       "Bash(npx serve *)",
-      "Bash(curl -s http://localhost:8083)"
+      "Bash(curl -s http://localhost:8083)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }

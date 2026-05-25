@@ -258,21 +258,40 @@ function localiseKey(key: string, t: any): string {
  * to largest amount and is safe to render directly.
  */
 export function getPortionPresets(food: FoodItem, t: any): ResolvedPortion[] {
-  // 1. Curated portions win. The Firestore seed ships labels already
-  //    localised (Turkish), so we pass them through unchanged. Filter out
-  //    malformed entries defensively — a NaN here would corrupt the meal log.
+  const categoryKey = (food.category || '').toLowerCase();
+  const categoryFixed = CATEGORY_TABLE[categoryKey];
+
+  // 1. Curated portions from Firestore seed. Tagged as 'portion' so they
+  //    appear under their own tab when category presets are also present.
+  //    If the food has no matching category, curated portions are returned
+  //    as-is (no tab bar shown — same UX as before this feature).
   if (food.commonPortions && food.commonPortions.length > 0) {
-    const cleaned: ResolvedPortion[] = food.commonPortions
+    const curated: ResolvedPortion[] = food.commonPortions
       .filter((p): p is FoodPortion => !!p && typeof p.label === 'string' && Number.isFinite(p.grams) && p.grams > 0)
-      .map((p) => ({ label: p.label, grams: Math.round(p.grams) }));
-    if (cleaned.length > 0) return cleaned;
+      .map((p) => ({ label: p.label, grams: Math.round(p.grams), unitType: 'portion' as UnitType }));
+
+    if (curated.length > 0) {
+      // If the food's category maps to non-portion unit types (adet, gram,
+      // kaşık…), merge curated under 'portion' tab + category presets in
+      // their own tabs, giving the user both options.
+      if (categoryFixed) {
+        const catPresets = categoryFixed.map((p) => ({
+          label: localiseKey(p.key, t),
+          grams: p.grams,
+          unitType: p.unitType,
+        }));
+        const hasExtraTypes = catPresets.some((p) => p.unitType !== 'portion');
+        if (hasExtraTypes) {
+          return [...curated, ...catPresets];
+        }
+      }
+      return curated;
+    }
   }
 
   // 2. Category-based fixed presets (bowl, glass, slice, adet, ...).
-  const categoryKey = (food.category || '').toLowerCase();
-  const fixed = CATEGORY_TABLE[categoryKey];
-  if (fixed) {
-    return fixed.map((p) => ({ label: localiseKey(p.key, t), grams: p.grams, unitType: p.unitType }));
+  if (categoryFixed) {
+    return categoryFixed.map((p) => ({ label: localiseKey(p.key, t), grams: p.grams, unitType: p.unitType }));
   }
 
   // 3. Multiplier fallback anchored to the food's serving size. If the food
