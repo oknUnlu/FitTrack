@@ -137,6 +137,196 @@ export async function initDatabase(): Promise<void> {
             }
           }
         }
+        // Point recategorisations — fix foods that were seeded with the wrong
+        // category before the keyword-matcher was corrected. These UPDATE
+        // unconditionally on the specific old value so they are idempotent.
+        // zeytin
+        await database.runAsync(
+          `UPDATE food_items SET category = 'vegetable' WHERE id = 'zeytin' AND source = 'local' AND category = 'condiment'`
+        );
+        // beverage → dessert
+        for (const id of ['cikolatali_pasta', 'krep_cikolatali']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = 'dessert' WHERE id = ? AND source = 'local' AND category = 'beverage'`, [id]
+          );
+        }
+        // beverage → snack
+        for (const id of ['cookie', 'cikolata_bitter', 'cikolata_sutlu', 'cikolata_beyaz']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = 'snack' WHERE id = ? AND source = 'local' AND category = 'beverage'`, [id]
+          );
+        }
+        // beverage → bread
+        await database.runAsync(
+          `UPDATE food_items SET category = 'bread' WHERE id = 'croissant_cikolatali' AND source = 'local' AND category = 'beverage'`
+        );
+        // bread → snack
+        for (const id of ['cheeseburger', 'double_burger', 'hot_dog', 'islak_hamburger', 'club_sandwich']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = 'snack' WHERE id = ? AND source = 'local' AND category = 'bread'`, [id]
+          );
+        }
+        // egg → vegetable
+        await database.runAsync(
+          `UPDATE food_items SET category = 'vegetable' WHERE id = 'patlican' AND source = 'local' AND category = 'egg'`
+        );
+        // egg → snack
+        await database.runAsync(
+          `UPDATE food_items SET category = 'snack' WHERE id = 'veggie_burger' AND source = 'local' AND category = 'egg'`
+        );
+        // fruit → condiment
+        for (const id of ['pekmez', 'nar_eksisi']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = 'condiment' WHERE id = ? AND source = 'local' AND category = 'fruit'`, [id]
+          );
+        }
+        // vegetable → condiment
+        for (const id of ['pul_biber', 'acili_ezme', 'atom']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = 'condiment' WHERE id = ? AND source = 'local' AND category = 'vegetable'`, [id]
+          );
+        }
+        // vegetable → nut
+        await database.runAsync(
+          `UPDATE food_items SET category = 'nut' WHERE id = 'kabak_cekirdegi' AND source = 'local' AND category = 'vegetable'`
+        );
+        // vegetable → snack
+        for (const id of ['pizza_pepperoni', 'quesadilla', 'onion_rings']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = 'snack' WHERE id = ? AND source = 'local' AND category = 'vegetable'`, [id]
+          );
+        }
+        // vegetable → bread
+        await database.runAsync(
+          `UPDATE food_items SET category = 'bread' WHERE id = 'dilli_kasarli' AND source = 'local' AND category = 'vegetable'`
+        );
+        // meat → dessert
+        await database.runAsync(
+          `UPDATE food_items SET category = 'dessert' WHERE id = 'tavuk_gogsu_tatlisi' AND source = 'local' AND category = 'meat'`
+        );
+        // dairy → nut
+        await database.runAsync(
+          `UPDATE food_items SET category = 'nut' WHERE id = 'fistik_ezmesi' AND source = 'local' AND category = 'dairy'`
+        );
+        // dairy → snack
+        await database.runAsync(
+          `UPDATE food_items SET category = 'snack' WHERE id = 'mozzarella_sticks' AND source = 'local' AND category = 'dairy'`
+        );
+        // snack → condiment
+        await database.runAsync(
+          `UPDATE food_items SET category = 'condiment' WHERE id = 'guacamole' AND source = 'local' AND category = 'snack'`
+        );
+        // legume → meat
+        for (const id of ['falafel', 'tofu']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = 'meat' WHERE id = ? AND source = 'local' AND category = 'legume'`, [id]
+          );
+        }
+        // bread → condiment (breadcrumbs)
+        await database.runAsync(
+          `UPDATE food_items SET category = 'condiment' WHERE id = 'galeta_unu' AND source = 'local' AND category = 'bread'`
+        );
+        // nut → condiment (tahini)
+        await database.runAsync(
+          `UPDATE food_items SET category = 'condiment' WHERE id = 'tahin' AND source = 'local' AND category = 'nut'`
+        );
+        // egg → bread (egg pide)
+        await database.runAsync(
+          `UPDATE food_items SET category = 'bread' WHERE id = 'yumurtali_pide' AND source = 'local' AND category = 'egg'`
+        );
+        // grain → snack (rice cake)
+        await database.runAsync(
+          `UPDATE food_items SET category = 'snack' WHERE id = 'pirinc_patlagi' AND source = 'local' AND category = 'grain'`
+        );
+        // bread → snack (large sandwiches/wraps)
+        for (const id of ['wrap_falafel', 'panini', 'etli_ekmek', 'kumru']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = 'snack' WHERE id = ? AND source = 'local' AND category = 'bread'`, [id]
+          );
+        }
+        // egg → NULL (full egg dishes — multiplier fallback gives correct portions)
+        for (const id of ['menemen', 'cilbir', 'shakshuka', 'omlet', 'ispanaklı_yumurta']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = NULL WHERE id = ? AND source = 'local' AND category = 'egg'`, [id]
+          );
+        }
+        // vegetable → NULL (kumpir 400g — no preset fits, multiplier fallback is better)
+        await database.runAsync(
+          `UPDATE food_items SET category = NULL WHERE id = 'kumpir' AND source = 'local' AND category = 'vegetable'`
+        );
+        // fish → snack (pizza shouldn't be in fish)
+        await database.runAsync(
+          `UPDATE food_items SET category = 'snack' WHERE id = 'pizza_ton_balikli' AND source = 'local' AND category = 'fish'`
+        );
+        // snack → NULL (double_burger 320g; snack presets 30/50/100g are useless)
+        await database.runAsync(
+          `UPDATE food_items SET category = NULL WHERE id = 'double_burger' AND source = 'local' AND category = 'snack'`
+        );
+        // vegetable → NULL (karniyarik 300g; adet 50/100/180g too small)
+        await database.runAsync(
+          `UPDATE food_items SET category = NULL WHERE id = 'karniyarik' AND source = 'local' AND category = 'vegetable'`
+        );
+        // beverage → NULL (espresso 30g; smallest beverage preset is 150g = 5x too large)
+        await database.runAsync(
+          `UPDATE food_items SET category = NULL WHERE id = 'espresso' AND source = 'local' AND category = 'beverage'`
+        );
+        // bread → NULL (large flatbreads/pides/toasts 180-200g; dilim 30/60/90g too small)
+        for (const id of ['tost_karisik','lahmacun','pide_kasarli','kiymali_pide',
+                          'yumurtali_pide','kusbasi_pide','dilli_kasarli',
+                          'gozleme','gozleme_kiymali','gozleme_peynirli','gozleme_patatesli']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = NULL WHERE id = ? AND source = 'local' AND category = 'bread'`, [id]
+          );
+        }
+        // snack → NULL (meals ≥150g; largest snack preset is 100g — multiplier fallback gives correct 1 porsiyon)
+        for (const id of [
+          'burrito','whopper','club_sandwich','wrap_falafel','etli_ekmek','shawarma','gyros',
+          'cheeseburger','panini','kumru','big_mac','veggie_burger','calzone','enchilada',
+          'quesadilla','patates_kizartmasi','hot_dog','pizza_margarita','pizza_pepperoni',
+          'pizza_karisik','pizza_ton_balikli','pizza_4_peynirli','pizza_sebzeli',
+          'islak_hamburger','kol_boregi','tepsi_boregi','taco',
+        ]) {
+          await database.runAsync(
+            `UPDATE food_items SET category = NULL WHERE id = ? AND source = 'local' AND category = 'snack'`, [id]
+          );
+        }
+        // beverage → NULL (≤60g drinks; smallest beverage preset 150g is 2.5× too large)
+        for (const id of ['turk_kahvesi_sade','turk_kahvesi_sekerli','macchiato']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = NULL WHERE id = ? AND source = 'local' AND category = 'beverage'`, [id]
+          );
+        }
+        // condiment → NULL (dips with 100g serving; condiment max preset is 30g)
+        for (const id of ['acili_ezme','atom','guacamole','babaganus']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = NULL WHERE id = ? AND source = 'local' AND category = 'condiment'`, [id]
+          );
+        }
+        // serving_unit g → ml for liquid beverages (UI shows "200 g" instead of "200 ml")
+        for (const id of ['kefir','ayran','sut_tam','sut_yarim','sut_yagsiz','badem_sutu']) {
+          await database.runAsync(
+            `UPDATE food_items SET serving_unit = 'ml' WHERE id = ? AND source = 'local' AND serving_unit = 'g'`, [id]
+          );
+        }
+        // bread → NULL (su_boregi 150g, tost_kasarli 150g; bread max preset 90g = only 60% of serving)
+        for (const id of ['su_boregi','tost_kasarli']) {
+          await database.runAsync(
+            `UPDATE food_items SET category = NULL WHERE id = ? AND source = 'local' AND category = 'bread'`, [id]
+          );
+        }
+        // Nutritional corrections for seeded foods that had wrong values
+        await database.runAsync(
+          `UPDATE food_items SET calories=155, fat=2.5, protein=2.7, carbs=27
+           WHERE id='pilav' AND source='local' AND calories=130`
+        );
+        await database.runAsync(
+          `UPDATE food_items SET calories=46, carbs=12, sugar=12
+           WHERE id='fanta' AND source='local' AND calories=42`
+        );
+        await database.runAsync(
+          `UPDATE food_items SET calories=33, protein=2.5, carbs=2.6, fat=1.3, sugar=2.6
+           WHERE id='ayran_icecek' AND source='local' AND calories=38`
+        );
       } catch (_) {
         // Non-critical — portion picker falls back gracefully without category
       }
