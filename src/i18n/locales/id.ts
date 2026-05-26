@@ -83,6 +83,17 @@ const id: Translations = {
     dinner: 'Makan Malam',
     snack: 'Camilan',
     aiRecognition: 'Pengenalan Kalori AI',
+    portions: {
+      half_slice: '½ irisan', slice: '1 irisan', two_slices: '2 irisan', three_slices: '3 irisan', whole: 'Seluruhnya',
+      tea_glass: '1 gelas teh', small_glass: 'Gelas kecil', large_glass: 'Gelas besar', bottle_500ml: '1 botol (500ml)', bottle_1l: 'Botol 1 L',
+      half_bowl: '½ mangkuk', bowl: '1 mangkuk', large_bowl: '1 mangkuk besar', two_bowls: '2 mangkuk',
+      tea_spoon: '1 sdt', table_spoon: '1 sdm', two_table_spoons: '2 sdm',
+      small_handful: 'Segenggam kecil', one_handful: '1 genggam', one_package: '1 kemasan',
+      small_piece: 'Kecil', medium_piece: 'Sedang', large_piece: 'Besar',
+      half_portion: '½ porsi', one_portion: '1 porsi', two_portions: '2 porsi', three_portions: '3 porsi',
+      small_piece_adet: '1 buah kecil', medium_piece_adet: '1 buah sedang', large_piece_adet: '1 buah besar',
+      gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
+    },
   },
 
   workout: {

@@ -83,6 +83,17 @@ const ja: Translations = {
     dinner: '夕食',
     snack: '間食',
     aiRecognition: 'AIカロリー認識',
+    portions: {
+      half_slice: '½ 枚', slice: '1 枚', two_slices: '2 枚', three_slices: '3 枚', whole: '全部',
+      tea_glass: '湯呑み 1杯', small_glass: '小さいコップ', large_glass: '大きいコップ', bottle_500ml: '1本 (500ml)', bottle_1l: '1L ボトル',
+      half_bowl: '½ 膳', bowl: '1 膳', large_bowl: '1 大盛り', two_bowls: '2 膳',
+      tea_spoon: '小さじ 1', table_spoon: '大さじ 1', two_table_spoons: '大さじ 2',
+      small_handful: '一つかみ（小）', one_handful: '一つかみ', one_package: '1 パック',
+      small_piece: '小', medium_piece: '中', large_piece: '大',
+      half_portion: '½ 人前', one_portion: '1 人前', two_portions: '2 人前', three_portions: '3 人前',
+      small_piece_adet: '小 1個', medium_piece_adet: '中 1個', large_piece_adet: '大 1個',
+      gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
+    },
   },
 
   workout: {

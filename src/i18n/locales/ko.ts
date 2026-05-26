@@ -83,6 +83,17 @@ const ko: Translations = {
     dinner: '저녁',
     snack: '간식',
     aiRecognition: 'AI 칼로리 인식',
+    portions: {
+      half_slice: '½ 조각', slice: '1 조각', two_slices: '2 조각', three_slices: '3 조각', whole: '전체',
+      tea_glass: '찻잔 1잔', small_glass: '작은 컵', large_glass: '큰 컵', bottle_500ml: '병 1개 (500ml)', bottle_1l: '1L 병',
+      half_bowl: '½ 그릇', bowl: '1 그릇', large_bowl: '1 큰 그릇', two_bowls: '2 그릇',
+      tea_spoon: '1 작은술', table_spoon: '1 큰술', two_table_spoons: '2 큰술',
+      small_handful: '작은 한 줌', one_handful: '한 줌', one_package: '1 팩',
+      small_piece: '소', medium_piece: '중', large_piece: '대',
+      half_portion: '½ 인분', one_portion: '1 인분', two_portions: '2 인분', three_portions: '3 인분',
+      small_piece_adet: '1개 (소)', medium_piece_adet: '1개 (중)', large_piece_adet: '1개 (대)',
+      gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
+    },
   },
 
   workout: {

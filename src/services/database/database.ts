@@ -118,6 +118,29 @@ export async function initDatabase(): Promise<void> {
         // Column already exists, ignore
       }
 
+      // Migration: back-fill category for existing local food items that were
+      // seeded before the category column existed. Reads from the bundled JSON
+      // and UPDATEs only rows where category IS NULL, so it is safe to run on
+      // every app start (no-op after the first successful run).
+      try {
+        const needsBackfill = await database.getFirstAsync(
+          `SELECT COUNT(*) as count FROM food_items WHERE source = 'local' AND category IS NULL`
+        ) as any;
+        if (needsBackfill?.count > 0) {
+          const seedFoods = require('../../assets/data/foods_tr.json');
+          for (const food of seedFoods) {
+            if (food.category) {
+              await database.runAsync(
+                `UPDATE food_items SET category = ? WHERE id = ? AND source = 'local' AND category IS NULL`,
+                [food.category, food.id]
+              );
+            }
+          }
+        }
+      } catch (_) {
+        // Non-critical — portion picker falls back gracefully without category
+      }
+
       // Index on (barcode, device_id) — NOT unique. The composite primary
       // key `bs_${barcode}_${deviceId}` combined with `INSERT OR REPLACE`
       // in barcodeDao.ts already guarantees one row per (barcode, device).
@@ -171,9 +194,9 @@ export async function seedDatabase(): Promise<void> {
   // Seed foods
   for (const food of foodsData) {
     await database.runAsync(
-      `INSERT OR IGNORE INTO food_items (id, name, name_tr, calories, protein, carbs, fat, fiber, sugar, serving_size, serving_unit, is_custom, is_favorite, source)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'local')`,
-      [food.id, food.name, food.nameTr, food.calories, food.protein, food.carbs, food.fat, food.fiber ?? null, food.sugar ?? null, food.servingSize, food.servingUnit]
+      `INSERT OR IGNORE INTO food_items (id, name, name_tr, calories, protein, carbs, fat, fiber, sugar, serving_size, serving_unit, is_custom, is_favorite, source, category, common_portions)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'local', ?, ?)`,
+      [food.id, food.name, food.nameTr, food.calories, food.protein, food.carbs, food.fat, food.fiber ?? null, food.sugar ?? null, food.servingSize, food.servingUnit, food.category ?? null, food.common_portions ? JSON.stringify(food.common_portions) : null]
     );
   }
 

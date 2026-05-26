@@ -83,6 +83,17 @@ const es: Translations = {
     dinner: 'Cena',
     snack: 'Merienda',
     aiRecognition: 'Reconocimiento de Calorías IA',
+    portions: {
+      half_slice: '½ rebanada', slice: '1 rebanada', two_slices: '2 rebanadas', three_slices: '3 rebanadas', whole: 'Entero',
+      tea_glass: '1 taza de té', small_glass: 'Vaso pequeño', large_glass: 'Vaso grande', bottle_500ml: '1 botella (500ml)', bottle_1l: 'Botella 1 L',
+      half_bowl: '½ tazón', bowl: '1 tazón', large_bowl: '1 tazón grande', two_bowls: '2 tazones',
+      tea_spoon: '1 cdita', table_spoon: '1 cda', two_table_spoons: '2 cdas',
+      small_handful: 'Puñado pequeño', one_handful: '1 puñado', one_package: '1 paquete',
+      small_piece: 'Pequeño', medium_piece: 'Mediano', large_piece: 'Grande',
+      half_portion: '½ porción', one_portion: '1 porción', two_portions: '2 porciones', three_portions: '3 porciones',
+      small_piece_adet: '1 pieza pequeña', medium_piece_adet: '1 pieza mediana', large_piece_adet: '1 pieza grande',
+      gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
+    },
   },
 
   workout: {

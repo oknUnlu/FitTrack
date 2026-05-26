@@ -83,6 +83,17 @@ const hi: Translations = {
     dinner: 'रात का खाना',
     snack: 'स्नैक',
     aiRecognition: 'AI कैलोरी पहचान',
+    portions: {
+      half_slice: '½ टुकड़ा', slice: '1 टुकड़ा', two_slices: '2 टुकड़े', three_slices: '3 टुकड़े', whole: 'पूरा',
+      tea_glass: '1 चाय गिलास', small_glass: 'छोटा गिलास', large_glass: 'बड़ा गिलास', bottle_500ml: '1 बोतल (500ml)', bottle_1l: '1 लीटर बोतल',
+      half_bowl: '½ कटोरी', bowl: '1 कटोरी', large_bowl: '1 बड़ी कटोरी', two_bowls: '2 कटोरी',
+      tea_spoon: '1 छोटी चम्मच', table_spoon: '1 बड़ी चम्मच', two_table_spoons: '2 बड़ी चम्मच',
+      small_handful: 'छोटी मुट्ठी', one_handful: '1 मुट्ठी', one_package: '1 पैकेट',
+      small_piece: 'छोटा', medium_piece: 'मध्यम', large_piece: 'बड़ा',
+      half_portion: '½ हिस्सा', one_portion: '1 हिस्सा', two_portions: '2 हिस्से', three_portions: '3 हिस्से',
+      small_piece_adet: '1 छोटा टुकड़ा', medium_piece_adet: '1 मध्यम टुकड़ा', large_piece_adet: '1 बड़ा टुकड़ा',
+      gram_50: '50 ग्रा', gram_100: '100 ग्रा', gram_150: '150 ग्रा', gram_200: '200 ग्रा',
+    },
   },
 
   workout: {

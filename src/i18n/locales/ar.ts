@@ -83,6 +83,17 @@ const ar: Translations = {
     dinner: 'عشاء',
     snack: 'وجبة خفيفة',
     aiRecognition: 'التعرف على السعرات الحرارية بالذكاء الاصطناعي',
+    portions: {
+      half_slice: '½ شريحة', slice: 'شريحة', two_slices: 'شريحتان', three_slices: '3 شرائح', whole: 'كامل',
+      tea_glass: 'كوب شاي', small_glass: 'كوب صغير', large_glass: 'كوب كبير', bottle_500ml: 'زجاجة (500مل)', bottle_1l: 'زجاجة 1 لتر',
+      half_bowl: '½ وعاء', bowl: 'وعاء', large_bowl: 'وعاء كبير', two_bowls: 'وعاءان',
+      tea_spoon: 'ملعقة صغيرة', table_spoon: 'ملعقة كبيرة', two_table_spoons: 'ملعقتان كبيرتان',
+      small_handful: 'حفنة صغيرة', one_handful: 'حفنة', one_package: 'عبوة',
+      small_piece: 'صغير', medium_piece: 'متوسط', large_piece: 'كبير',
+      half_portion: '½ حصة', one_portion: 'حصة', two_portions: 'حصتان', three_portions: '3 حصص',
+      small_piece_adet: 'قطعة صغيرة', medium_piece_adet: 'قطعة متوسطة', large_piece_adet: 'قطعة كبيرة',
+      gram_50: '50 غ', gram_100: '100 غ', gram_150: '150 غ', gram_200: '200 غ',
+    },
   },
 
   workout: {

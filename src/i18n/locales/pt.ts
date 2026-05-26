@@ -83,6 +83,17 @@ const pt: Translations = {
     dinner: 'Jantar',
     snack: 'Lanche',
     aiRecognition: 'Reconhecimento de Calorias IA',
+    portions: {
+      half_slice: '½ fatia', slice: '1 fatia', two_slices: '2 fatias', three_slices: '3 fatias', whole: 'Inteiro',
+      tea_glass: '1 xícara de chá', small_glass: 'Copo pequeno', large_glass: 'Copo grande', bottle_500ml: '1 garrafa (500ml)', bottle_1l: 'Garrafa 1 L',
+      half_bowl: '½ tigela', bowl: '1 tigela', large_bowl: '1 tigela grande', two_bowls: '2 tigelas',
+      tea_spoon: '1 col. de chá', table_spoon: '1 col. de sopa', two_table_spoons: '2 col. de sopa',
+      small_handful: 'Punhado pequeno', one_handful: '1 punhado', one_package: '1 embalagem',
+      small_piece: 'Pequeno', medium_piece: 'Médio', large_piece: 'Grande',
+      half_portion: '½ porção', one_portion: '1 porção', two_portions: '2 porções', three_portions: '3 porções',
+      small_piece_adet: '1 pedaço pequeno', medium_piece_adet: '1 pedaço médio', large_piece_adet: '1 pedaço grande',
+      gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
+    },
   },
 
   workout: {
