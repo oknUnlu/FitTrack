@@ -94,6 +94,7 @@ const hi: Translations = {
       small_piece_adet: '1 छोटा टुकड़ा', medium_piece_adet: '1 मध्यम टुकड़ा', large_piece_adet: '1 बड़ा टुकड़ा',
       gram_50: '50 ग्रा', gram_100: '100 ग्रा', gram_150: '150 ग्रा', gram_200: '200 ग्रा',
     },
+    unitLabels: { piece: 'टुकड़ा', spoon: 'चम्मच', cup: 'गिलास', bowl: 'कटोरी', slice: 'स्लाइस', handful: 'मुट्ठी', portion: 'हिस्सा', gram: 'ग्राम' },
   },
 
   workout: {

@@ -94,6 +94,7 @@ const ja: Translations = {
       small_piece_adet: '小 1個', medium_piece_adet: '中 1個', large_piece_adet: '大 1個',
       gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
     },
+    unitLabels: { piece: '個', spoon: 'さじ', cup: 'コップ', bowl: '膳', slice: '枚', handful: 'つかみ', portion: '人前', gram: 'グラム' },
   },
 
   workout: {

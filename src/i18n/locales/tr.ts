@@ -137,6 +137,10 @@ const tr: Translations = {
       gram_150: '150 g',
       gram_200: '200 g',
     },
+    unitLabels: {
+      piece: 'Adet', spoon: 'Kaşık', cup: 'Bardak', bowl: 'Kase',
+      slice: 'Dilim', handful: 'Avuç', portion: 'Porsiyon', gram: 'Gram',
+    },
   },
 
   workout: {

@@ -755,7 +755,7 @@ export function CalorieScreen() {
           <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setSearchVisible(false); }}>
             <View style={styles.modalBackdrop} />
           </TouchableWithoutFeedback>
-          <View style={[styles.modalSheet, { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom || spacing.md }]}>
+          <View style={[styles.modalSheet, { flex: 1, backgroundColor: theme.colors.surface, paddingBottom: insets.bottom || spacing.md }]}>
             <View style={styles.sheetHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t.calorie.searchFood}</Text>
@@ -956,15 +956,16 @@ export function CalorieScreen() {
                 ? quantityPresets.filter((p) => p.unitType === selectedUnitType)
                 : quantityPresets;
 
+              const ul = (t as any).calorie?.unitLabels ?? {};
               const UNIT_TYPE_LABELS: Record<UnitType, string> = {
-                piece: 'Adet',
-                spoon: 'Kaşık',
-                cup: 'Bardak',
-                bowl: 'Kase',
-                slice: 'Dilim',
-                handful: 'Avuç',
-                portion: 'Porsiyon',
-                gram: 'Gram',
+                piece: ul.piece ?? 'Adet',
+                spoon: ul.spoon ?? 'Kaşık',
+                cup: ul.cup ?? 'Bardak',
+                bowl: ul.bowl ?? 'Kase',
+                slice: ul.slice ?? 'Dilim',
+                handful: ul.handful ?? 'Avuç',
+                portion: ul.portion ?? 'Porsiyon',
+                gram: ul.gram ?? 'Gram',
               };
 
               return (
@@ -1303,7 +1304,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-    flex: 1,
     maxHeight: '85%',
   },
   sheetHandle: {

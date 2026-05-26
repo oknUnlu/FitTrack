@@ -94,6 +94,7 @@ const id: Translations = {
       small_piece_adet: '1 buah kecil', medium_piece_adet: '1 buah sedang', large_piece_adet: '1 buah besar',
       gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
     },
+    unitLabels: { piece: 'Buah', spoon: 'Sendok', cup: 'Gelas', bowl: 'Mangkuk', slice: 'Irisan', handful: 'Genggam', portion: 'Porsi', gram: 'Gram' },
   },
 
   workout: {

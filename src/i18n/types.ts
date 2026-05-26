@@ -130,6 +130,16 @@ export interface Translations {
      * across the bundle — when a locale lacks an entry the utility falls
      * back to the Turkish source string.
      */
+    unitLabels?: {
+      piece?: string;
+      spoon?: string;
+      cup?: string;
+      bowl?: string;
+      slice?: string;
+      handful?: string;
+      portion?: string;
+      gram?: string;
+    };
     portions?: {
       half_slice?: string;
       slice?: string;

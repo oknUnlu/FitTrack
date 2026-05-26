@@ -137,6 +137,10 @@ const en: Translations = {
       gram_150: '150 g',
       gram_200: '200 g',
     },
+    unitLabels: {
+      piece: 'Piece', spoon: 'Spoon', cup: 'Cup', bowl: 'Bowl',
+      slice: 'Slice', handful: 'Handful', portion: 'Portion', gram: 'Gram',
+    },
   },
 
   workout: {

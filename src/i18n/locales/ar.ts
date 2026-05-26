@@ -94,6 +94,7 @@ const ar: Translations = {
       small_piece_adet: 'قطعة صغيرة', medium_piece_adet: 'قطعة متوسطة', large_piece_adet: 'قطعة كبيرة',
       gram_50: '50 غ', gram_100: '100 غ', gram_150: '150 غ', gram_200: '200 غ',
     },
+    unitLabels: { piece: 'قطعة', spoon: 'ملعقة', cup: 'كوب', bowl: 'وعاء', slice: 'شريحة', handful: 'حفنة', portion: 'حصة', gram: 'غرام' },
   },
 
   workout: {

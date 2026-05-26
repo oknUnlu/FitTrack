@@ -94,6 +94,7 @@ const it: Translations = {
       small_piece_adet: '1 pezzo piccolo', medium_piece_adet: '1 pezzo medio', large_piece_adet: '1 pezzo grande',
       gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
     },
+    unitLabels: { piece: 'Pezzo', spoon: 'Cucchiaio', cup: 'Bicchiere', bowl: 'Ciotola', slice: 'Fetta', handful: 'Manciata', portion: 'Porzione', gram: 'Grammo' },
   },
 
   workout: {

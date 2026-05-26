@@ -94,6 +94,7 @@ const ko: Translations = {
       small_piece_adet: '1개 (소)', medium_piece_adet: '1개 (중)', large_piece_adet: '1개 (대)',
       gram_50: '50 g', gram_100: '100 g', gram_150: '150 g', gram_200: '200 g',
     },
+    unitLabels: { piece: '개', spoon: '숟가락', cup: '컵', bowl: '그릇', slice: '조각', handful: '줌', portion: '인분', gram: '그램' },
   },
 
   workout: {
