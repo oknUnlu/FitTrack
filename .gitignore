@@ -51,3 +51,5 @@ coverage/
 *.pdf
 *.docx
 *.md
+
+food_calories/
