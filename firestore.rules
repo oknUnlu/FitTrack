@@ -22,6 +22,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ─── food_library: public read reference data, no client writes ───
+    // Non-sensitive nutrition reference data (USDA + curated), seeded only
+    // by scripts/seedFoods.js. Read is left public (no App Check) because the
+    // client does not initialize App Check; gating it like verified_products
+    // would deny every read and silently break cloud food search.
+    match /food_library/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // ─── barcode_submissions: client may create only, strict validation ───
     match /barcode_submissions/{docId} {
       allow read: if false;

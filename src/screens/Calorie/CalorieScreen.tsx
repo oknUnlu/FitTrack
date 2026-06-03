@@ -43,6 +43,33 @@ function searchFoodsLocal(query: string, limit = 20): FoodItem[] {
     }));
 }
 
+function normalizeFoodName(s: string | null): string {
+  return (s ?? '').toLowerCase().trim();
+}
+
+/**
+ * Merge cloud food results into the local ones, keeping local entries first
+ * (they're cached/favorited/curated) and appending only cloud foods that
+ * aren't already present. Deduped by id and by normalized name so a cloud
+ * copy of a food the user already has locally doesn't show up twice.
+ */
+function mergeFoods(local: FoodItem[], cloud: FoodItem[]): FoodItem[] {
+  const seenIds = new Set(local.map((f) => f.id));
+  const seenNames = new Set(
+    local.map((f) => normalizeFoodName(f.nameTr) || normalizeFoodName(f.name))
+  );
+  const merged = [...local];
+  for (const c of cloud) {
+    const nameKey = normalizeFoodName(c.nameTr) || normalizeFoodName(c.name);
+    if (seenIds.has(c.id)) continue;
+    if (nameKey && seenNames.has(nameKey)) continue;
+    merged.push(c);
+    seenIds.add(c.id);
+    if (nameKey) seenNames.add(nameKey);
+  }
+  return merged;
+}
+
 const MEAL_TYPE_KEYS: Record<string, 'breakfast' | 'lunch' | 'dinner' | 'snack'> = {
   breakfast: 'breakfast',
   lunch: 'lunch',
@@ -160,17 +187,16 @@ export function CalorieScreen() {
         setSearchResults(results);
       }
 
-      // Cloud fallback: if local returned nothing, hit Firestore's
-      // `food_library` collection. The seed script populates this with
-      // 5000+ verified entries (USDA + curated Turkish). Hits are
+      // Always also query Firestore's `food_library` collection and merge
+      // the hits in, so foods that only exist in the cloud library (USDA +
+      // curated entries seeded by scripts/seedFoods.js) show up alongside
+      // the local matches — not only when local returns nothing. Hits are
       // cached back into local SQLite so the next search short-circuits.
-      if (results.length === 0) {
-        const cloudResults = await searchFoodsInCloud(query);
-        // Only render if the user is still looking for the same query —
-        // otherwise they've already moved on.
-        if (mySeq === searchSeqRef.current && cloudResults.length > 0) {
-          setSearchResults(cloudResults);
-        }
+      const cloudResults = await searchFoodsInCloud(query);
+      // Only render if the user is still looking for the same query —
+      // otherwise they've already moved on.
+      if (mySeq === searchSeqRef.current && cloudResults.length > 0) {
+        setSearchResults(mergeFoods(results, cloudResults));
       }
     } catch (e) {
       if (__DEV__) console.warn('searchFoodItems failed:', e);
