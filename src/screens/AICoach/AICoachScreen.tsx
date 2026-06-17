@@ -308,7 +308,7 @@ export function AICoachScreen() {
       )}
 
       {/* Input */}
-      <View style={styles.inputRow}>
+      <View style={[styles.inputRow, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
         <TextInput
           value={input}
           onChangeText={setInput}

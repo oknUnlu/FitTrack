@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { View, ScrollView, StyleSheet, FlatList, TouchableOpacity, Platform, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import { Text, Card, Searchbar, useTheme, Dialog, Portal, TextInput, Button } from 'react-native-paper';
+import { Text, Card, Searchbar, useTheme, Dialog, Portal, TextInput, Button, IconButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '../../store/userStore';
@@ -23,6 +23,16 @@ import { usePremiumStore } from '../../store/premiumStore';
 import { PaywallModal } from '../../components/PaywallModal';
 import { checkDailyLimit } from '../../services/premium/featureGate';
 import { incrementUsage, getRemainingUsage } from '../../services/ai/rateLimiter';
+
+// Clamp the free-text unit count to a sane integer range (1..99). Empty or
+// garbage input falls back to 1 so the dialog never resolves to NaN grams.
+const COUNT_MIN = 1;
+const COUNT_MAX = 99;
+function clampCount(raw: string): number {
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n)) return COUNT_MIN;
+  return Math.min(COUNT_MAX, Math.max(COUNT_MIN, n));
+}
 
 // Web fallback: load foods JSON directly for search
 const foodsJsonData: any[] = require('../../assets/data/foods_tr.json');
@@ -137,6 +147,9 @@ export function CalorieScreen() {
   const [selectedUnitType, setSelectedUnitType] = useState<UnitType | null>(null);
   const [manualMode, setManualMode] = useState(false);
   const [quantityAmount, setQuantityAmount] = useState('');
+  // How many of the selected unit (e.g. 7 olives, 2 bowls). Kept as text so
+  // the field can be edited freely; clamped to 1..99 wherever it's consumed.
+  const [quantityCount, setQuantityCount] = useState('1');
 
 
   const loadMeals = useCallback(async () => {
@@ -225,6 +238,8 @@ export function CalorieScreen() {
     setSelectedUnitType(defaultUnitType);
     // Manual mode is opt-in — start with chip mode every time.
     setManualMode(false);
+    // Default to a single unit; the user bumps it with the count stepper.
+    setQuantityCount('1');
     // Seed the manual-mode input with the default preset's grams (or the
     // food's serving size as a fallback) so the field isn't empty if the
     // user toggles into manual mode.
@@ -252,8 +267,12 @@ export function CalorieScreen() {
       return parseFloat(quantityAmount.replace(',', '.'));
     }
     const preset = quantityPresets[selectedPortionIdx];
-    return preset ? preset.grams : NaN;
-  }, [manualMode, quantityAmount, quantityPresets, selectedPortionIdx]);
+    if (!preset) return NaN;
+    // 'gram' chips are an absolute amount; everything else is per-unit and
+    // gets multiplied by how many units the user entered.
+    const count = preset.unitType === 'gram' ? 1 : clampCount(quantityCount);
+    return preset.grams * count;
+  }, [manualMode, quantityAmount, quantityPresets, selectedPortionIdx, quantityCount]);
 
   // Computes macros proportionally to the chosen gram amount (the
   // food object stores per-100g values) and inserts the meal log.
@@ -292,6 +311,7 @@ export function CalorieScreen() {
       setSelectedPortionIdx(-1);
       setManualMode(false);
       setQuantityAmount('');
+      setQuantityCount('1');
     } catch (e) {
       if (__DEV__) console.warn('handleConfirmQuantity failed:', e);
     }
@@ -1010,9 +1030,11 @@ export function CalorieScreen() {
                             key={ut}
                             onPress={() => {
                               setSelectedUnitType(ut);
-                              // Auto-select first chip of the new type.
+                              // Auto-select first chip of the new type and reset
+                              // the count — a fresh unit starts at one.
                               const firstIdx = quantityPresets.findIndex((p) => p.unitType === ut);
                               if (firstIdx >= 0) setSelectedPortionIdx(firstIdx);
+                              setQuantityCount('1');
                             }}
                             activeOpacity={0.7}
                             style={[
@@ -1069,6 +1091,53 @@ export function CalorieScreen() {
               );
             })()}
 
+            {/* Count stepper — lets the user say how many of the selected unit
+                they had (7 olives, 2 bowls…). Hidden for absolute 'gram' chips
+                and in manual mode, where the amount is already exact. */}
+            {!manualMode && (() => {
+              const preset = quantityPresets[selectedPortionIdx];
+              if (!preset || preset.unitType === 'gram') return null;
+              const count = clampCount(quantityCount);
+              return (
+                <View style={styles.countRow}>
+                  <Text style={styles.countLabel}>
+                    {(t as any).calorie?.countLabel || 'Kaç tane?'}
+                  </Text>
+                  <View style={styles.countStepper}>
+                    <IconButton
+                      icon="minus"
+                      mode="outlined"
+                      size={18}
+                      disabled={count <= COUNT_MIN}
+                      onPress={() => setQuantityCount(String(clampCount(String(count - 1))))}
+                      accessibilityLabel="Decrease count"
+                      style={styles.countBtn}
+                    />
+                    <TextInput
+                      value={quantityCount}
+                      onChangeText={(v) => setQuantityCount(v.replace(/[^0-9]/g, '').slice(0, 2))}
+                      onBlur={() => setQuantityCount(String(clampCount(quantityCount)))}
+                      keyboardType="number-pad"
+                      mode="outlined"
+                      dense
+                      textAlign="center"
+                      style={styles.countInput}
+                      accessibilityLabel="Unit count"
+                    />
+                    <IconButton
+                      icon="plus"
+                      mode="outlined"
+                      size={18}
+                      disabled={count >= COUNT_MAX}
+                      onPress={() => setQuantityCount(String(clampCount(String(count + 1))))}
+                      accessibilityLabel="Increase count"
+                      style={styles.countBtn}
+                    />
+                  </View>
+                </View>
+              );
+            })()}
+
             {/* Manual gram input — collapsed by default. */}
             {manualMode && (
               <TextInput
@@ -1091,7 +1160,9 @@ export function CalorieScreen() {
               const g = (() => {
                 if (manualMode) return parseFloat((quantityAmount || '0').replace(',', '.'));
                 const preset = quantityPresets[selectedPortionIdx];
-                return preset ? preset.grams : NaN;
+                if (!preset) return NaN;
+                const count = preset.unitType === 'gram' ? 1 : clampCount(quantityCount);
+                return preset.grams * count;
               })();
               if (isNaN(g) || g <= 0) return null;
               const ratio = g / 100;
@@ -1145,6 +1216,7 @@ export function CalorieScreen() {
                 setSelectedUnitType(null);
                 setManualMode(false);
                 setQuantityAmount('');
+                setQuantityCount('1');
               }}
             >
               {t.common.cancel}
@@ -1492,6 +1564,29 @@ const styles = StyleSheet.create({
   portionChipText: {
     fontSize: 12,
     color: colors.textPrimary,
+  },
+  countRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+  },
+  countLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  countStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  countBtn: {
+    margin: 0,
+  },
+  countInput: {
+    width: 60,
+    height: 40,
   },
   portionModeToggle: {
     alignSelf: 'center',

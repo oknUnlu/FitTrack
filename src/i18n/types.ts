@@ -110,6 +110,7 @@ export interface Translations {
     quantityAmount?: string;
     quantityUnit?: string;
     quantityPreview?: string;
+    countLabel?: string;
     quantityInvalid?: string;
     useManualMode?: string;
     usePresetMode?: string;

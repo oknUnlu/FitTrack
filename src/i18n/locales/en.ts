@@ -88,6 +88,7 @@ const en: Translations = {
     quantityAmount: 'Amount',
     quantityUnit: 'grams',
     quantityPreview: 'Estimated',
+    countLabel: 'How many?',
     quantityInvalid: 'Enter a valid amount',
     useManualMode: 'I know the exact grams ▾',
     usePresetMode: 'Back to quick picks ▴',

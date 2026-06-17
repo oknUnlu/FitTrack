@@ -30,30 +30,34 @@ function makeFood(overrides: Partial<FoodItem> = {}): FoodItem {
 const NO_T = undefined;
 
 describe('getPortionPresets', () => {
-  test('curated commonPortions take precedence over category defaults', () => {
+  test('curated portions lead, then category presets are merged in their own tabs', () => {
     const food = makeFood({
-      category: 'soup', // Would normally produce kase presets…
+      category: 'soup', // soup → bowl presets, a non-portion unit type
       commonPortions: [
         { label: 'Özel boy', grams: 175 },
         { label: 'Devasa', grams: 999 },
       ],
     });
     const presets = getPortionPresets(food, NO_T);
-    expect(presets).toHaveLength(2);
-    expect(presets[0]).toEqual({ label: 'Özel boy', grams: 175 });
-    expect(presets[1]).toEqual({ label: 'Devasa', grams: 999 });
+    // Curated entries come first (under the 'portion' tab)…
+    expect(presets[0]).toEqual({ label: 'Özel boy', grams: 175, unitType: 'portion' });
+    expect(presets[1]).toEqual({ label: 'Devasa', grams: 999, unitType: 'portion' });
+    // …followed by the soup (bowl) category presets so the user gets both.
+    expect(presets.slice(2).map((p) => p.grams)).toEqual([125, 250, 400]);
+    expect(presets.slice(2).every((p) => p.unitType === 'bowl')).toBe(true);
   });
 
   test('soup category produces kase chips when no curated portions', () => {
     const presets = getPortionPresets(makeFood({ category: 'soup' }), NO_T);
-    expect(presets.map((p) => p.grams)).toEqual([125, 250, 400, 500]);
+    expect(presets.map((p) => p.grams)).toEqual([125, 250, 400]);
     // Default labels are Turkish — soup → kase
     expect(presets[1].label).toContain('kase');
   });
 
   test('beverage category produces glass/bottle chips', () => {
     const presets = getPortionPresets(makeFood({ category: 'beverage' }), NO_T);
-    expect(presets.map((p) => p.grams)).toEqual([200, 300, 500, 1000]);
+    // Includes the Turkish çay bardağı (150 ml) added in the beverage presets.
+    expect(presets.map((p) => p.grams)).toEqual([150, 200, 300, 500, 1000]);
   });
 
   test('drink alias maps to the same beverage presets', () => {
@@ -67,8 +71,8 @@ describe('getPortionPresets', () => {
       makeFood({ category: null, servingSize: 200 }),
       NO_T
     );
-    // Multipliers: 0.5x, 1x, 2x, 3x → 100, 200, 400, 600 g
-    expect(presets.map((p) => p.grams)).toEqual([100, 200, 400, 600]);
+    // Multipliers: 0.5x, 1x → 100, 200 g (2x/3x handled by count stepper)
+    expect(presets.map((p) => p.grams)).toEqual([100, 200]);
   });
 
   test('zero or missing servingSize defaults the multiplier anchor to 100 g', () => {
@@ -76,7 +80,7 @@ describe('getPortionPresets', () => {
       makeFood({ category: null, servingSize: 0 }),
       NO_T
     );
-    expect(presets.map((p) => p.grams)).toEqual([50, 100, 200, 300]);
+    expect(presets.map((p) => p.grams)).toEqual([50, 100]);
   });
 
   test('curated portions with NaN or non-positive grams are filtered out', () => {
@@ -96,7 +100,7 @@ describe('getPortionPresets', () => {
   test('empty curated portions falls through to category defaults', () => {
     const food = makeFood({ category: 'soup', commonPortions: [] });
     const presets = getPortionPresets(food, NO_T);
-    expect(presets.map((p) => p.grams)).toEqual([125, 250, 400, 500]);
+    expect(presets.map((p) => p.grams)).toEqual([125, 250, 400]);
   });
 
   test('i18n bundle override wins over default labels', () => {

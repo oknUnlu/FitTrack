@@ -12,6 +12,12 @@ export async function sendMessage(
   prompt: string,
   context: string
 ): Promise<AIResponse> {
+  // Load recent conversation history BEFORE saving the current message.
+  // Saving first would put the prompt at the end of the history too, so Gemini
+  // would see the user's message twice (once as the last turn, once as the live
+  // prompt) — which makes it repeat itself.
+  const history = await getChatHistory(userId);
+
   // Save user message
   await insertConversation({
     id: generateId(),
@@ -22,20 +28,19 @@ export async function sendMessage(
     createdAt: Date.now(),
   });
 
-  let response: AIResponse;
-
-  // Load recent conversation history for multi-turn context
-  const history = await getChatHistory(userId);
-  response = await sendToGemini(prompt, context, history);
+  let response: AIResponse = await sendToGemini(prompt, context, history);
 
   if (!response.success) {
-    // Use fallback if server is unreachable or errors
-    const fallback = getFallbackResponse(prompt);
-    // Only use fallback if it's a network/server issue, not rate limit
-    if (response.message.includes('RATE_LIMIT') || response.message.includes('limitine')) {
-      // Keep the rate limit message from server
-    } else {
-      response = fallback;
+    // The call failed. Log the real cause so it's clear whether the problem is
+    // our backend/API rather than masking everything behind the same canned
+    // reply (which looks like the AI "repeating itself").
+    if (__DEV__) console.warn('[aiService] sendToGemini failed:', response.errorKind, response.message);
+
+    // Only the offline canned tips for genuine network/unknown failures. Rate
+    // limit, budget/unavailable and safety already carry a clear, distinct
+    // message, so we keep those untouched.
+    if (response.errorKind === 'network' || response.errorKind === undefined) {
+      response = getFallbackResponse(prompt);
     }
   }
 

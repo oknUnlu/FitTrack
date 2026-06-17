@@ -89,8 +89,17 @@ export async function apiPost<T = any>(
     throw new Error('UNAUTHORIZED');
   }
 
+  // 503 = server refused work (monthly budget guard tripped or transient
+  // overload). Surface a stable code so the caller can show a specific message.
+  if (response.status === 503) {
+    throw new Error('SERVICE_UNAVAILABLE');
+  }
+
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
+    if (data.source === 'safety') {
+      throw new Error('SAFETY_BLOCKED');
+    }
     throw new Error(data.message || `HTTP ${response.status}`);
   }
 

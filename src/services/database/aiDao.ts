@@ -18,8 +18,14 @@ function rowToConversation(row: any): AIConversation {
 
 export async function getConversations(userId: string, limit = 50): Promise<AIConversation[]> {
   const db = await getDatabase();
+  // Take the most RECENT `limit` messages (inner DESC), then return them in
+  // chronological order for display. Ordering ASC directly would keep the
+  // OLDEST 50 forever, so once a chat passes the limit the user's recent
+  // history would vanish on reload and Gemini would get stale context.
   const rows = await db.getAllAsync(
-    'SELECT * FROM ai_conversations WHERE user_id = ? ORDER BY created_at ASC LIMIT ?',
+    `SELECT * FROM (
+       SELECT * FROM ai_conversations WHERE user_id = ? ORDER BY created_at DESC LIMIT ?
+     ) ORDER BY created_at ASC`,
     [userId, limit]
   );
   return rows.map(rowToConversation);

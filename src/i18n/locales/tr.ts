@@ -88,6 +88,7 @@ const tr: Translations = {
     quantityAmount: 'Miktar',
     quantityUnit: 'gram',
     quantityPreview: 'Tahmini',
+    countLabel: 'Kaç tane?',
     quantityInvalid: 'Geçerli bir miktar girin',
     useManualMode: 'Tam gramajı biliyorum ▾',
     usePresetMode: 'Hazır porsiyonlara dön ▴',

@@ -31,18 +31,46 @@ export async function sendToGemini(
 
     return data;
   } catch (error: any) {
-    if (error.message === 'RATE_LIMIT_EXCEEDED') {
+    return mapGeminiError(error);
+  }
+}
+
+/**
+ * Translate a thrown API error into a typed AIResponse. Known failure causes
+ * get a clear, distinct message; everything else is flagged as a network error
+ * so the caller can fall back to offline tips.
+ */
+function mapGeminiError(error: any): AIResponse {
+  if (__DEV__) console.warn('[geminiCloud] request failed:', error?.message);
+  switch (error?.message) {
+    case 'RATE_LIMIT_EXCEEDED':
       return {
         success: false,
         message: 'Günlük istek limitine ulaşıldı. Yarın tekrar deneyin.',
         source: 'fallback',
+        errorKind: 'rate_limit',
       };
-    }
-    return {
-      success: false,
-      message: `Gemini hatası: ${error.message}`,
-      source: 'gemini_cloud',
-    };
+    case 'SERVICE_UNAVAILABLE':
+      return {
+        success: false,
+        message: 'AI servisi şu an geçici olarak kullanılamıyor (yoğunluk veya aylık limit). Lütfen biraz sonra tekrar deneyin.',
+        source: 'fallback',
+        errorKind: 'unavailable',
+      };
+    case 'SAFETY_BLOCKED':
+      return {
+        success: false,
+        message: 'Mesajın güvenlik filtrelerine takıldı. Lütfen farklı bir şekilde ifade etmeyi dene.',
+        source: 'fallback',
+        errorKind: 'safety',
+      };
+    default:
+      return {
+        success: false,
+        message: `Gemini hatası: ${error?.message ?? 'bilinmeyen hata'}`,
+        source: 'gemini_cloud',
+        errorKind: 'network',
+      };
   }
 }
 
@@ -87,17 +115,6 @@ export async function generatePlan(
 
     return data;
   } catch (error: any) {
-    if (error.message === 'RATE_LIMIT_EXCEEDED') {
-      return {
-        success: false,
-        message: 'Günlük istek limitine ulaşıldı. Yarın tekrar deneyin.',
-        source: 'fallback',
-      };
-    }
-    return {
-      success: false,
-      message: `Plan oluşturma hatası: ${error.message}`,
-      source: 'gemini_cloud',
-    };
+    return mapGeminiError(error);
   }
 }

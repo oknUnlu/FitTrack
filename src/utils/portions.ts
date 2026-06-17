@@ -50,23 +50,22 @@ const BEVERAGE_PRESETS: FixedPreset[] = [
   { key: 'bottle_1l', grams: 1000, unitType: 'cup' },
 ];
 
+// Presets describe ONE unit per size. Multiples (e.g. "2 kase", "3 dilim")
+// are expressed by the count stepper in the quantity dialog, not by separate
+// chips — so we only ship single-unit sizes here.
 const SOUP_PRESETS: FixedPreset[] = [
   { key: 'half_bowl', grams: 125, unitType: 'bowl' },
   { key: 'bowl', grams: 250, unitType: 'bowl' },
   { key: 'large_bowl', grams: 400, unitType: 'bowl' },
-  { key: 'two_bowls', grams: 500, unitType: 'bowl' },
 ];
 
 const BREAD_PRESETS: FixedPreset[] = [
   { key: 'slice', grams: 30, unitType: 'slice' },
-  { key: 'two_slices', grams: 60, unitType: 'slice' },
-  { key: 'three_slices', grams: 90, unitType: 'slice' },
 ];
 
 const CONDIMENT_PRESETS: FixedPreset[] = [
   { key: 'tea_spoon', grams: 5, unitType: 'spoon' },
   { key: 'table_spoon', grams: 15, unitType: 'spoon' },
-  { key: 'two_table_spoons', grams: 30, unitType: 'spoon' },
 ];
 
 // Fruits and vegetables support both piece (adet) and gram selection.
@@ -109,7 +108,6 @@ const DAIRY_PRESETS: FixedPreset[] = [
 
 const LEGUME_PRESETS: FixedPreset[] = [
   { key: 'table_spoon', grams: 15, unitType: 'spoon' },
-  { key: 'two_table_spoons', grams: 30, unitType: 'spoon' },
   { key: 'half_bowl', grams: 125, unitType: 'bowl' },
   { key: 'bowl', grams: 250, unitType: 'bowl' },
 ];
@@ -146,8 +144,6 @@ const SNACK_PRESETS: FixedPreset[] = [
 const PORTION_MULTIPLIERS: MultiplierPreset[] = [
   { key: 'half_portion', multiplier: 0.5, unitType: 'portion' },
   { key: 'one_portion', multiplier: 1, unitType: 'portion' },
-  { key: 'two_portions', multiplier: 2, unitType: 'portion' },
-  { key: 'three_portions', multiplier: 3, unitType: 'portion' },
 ];
 
 const CATEGORY_TABLE: Record<string, FixedPreset[]> = {
