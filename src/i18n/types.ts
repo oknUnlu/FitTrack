@@ -155,6 +155,12 @@ export interface Translations {
       bowl?: string;
       large_bowl?: string;
       two_bowls?: string;
+      ladle?: string;
+      bowl_small?: string;
+      bowl_medium?: string;
+      bowl_large?: string;
+      portion_medium?: string;
+      plate_full?: string;
       tea_spoon?: string;
       table_spoon?: string;
       two_table_spoons?: string;

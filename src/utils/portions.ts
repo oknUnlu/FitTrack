@@ -54,9 +54,12 @@ const BEVERAGE_PRESETS: FixedPreset[] = [
 // are expressed by the count stepper in the quantity dialog, not by separate
 // chips — so we only ship single-unit sizes here.
 const SOUP_PRESETS: FixedPreset[] = [
-  { key: 'half_bowl', grams: 125, unitType: 'bowl' },
-  { key: 'bowl', grams: 250, unitType: 'bowl' },
-  { key: 'large_bowl', grams: 400, unitType: 'bowl' },
+  { key: 'ladle', grams: 100, unitType: 'spoon' },
+  { key: 'bowl_small', grams: 200, unitType: 'bowl' },
+  { key: 'bowl_medium', grams: 300, unitType: 'bowl' },
+  { key: 'bowl_large', grams: 400, unitType: 'bowl' },
+  { key: 'portion_medium', grams: 300, unitType: 'portion' },
+  { key: 'plate_full', grams: 350, unitType: 'portion' },
 ];
 
 const BREAD_PRESETS: FixedPreset[] = [
@@ -108,15 +111,18 @@ const DAIRY_PRESETS: FixedPreset[] = [
 
 const LEGUME_PRESETS: FixedPreset[] = [
   { key: 'table_spoon', grams: 15, unitType: 'spoon' },
-  { key: 'half_bowl', grams: 125, unitType: 'bowl' },
-  { key: 'bowl', grams: 250, unitType: 'bowl' },
+  { key: 'bowl_small', grams: 150, unitType: 'bowl' },
+  { key: 'bowl_medium', grams: 250, unitType: 'bowl' },
+  { key: 'bowl_large', grams: 350, unitType: 'bowl' },
+  { key: 'portion_medium', grams: 200, unitType: 'portion' },
 ];
 
 const GRAIN_PRESETS: FixedPreset[] = [
   { key: 'table_spoon', grams: 15, unitType: 'spoon' },
-  { key: 'half_bowl', grams: 100, unitType: 'bowl' },
-  { key: 'bowl', grams: 200, unitType: 'bowl' },
-  { key: 'large_bowl', grams: 350, unitType: 'bowl' },
+  { key: 'bowl_small', grams: 100, unitType: 'bowl' },
+  { key: 'bowl_medium', grams: 200, unitType: 'bowl' },
+  { key: 'bowl_large', grams: 350, unitType: 'bowl' },
+  { key: 'plate_full', grams: 300, unitType: 'portion' },
 ];
 
 const EGG_PRESETS: FixedPreset[] = [
@@ -210,6 +216,13 @@ const DEFAULT_LABELS: Record<string, string> = {
   bowl: '1 kase',
   large_bowl: '1 büyük kase',
   two_bowls: '2 kase',
+  // Sized bowls + soup-style measures (newer, parenthetical naming)
+  ladle: 'Kepçe',
+  bowl_small: 'Kase (Küçük)',
+  bowl_medium: 'Kase (Orta)',
+  bowl_large: 'Kase (Büyük)',
+  portion_medium: 'Porsiyon (Orta)',
+  plate_full: 'Tabak (Tam)',
   tea_spoon: '1 çay kaşığı',
   table_spoon: '1 yemek kaşığı',
   two_table_spoons: '2 yemek kaşığı',
@@ -220,10 +233,11 @@ const DEFAULT_LABELS: Record<string, string> = {
   small_piece: '1 küçük',
   medium_piece: '1 orta',
   large_piece: '1 büyük',
-  // New adet (piece count) keys
-  small_piece_adet: '1 küçük adet',
-  medium_piece_adet: '1 orta adet',
-  large_piece_adet: '1 büyük adet',
+  // New adet (piece count) keys — parenthetical size naming reads cleanly
+  // next to the "Miktar" count in the redesigned quantity dialog.
+  small_piece_adet: 'Adet (Küçük)',
+  medium_piece_adet: 'Adet (Orta)',
+  large_piece_adet: 'Adet (Büyük)',
   // Gram shortcuts
   gram_50: '50 g',
   gram_100: '100 g',

@@ -42,16 +42,18 @@ describe('getPortionPresets', () => {
     // Curated entries come first (under the 'portion' tab)…
     expect(presets[0]).toEqual({ label: 'Özel boy', grams: 175, unitType: 'portion' });
     expect(presets[1]).toEqual({ label: 'Devasa', grams: 999, unitType: 'portion' });
-    // …followed by the soup (bowl) category presets so the user gets both.
-    expect(presets.slice(2).map((p) => p.grams)).toEqual([125, 250, 400]);
-    expect(presets.slice(2).every((p) => p.unitType === 'bowl')).toBe(true);
+    // …followed by the soup category presets (ladle / sized bowls / plate) so
+    // the user gets both. The soup set mixes spoon, bowl and portion types.
+    expect(presets.slice(2).map((p) => p.grams)).toEqual([100, 200, 300, 400, 300, 350]);
+    expect(presets.slice(2).some((p) => p.unitType === 'bowl')).toBe(true);
   });
 
-  test('soup category produces kase chips when no curated portions', () => {
+  test('soup category produces sized kase presets when no curated portions', () => {
     const presets = getPortionPresets(makeFood({ category: 'soup' }), NO_T);
-    expect(presets.map((p) => p.grams)).toEqual([125, 250, 400]);
-    // Default labels are Turkish — soup → kase
-    expect(presets[1].label).toContain('kase');
+    expect(presets.map((p) => p.grams)).toEqual([100, 200, 300, 400, 300, 350]);
+    // Default labels are Turkish — soup → Kepçe + sized Kase + Tabak
+    expect(presets[0].label).toBe('Kepçe');
+    expect(presets[1].label).toContain('Kase');
   });
 
   test('beverage category produces glass/bottle chips', () => {
@@ -100,23 +102,23 @@ describe('getPortionPresets', () => {
   test('empty curated portions falls through to category defaults', () => {
     const food = makeFood({ category: 'soup', commonPortions: [] });
     const presets = getPortionPresets(food, NO_T);
-    expect(presets.map((p) => p.grams)).toEqual([125, 250, 400]);
+    expect(presets.map((p) => p.grams)).toEqual([100, 200, 300, 400, 300, 350]);
   });
 
   test('i18n bundle override wins over default labels', () => {
     const t = {
       calorie: {
         portions: {
-          half_bowl: '½ кassa',
-          bowl: 'EnglishBowl',
+          ladle: 'Ladle',
+          bowl_small: 'EnglishSmallBowl',
         },
       },
     };
     const presets = getPortionPresets(makeFood({ category: 'soup' }), t);
-    expect(presets[0].label).toBe('½ кassa');
-    expect(presets[1].label).toBe('EnglishBowl');
+    expect(presets[0].label).toBe('Ladle');
+    expect(presets[1].label).toBe('EnglishSmallBowl');
     // Untranslated keys still fall back to Turkish defaults
-    expect(presets[2].label).toContain('büyük kase');
+    expect(presets[3].label).toContain('Büyük');
   });
 });
 

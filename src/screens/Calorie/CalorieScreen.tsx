@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { View, ScrollView, StyleSheet, FlatList, TouchableOpacity, Platform, Alert, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import { Text, Card, Searchbar, useTheme, Dialog, Portal, TextInput, Button, IconButton } from 'react-native-paper';
+import { Text, Card, Searchbar, useTheme, Dialog, Portal, TextInput, Button, IconButton, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '../../store/userStore';
@@ -8,7 +8,7 @@ import { useMealStore } from '../../store/mealStore';
 import { getUserById, User } from '../../services/database/userDao';
 import { getMealLogsByDate, MealLog, insertMealLog, deleteMealLog } from '../../services/database/mealDao';
 import { searchFoodItems, FoodItem, getFoodByBarcode } from '../../services/database/foodDao';
-import { getPortionPresets, getUnitTypes, pickDefaultPreset, type ResolvedPortion, type UnitType } from '../../utils/portions';
+import { getPortionPresets, pickDefaultPreset, type ResolvedPortion, type UnitType } from '../../utils/portions';
 import { getProductByBarcode } from '../../services/api/openFoodFacts';
 import { insertBarcodeSubmission, checkAndPromoteBarcode, getVerifiedProductFromCloud } from '../../services/database/barcodeDao';
 import { searchFoodsInCloud } from '../../services/firebase/foodFirestore';
@@ -150,6 +150,8 @@ export function CalorieScreen() {
   // How many of the selected unit (e.g. 7 olives, 2 bowls). Kept as text so
   // the field can be edited freely; clamped to 1..99 wherever it's consumed.
   const [quantityCount, setQuantityCount] = useState('1');
+  // Whether the unit dropdown in the quantity dialog is expanded.
+  const [unitMenuVisible, setUnitMenuVisible] = useState(false);
 
 
   const loadMeals = useCallback(async () => {
@@ -227,18 +229,22 @@ export function CalorieScreen() {
     setSelectedFood(food);
 
     const presets = getPortionPresets(food, t);
-    const defaultIdx = pickDefaultPreset(presets, food.servingSize);
+    let defaultIdx = pickDefaultPreset(presets, food.servingSize);
+    // The unit dropdown lists real household units (adet, kase, …); exact
+    // grams are a dedicated "Gram" option that switches to manual entry. So
+    // if the closest preset is a gram shortcut, open on the first real unit
+    // instead, and only fall back to manual mode when no unit preset exists.
+    const noUnitPresets = presets.every((p) => p.unitType === 'gram');
+    if (defaultIdx >= 0 && presets[defaultIdx].unitType === 'gram' && !noUnitPresets) {
+      defaultIdx = presets.findIndex((p) => p.unitType !== 'gram');
+    }
     setQuantityPresets(presets);
     setSelectedPortionIdx(defaultIdx);
-    // Set initial unit type tab to the one that contains the default preset.
-    const unitTypes = getUnitTypes(presets);
-    const defaultUnitType = unitTypes.length > 1
-      ? (defaultIdx >= 0 && presets[defaultIdx].unitType) || unitTypes[0]
-      : null;
-    setSelectedUnitType(defaultUnitType);
-    // Manual mode is opt-in — start with chip mode every time.
-    setManualMode(false);
-    // Default to a single unit; the user bumps it with the count stepper.
+    setSelectedUnitType(defaultIdx >= 0 ? presets[defaultIdx].unitType ?? null : null);
+    // Start in unit mode unless the food only offers gram amounts.
+    setManualMode(noUnitPresets);
+    setUnitMenuVisible(false);
+    // Default to a single unit; the user changes it in the "Miktar" field.
     setQuantityCount('1');
     // Seed the manual-mode input with the default preset's grams (or the
     // food's serving size as a fallback) so the field isn't empty if the
@@ -310,6 +316,7 @@ export function CalorieScreen() {
       setQuantityPresets([]);
       setSelectedPortionIdx(-1);
       setManualMode(false);
+      setUnitMenuVisible(false);
       setQuantityAmount('');
       setQuantityCount('1');
     } catch (e) {
@@ -983,136 +990,79 @@ export function CalorieScreen() {
             setSelectedPortionIdx(-1);
             setSelectedUnitType(null);
             setManualMode(false);
+            setUnitMenuVisible(false);
             setQuantityAmount('');
           }}
         >
           <Dialog.Title>{(t as any).calorie?.quantityPickerTitle || t.calorie.quantityTitle || 'Ne kadar yedin?'}</Dialog.Title>
-          <Dialog.Content style={{ gap: 10 }}>
-            {selectedFood && (
-              <Text style={styles.quantityFoodName} numberOfLines={2}>
-                {selectedFood.nameTr || selectedFood.name}
-              </Text>
-            )}
-
-            {/* Chip grid — only shown in chip mode. */}
-            {!manualMode && quantityPresets.length > 0 && (() => {
-              const unitTypes = getUnitTypes(quantityPresets);
-              const hasMultipleTypes = unitTypes.length > 1;
-              const visiblePresets = hasMultipleTypes && selectedUnitType
-                ? quantityPresets.filter((p) => p.unitType === selectedUnitType)
-                : quantityPresets;
-
+          <Dialog.Content style={{ gap: spacing.sm }}>
+            {selectedFood && (() => {
               const ul = (t as any).calorie?.unitLabels ?? {};
-              const UNIT_TYPE_LABELS: Record<UnitType, string> = {
-                piece: ul.piece ?? 'Adet',
-                spoon: ul.spoon ?? 'Kaşık',
-                cup: ul.cup ?? 'Bardak',
-                bowl: ul.bowl ?? 'Kase',
-                slice: ul.slice ?? 'Dilim',
-                handful: ul.handful ?? 'Avuç',
-                portion: ul.portion ?? 'Porsiyon',
-                gram: ul.gram ?? 'Gram',
-              };
+              const gramUnit = selectedFood.servingUnit || 'g';
+              const gramLabel = ul.gram ?? 'Gram';
+
+              // The dropdown offers real household units; gram amounts are a
+              // dedicated option that flips the dialog into manual entry.
+              const unitPresets = quantityPresets.filter((p) => p.unitType !== 'gram');
+
+              // Drop a redundant leading "1 " so the unit reads naturally next
+              // to the "Miktar" count (e.g. "2 × orta adet", not "2 × 1 orta adet").
+              const prettyUnit = (label: string) =>
+                label.startsWith('1 ') ? label.slice(2) : label;
+
+              const currentLabel = manualMode
+                ? `${gramLabel} (${gramUnit})`
+                : prettyUnit(quantityPresets[selectedPortionIdx]?.label ?? gramLabel);
+
+              // Resolve the gram amount currently described by the inputs so we
+              // can show a live calorie + macro readout in the header.
+              const g = manualMode
+                ? parseFloat((quantityAmount || '0').replace(',', '.'))
+                : (quantityPresets[selectedPortionIdx]?.grams ?? NaN) * clampCount(quantityCount);
+              const valid = !isNaN(g) && g > 0;
+              const ratio = valid ? g / 100 : 0;
+              const kcal = Math.round(selectedFood.calories * ratio);
+              const pP = Math.round(selectedFood.protein * ratio);
+              const pC = Math.round(selectedFood.carbs * ratio);
+              const pF = Math.round(selectedFood.fat * ratio);
 
               return (
-                <View style={{ gap: 8 }}>
-                  {/* Unit type tab bar — only rendered when >1 type exists */}
-                  {hasMultipleTypes && (
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.unitTypeTabRow}
-                    >
-                      {unitTypes.map((ut) => {
-                        const active = ut === selectedUnitType;
-                        return (
-                          <TouchableOpacity
-                            key={ut}
-                            onPress={() => {
-                              setSelectedUnitType(ut);
-                              // Auto-select first chip of the new type and reset
-                              // the count — a fresh unit starts at one.
-                              const firstIdx = quantityPresets.findIndex((p) => p.unitType === ut);
-                              if (firstIdx >= 0) setSelectedPortionIdx(firstIdx);
-                              setQuantityCount('1');
-                            }}
-                            activeOpacity={0.7}
-                            style={[
-                              styles.unitTypeTab,
-                              active && {
-                                backgroundColor: theme.colors.primary,
-                                borderColor: theme.colors.primary,
-                              },
-                            ]}
-                          >
-                            <Text style={[
-                              styles.unitTypeTabText,
-                              active && { color: '#fff', fontWeight: '600' },
-                            ]}>
-                              {UNIT_TYPE_LABELS[ut] ?? ut}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
-                  )}
-
-                  {/* Portion chips filtered to the active unit type */}
-                  <View style={styles.portionChipRow}>
-                    {visiblePresets.map((p) => {
-                      const globalIdx = quantityPresets.indexOf(p);
-                      const active = globalIdx === selectedPortionIdx;
-                      return (
-                        <TouchableOpacity
-                          key={`${p.label}-${globalIdx}`}
-                          onPress={() => setSelectedPortionIdx(globalIdx)}
-                          activeOpacity={0.7}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: active }}
-                          style={[
-                            styles.portionChip,
-                            active && {
-                              backgroundColor: theme.colors.primaryContainer,
-                              borderColor: theme.colors.primary,
-                            },
-                          ]}
-                        >
-                          <Text style={[
-                            styles.portionChipText,
-                            active && { color: theme.colors.primary, fontWeight: '600' },
-                          ]}>
-                            {p.label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+                <View>
+                  {/* Header — food icon, name and a live calorie readout. */}
+                  <View style={styles.qHeader}>
+                    <View style={styles.qIconCircle}>
+                      <MaterialCommunityIcons name="silverware-fork-knife" size={22} color={theme.colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.qHeaderName} numberOfLines={2}>
+                        {selectedFood.nameTr || selectedFood.name}
+                      </Text>
+                      <View style={styles.qKcalRow}>
+                        <Text style={styles.qKcalValue}>{valid ? kcal : 0}</Text>
+                        <Text style={styles.qKcalUnit}> {t.common.kcal}</Text>
+                        <MaterialCommunityIcons name="fire" size={15} color={colors.orange} style={{ marginLeft: 3 }} />
+                      </View>
+                    </View>
                   </View>
-                </View>
-              );
-            })()}
 
-            {/* Count stepper — lets the user say how many of the selected unit
-                they had (7 olives, 2 bowls…). Hidden for absolute 'gram' chips
-                and in manual mode, where the amount is already exact. */}
-            {!manualMode && (() => {
-              const preset = quantityPresets[selectedPortionIdx];
-              if (!preset || preset.unitType === 'gram') return null;
-              const count = clampCount(quantityCount);
-              return (
-                <View style={styles.countRow}>
-                  <Text style={styles.countLabel}>
-                    {(t as any).calorie?.countLabel || 'Kaç tane?'}
-                  </Text>
-                  <View style={styles.countStepper}>
-                    <IconButton
-                      icon="minus"
+                  <Divider style={styles.qDivider} />
+
+                  {/* Amount — a count of the chosen unit, or exact grams in
+                      manual mode. One field instead of a chip + stepper combo. */}
+                  <Text style={styles.qFieldLabel}>{t.calorie.quantityAmount || 'Miktar'}</Text>
+                  {manualMode ? (
+                    <TextInput
+                      value={quantityAmount}
+                      onChangeText={setQuantityAmount}
+                      keyboardType="numeric"
                       mode="outlined"
-                      size={18}
-                      disabled={count <= COUNT_MIN}
-                      onPress={() => setQuantityCount(String(clampCount(String(count - 1))))}
-                      accessibilityLabel="Decrease count"
-                      style={styles.countBtn}
+                      dense
+                      maxLength={6}
+                      placeholder="0"
+                      right={<TextInput.Affix text={gramUnit} />}
+                      style={styles.qAmountInput}
                     />
+                  ) : (
                     <TextInput
                       value={quantityCount}
                       onChangeText={(v) => setQuantityCount(v.replace(/[^0-9]/g, '').slice(0, 2))}
@@ -1120,91 +1070,87 @@ export function CalorieScreen() {
                       keyboardType="number-pad"
                       mode="outlined"
                       dense
-                      textAlign="center"
-                      style={styles.countInput}
-                      accessibilityLabel="Unit count"
+                      placeholder="1"
+                      style={styles.qAmountInput}
                     />
-                    <IconButton
-                      icon="plus"
-                      mode="outlined"
-                      size={18}
-                      disabled={count >= COUNT_MAX}
-                      onPress={() => setQuantityCount(String(clampCount(String(count + 1))))}
-                      accessibilityLabel="Increase count"
-                      style={styles.countBtn}
+                  )}
+
+                  {/* Unit selector — an inline dropdown (kept inline rather than
+                      a Portal Menu so it layers reliably inside the Dialog). */}
+                  <Text style={[styles.qFieldLabel, { marginTop: spacing.sm }]}>
+                    {(t as any).calorie?.unitFieldLabel || 'Birim'}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.qDropdownAnchor}
+                    activeOpacity={0.7}
+                    onPress={() => setUnitMenuVisible((v) => !v)}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.qDropdownText} numberOfLines={1}>{currentLabel}</Text>
+                    <MaterialCommunityIcons
+                      name={unitMenuVisible ? 'chevron-up' : 'chevron-down'}
+                      size={22}
+                      color={colors.textSecondary}
                     />
-                  </View>
+                  </TouchableOpacity>
+
+                  {unitMenuVisible && (
+                    <View style={styles.qDropdownList}>
+                      {unitPresets.map((p) => {
+                        const globalIdx = quantityPresets.indexOf(p);
+                        const active = !manualMode && globalIdx === selectedPortionIdx;
+                        return (
+                          <TouchableOpacity
+                            key={`${p.label}-${globalIdx}`}
+                            style={styles.qDropdownItem}
+                            activeOpacity={0.6}
+                            onPress={() => {
+                              setManualMode(false);
+                              setSelectedPortionIdx(globalIdx);
+                              setSelectedUnitType(p.unitType ?? null);
+                              setUnitMenuVisible(false);
+                            }}
+                          >
+                            <Text style={[styles.qDropdownItemText, active && { color: theme.colors.primary, fontWeight: '600' }]}>
+                              {prettyUnit(p.label)}
+                            </Text>
+                            {active && <MaterialCommunityIcons name="check" size={18} color={theme.colors.primary} />}
+                          </TouchableOpacity>
+                        );
+                      })}
+                      {/* Exact grams — switches to manual entry. */}
+                      <TouchableOpacity
+                        style={[styles.qDropdownItem, { borderBottomWidth: 0 }]}
+                        activeOpacity={0.6}
+                        onPress={() => {
+                          setManualMode(true);
+                          if (!quantityAmount || quantityAmount === '0') {
+                            const preset = quantityPresets[selectedPortionIdx];
+                            setQuantityAmount(String(preset ? preset.grams : selectedFood.servingSize || 100));
+                          }
+                          setUnitMenuVisible(false);
+                        }}
+                      >
+                        <Text style={[styles.qDropdownItemText, manualMode && { color: theme.colors.primary, fontWeight: '600' }]}>
+                          {gramLabel} ({gramUnit})
+                        </Text>
+                        {manualMode && <MaterialCommunityIcons name="check" size={18} color={theme.colors.primary} />}
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Macro breakdown for the resolved amount. */}
+                  {valid && (
+                    <View style={styles.qMacroRow}>
+                      <Text style={[styles.qMacro, { color: colors.protein }]}>P {pP}g</Text>
+                      <Text style={[styles.qMacro, { color: colors.carbs }]}>K {pC}g</Text>
+                      <Text style={[styles.qMacro, { color: colors.fat }]}>Y {pF}g</Text>
+                      <Text style={[styles.qMacro, { color: colors.textTertiary }]}>{Math.round(g)} {gramUnit}</Text>
+                    </View>
+                  )}
                 </View>
               );
             })()}
-
-            {/* Manual gram input — collapsed by default. */}
-            {manualMode && (
-              <TextInput
-                label={`${t.calorie.quantityAmount || 'Miktar'} (${t.calorie.quantityUnit || 'gram'})`}
-                value={quantityAmount}
-                onChangeText={setQuantityAmount}
-                keyboardType="numeric"
-                mode="outlined"
-                dense
-                maxLength={6}
-                right={<TextInput.Affix text={selectedFood?.servingUnit || 'g'} />}
-              />
-            )}
-
-            {/* Live preview — recomputed whenever the active preset or the
-                manual input changes. Mirrors the preview chip in the design
-                mockup; gives users immediate feedback on the calorie cost
-                of each portion option. */}
-            {selectedFood && (() => {
-              const g = (() => {
-                if (manualMode) return parseFloat((quantityAmount || '0').replace(',', '.'));
-                const preset = quantityPresets[selectedPortionIdx];
-                if (!preset) return NaN;
-                const count = preset.unitType === 'gram' ? 1 : clampCount(quantityCount);
-                return preset.grams * count;
-              })();
-              if (isNaN(g) || g <= 0) return null;
-              const ratio = g / 100;
-              const kcal = Math.round(selectedFood.calories * ratio);
-              const p = Math.round(selectedFood.protein * ratio);
-              const c = Math.round(selectedFood.carbs * ratio);
-              const f = Math.round(selectedFood.fat * ratio);
-              return (
-                <View style={styles.quantityPreview}>
-                  <Text style={styles.quantityPreviewLabel}>
-                    {t.calorie.quantityPreview || 'Tahmini'}
-                  </Text>
-                  <Text style={styles.quantityPreviewKcal}>
-                    {kcal} {t.common.kcal}
-                  </Text>
-                  <View style={styles.quantityPreviewRow}>
-                    <Text style={[styles.quantityPreviewMacro, { color: colors.protein }]}>P:{p}g</Text>
-                    <Text style={styles.macroDivider}>&middot;</Text>
-                    <Text style={[styles.quantityPreviewMacro, { color: colors.carbs }]}>K:{c}g</Text>
-                    <Text style={styles.macroDivider}>&middot;</Text>
-                    <Text style={[styles.quantityPreviewMacro, { color: colors.fat }]}>Y:{f}g</Text>
-                    <Text style={styles.macroDivider}>&middot;</Text>
-                    <Text style={styles.quantityPreviewMacro}>{Math.round(g)} {selectedFood.servingUnit || 'g'}</Text>
-                  </View>
-                </View>
-              );
-            })()}
-
-            {/* Mode toggle — links into manual entry for power users, or
-                back to chips so a typo in manual mode doesn't trap them. */}
-            <TouchableOpacity
-              onPress={() => setManualMode((m) => !m)}
-              activeOpacity={0.6}
-              accessibilityRole="button"
-              style={styles.portionModeToggle}
-            >
-              <Text style={[styles.portionModeToggleText, { color: theme.colors.primary }]}>
-                {manualMode 
-                  ? (t as any).calorie?.usePresetMode || 'Hazır porsiyonlara dön ▴'
-                  : (t as any).calorie?.useManualMode || 'Tam gramajı biliyorum ▾'}
-              </Text>
-            </TouchableOpacity>
           </Dialog.Content>
           <Dialog.Actions>
             <Button
@@ -1215,6 +1161,7 @@ export function CalorieScreen() {
                 setSelectedPortionIdx(-1);
                 setSelectedUnitType(null);
                 setManualMode(false);
+                setUnitMenuVisible(false);
                 setQuantityAmount('');
                 setQuantityCount('1');
               }}
@@ -1490,112 +1437,100 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Quantity Dialog preview
-  quantityFoodName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  quantityPreview: {
+  // Quantity Dialog — redesigned as a clean card: food header with a live
+  // calorie readout, a single "Miktar" field, and an inline unit dropdown.
+  qHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  qIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.surfaceVariant,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.sm,
-    marginTop: spacing.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  quantityPreviewLabel: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    marginBottom: 2,
+  qHeaderName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
-  quantityPreviewKcal: {
-    fontSize: 20,
+  qKcalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  qKcalValue: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    marginBottom: 4,
   },
-  quantityPreviewRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  quantityPreviewMacro: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  // Portion picker chips — household-measure quick selects shown above the
-  // preview ("1 dilim", "1 kase", "1 büyük bardak"). The active chip uses
-  // the theme's primaryContainer fill via inline style; default state is
-  // a thin neutral border so the row reads as a tag cloud, not buttons.
-  unitTypeTabRow: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingVertical: 2,
-  },
-  unitTypeTab: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.15)',
-    backgroundColor: 'transparent',
-  },
-  unitTypeTabText: {
+  qKcalUnit: {
     fontSize: 12,
     color: colors.textSecondary,
   },
-  portionChipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: spacing.xs,
+  qDivider: {
+    marginBottom: spacing.sm,
   },
-  portionChip: {
-    paddingVertical: 7,
-    paddingHorizontal: 11,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.12)',
+  qFieldLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  qAmountInput: {
     backgroundColor: 'transparent',
   },
-  portionChipText: {
-    fontSize: 12,
-    color: colors.textPrimary,
-  },
-  countRow: {
+  qDropdownAnchor: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.22)',
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+    backgroundColor: colors.surface,
   },
-  countLabel: {
-    fontSize: 13,
-    fontWeight: '500',
+  qDropdownText: {
+    fontSize: 15,
     color: colors.textPrimary,
+    flex: 1,
   },
-  countStepper: {
+  qDropdownList: {
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.12)',
+    borderRadius: borderRadius.sm,
+    marginTop: 4,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+  },
+  qDropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
-  countBtn: {
-    margin: 0,
+  qDropdownItemText: {
+    fontSize: 15,
+    color: colors.textPrimary,
   },
-  countInput: {
-    width: 60,
-    height: 40,
+  qMacroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.md,
+    flexWrap: 'wrap',
   },
-  portionModeToggle: {
-    alignSelf: 'center',
-    paddingVertical: 4,
-    marginTop: 2,
-  },
-  portionModeToggleText: {
-    fontSize: 12,
-    fontWeight: '500',
+  qMacro: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   // Search
