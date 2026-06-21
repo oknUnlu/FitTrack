@@ -4,9 +4,10 @@ exports.checkRateLimit = checkRateLimit;
 const admin_1 = require("./admin");
 const firestore_1 = require("firebase-admin/firestore");
 const LIMITS = {
-    ai_coach: { free: 10, premium: 250 },
-    food_recognition: { free: 3, premium: 999999 },
-    plan: { free: 10, premium: 250 },
+    ai_coach: { free: 0, premium: 10 },
+    food_recognition: { free: 0, premium: 7 },
+    food_estimate: { free: 0, premium: 7 },
+    plan: { free: 0, premium: 10 },
 };
 function getSecondsUntilMidnightUTC() {
     const now = new Date();
