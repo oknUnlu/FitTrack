@@ -53,3 +53,5 @@ coverage/
 *.md
 
 food_calories/
+# Firebase deploy cache
+.firebase/
