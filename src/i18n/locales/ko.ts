@@ -612,7 +612,6 @@ const ko: Translations = {
     processing: '처리 중...',
     aiCoachUnlimited: '일일 AI 코치 메시지 10개',
     foodRecognitionUnlimited: '일일 음식 인식 스캔 7개',
-    barcodeUnlimited: '무제한 바코드 스캔',
     progressFull: '전체 진행 분석',
     dataExport: '데이터 내보내기',
     advancedPrograms: '모든 운동 프로그램',

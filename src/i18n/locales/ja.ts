@@ -612,7 +612,6 @@ const ja: Translations = {
     processing: '処理中...',
     aiCoachUnlimited: '毎日10回のAIコーチメッセージ',
     foodRecognitionUnlimited: '毎日7回の食品認識スキャン',
-    barcodeUnlimited: '無制限バーコードスキャン',
     progressFull: '完全な進捗分析',
     dataExport: 'データエクスポート',
     advancedPrograms: 'すべてのトレーニングプログラム',

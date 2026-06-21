@@ -612,7 +612,6 @@ const es: Translations = {
     processing: 'Procesando...',
     aiCoachUnlimited: '10 mensajes de AI Coach diarios',
     foodRecognitionUnlimited: '7 reconocimientos de alimentos diarios',
-    barcodeUnlimited: 'Escaneo de código de barras ilimitado',
     progressFull: 'Análisis de progreso completo',
     dataExport: 'Exportación de datos',
     advancedPrograms: 'Todos los programas de entrenamiento',

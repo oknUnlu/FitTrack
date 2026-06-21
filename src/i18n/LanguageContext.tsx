@@ -9,6 +9,7 @@ import hi from './locales/hi';
 import id from './locales/id';
 import ja from './locales/ja';
 import ko from './locales/ko';
+import ro from './locales/ro';
 
 /**
  * Deep-merge an `overrides` object into a `base` object so that any keys
@@ -57,6 +58,7 @@ const translations: Record<Language, Translations> = {
   id: deepMerge(en, id),
   ja: deepMerge(en, ja),
   ko: deepMerge(en, ko),
+  ro: deepMerge(en, ro),
 };
 
 interface LanguageContextType {

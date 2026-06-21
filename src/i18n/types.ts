@@ -1,4 +1,4 @@
-export type Language = 'tr' | 'en' | 'es' | 'pt' | 'hi' | 'id' | 'ja' | 'ko';
+export type Language = 'tr' | 'en' | 'es' | 'pt' | 'hi' | 'id' | 'ja' | 'ko' | 'ro';
 
 export interface LanguageInfo {
   code: Language;
@@ -15,6 +15,7 @@ export const LANGUAGES: LanguageInfo[] = [
   { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia' },
   { code: 'ja', name: 'Japanese', nativeName: '日本語' },
   { code: 'ko', name: 'Korean', nativeName: '한국어' },
+  { code: 'ro', name: 'Romanian', nativeName: 'Română' },
 ];
 
 export interface Translations {
@@ -773,7 +774,6 @@ export interface Translations {
     processing: string;
     aiCoachUnlimited: string;
     foodRecognitionUnlimited: string;
-    barcodeUnlimited: string;
     progressFull: string;
     dataExport: string;
     advancedPrograms: string;
