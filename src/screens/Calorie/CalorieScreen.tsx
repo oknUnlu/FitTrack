@@ -1032,16 +1032,6 @@ export function CalorieScreen() {
               dense
               maxLength={100}
             />
-            <Button
-              mode="contained-tonal"
-              icon="robot-happy-outline"
-              loading={aiEstimateLoading}
-              disabled={aiEstimateLoading}
-              onPress={() => runFoodEstimate(manualName)}
-              style={{ marginVertical: 2 }}
-            >
-              {!isPremium && '🔒 '}{(t as any).calorie?.aiFillButton || 'Fill with AI'}
-            </Button>
             <TextInput
               label={t.barcode.caloriesPer100g}
               value={manualCalories}
