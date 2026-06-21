@@ -125,6 +125,18 @@ export interface Translations {
     aiTotalLabel?: string;
     aiDisabledTitle?: string;
     aiDisabledBody?: string;
+    // AI text-based nutrition estimate (premium) — fills the manual form
+    aiEstimate?: string;
+    aiEstimateCta?: string;
+    aiFillButton?: string;
+    aiEstimateTitle?: string;
+    aiEstimateHint?: string;
+    aiEstimateLabel?: string;
+    aiEstimatePlaceholder?: string;
+    aiEstimateSubmit?: string;
+    aiEstimateEmpty?: string;
+    aiEstimateNotFound?: string;
+    aiEstimateError?: string;
     /**
      * Household-measure portion preset labels for the quantity picker. Keys
      * are the canonical preset names from `src/utils/portions.ts`. Optional

@@ -5,6 +5,7 @@ import type { RateLimitConfig } from './types';
 const LIMITS: Record<string, { free: number; premium: number }> = {
   ai_coach: { free: 0, premium: 10 },
   food_recognition: { free: 0, premium: 7 },
+  food_estimate: { free: 0, premium: 7 },
   plan: { free: 0, premium: 10 },
 };
 

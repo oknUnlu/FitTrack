@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 
-export type LimitedFeature = 'ai_coach' | 'food_recognition';
+export type LimitedFeature = 'ai_coach' | 'food_recognition' | 'food_estimate';
 
 const DAILY_LIMITS: Record<LimitedFeature, number> = {
   ai_coach: 10,
   food_recognition: 7,
+  food_estimate: 7,
 };
 
 function getCountKey(feature: LimitedFeature): string {

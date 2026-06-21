@@ -15,6 +15,7 @@ import { searchFoodsInCloud } from '../../services/firebase/foodFirestore';
 import { getDeviceToken } from '../../services/api/apiClient';
 import { BarcodeScanner } from '../../components/BarcodeScanner';
 import { recognizeFoodFromImage, RecognizedFood } from '../../services/ai/foodRecognition';
+import { estimateFoodFromText } from '../../services/ai/foodEstimate';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { todayString, MEAL_TYPES, generateId } from '../../utils/helpers';
@@ -128,6 +129,14 @@ export function CalorieScreen() {
   const [manualProtein, setManualProtein] = useState('');
   const [manualCarbs, setManualCarbs] = useState('');
   const [manualFat, setManualFat] = useState('');
+
+  // AI text estimate (premium): user types a food + portion and the model
+  // fills the editable manual-entry form. `aiEstimateVisible` is the small
+  // query dialog used by the standalone entry points; `aiEstimateLoading`
+  // is shared with the in-dialog "fill with AI" button.
+  const [aiEstimateVisible, setAiEstimateVisible] = useState(false);
+  const [aiEstimateQuery, setAiEstimateQuery] = useState('');
+  const [aiEstimateLoading, setAiEstimateLoading] = useState(false);
 
   // Bug #13: quantity dialog — every food selection routes through
   // this dialog so the user can pick exactly how many grams they ate.
@@ -486,6 +495,70 @@ export function CalorieScreen() {
     setManualFat('');
     setManualEntryVisible(true);
   }, []);
+
+  // Core AI text-estimate routine (premium). Sends the query to Gemini,
+  // converts the returned portion TOTALS back to per-100g, and fills the
+  // editable manual-entry form so the user can review/correct before adding.
+  // Both entry points (the standalone query dialog and the in-dialog "fill
+  // with AI" button) funnel through here.
+  const runFoodEstimate = useCallback(async (query: string) => {
+    const q = query.trim();
+    if (!q) {
+      Alert.alert('', (t as any).calorie?.aiEstimateEmpty || t.barcode.fillAllFields);
+      return;
+    }
+    if (!checkPremiumAccess('food_estimate')) return;
+
+    const { allowed } = await checkDailyLimit('food_estimate');
+    if (!allowed) {
+      Alert.alert(t.premium.limitReached, t.premium.dailyLimitFoodMsg);
+      return;
+    }
+
+    Keyboard.dismiss();
+    try {
+      setAiEstimateLoading(true);
+      const food = await estimateFoodFromText(q);
+      await incrementUsage('food_estimate');
+      if (!food) {
+        Alert.alert('', (t as any).calorie?.aiEstimateNotFound || t.calorie.noResults);
+        return;
+      }
+
+      // Convert AI portion TOTALS → per-100g for the manual form fields.
+      const grams = food.servingSize > 0 ? food.servingSize : 100;
+      const ratio = grams / 100;
+      const per100 = (n: number): number => (ratio > 0 ? n / ratio : n);
+      const round1 = (n: number): string => String(Math.round(n * 10) / 10);
+
+      setScannedBarcode('');
+      setManualName(food.name || q);
+      setManualCalories(String(Math.round(per100(food.calories))));
+      setManualProtein(round1(per100(food.protein)));
+      setManualCarbs(round1(per100(food.carbs)));
+      setManualFat(round1(per100(food.fat)));
+
+      setAiEstimateVisible(false);
+      setAiEstimateQuery('');
+      setManualEntryVisible(true);
+    } catch (e: any) {
+      Alert.alert(t.common.error, e?.message || ((t as any).calorie?.aiEstimateError || t.common.errorOccurred));
+    } finally {
+      setAiEstimateLoading(false);
+    }
+  }, [checkPremiumAccess, t]);
+
+  // Opens the standalone AI estimate query dialog (from the search action row
+  // / empty-results CTA). Premium is gated here so non-subscribers see the
+  // paywall instead of an empty input.
+  const handleOpenAiEstimate = useCallback(() => {
+    if (!checkPremiumAccess('food_estimate')) return;
+    Keyboard.dismiss();
+    setSearchVisible(false);
+    setManualEntryVisible(false);
+    setAiEstimateQuery(searchQuery.trim());
+    setAiEstimateVisible(true);
+  }, [checkPremiumAccess, searchQuery]);
 
   const handlePhotoRecognition = useCallback(async () => {
     if (!checkPremiumAccess('food_recognition')) return;
@@ -861,6 +934,22 @@ export function CalorieScreen() {
 
                 <TouchableOpacity
                   style={styles.actionBtn}
+                  onPress={() => { Keyboard.dismiss(); handleOpenAiEstimate(); }}
+                  activeOpacity={0.7}
+                  accessibilityLabel="AI nutrition estimate"
+                  accessibilityRole="button"
+                >
+                  <View style={[styles.actionBtnIcon, { backgroundColor: colors.purple }]}>
+                    <MaterialCommunityIcons name="robot-happy-outline" size={22} color="#fff" />
+                  </View>
+                  <Text style={styles.actionBtnLabel}>{(t as any).calorie?.aiEstimate || 'AI ile tahmin'}</Text>
+                  {!isPremium && (
+                    <MaterialCommunityIcons name="lock" size={12} color={colors.textTertiary} style={{ marginTop: 2 }} />
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.actionBtn}
                   onPress={handleOpenManualEntry}
                   activeOpacity={0.7}
                   accessibilityLabel="Manual entry"
@@ -900,6 +989,19 @@ export function CalorieScreen() {
                     <Text style={styles.modalEmptyText}>{t.calorie.noResults}</Text>
                     <Text style={styles.modalEmptyHint}>{t.calorie.manualEntryDesc || ''}</Text>
                     <TouchableOpacity
+                      style={[styles.manualEntryCta, { backgroundColor: colors.purple }]}
+                      onPress={handleOpenAiEstimate}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons name="robot-happy-outline" size={18} color="#fff" />
+                      <Text style={styles.manualEntryCtaText}>
+                        {(t as any).calorie?.aiEstimateCta || 'AI ile tahmin et'}
+                      </Text>
+                      {!isPremium && (
+                        <MaterialCommunityIcons name="lock" size={12} color="#fff" style={{ marginLeft: 4 }} />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
                       style={styles.manualEntryCta}
                       onPress={handleOpenManualEntry}
                       activeOpacity={0.7}
@@ -930,6 +1032,16 @@ export function CalorieScreen() {
               dense
               maxLength={100}
             />
+            <Button
+              mode="contained-tonal"
+              icon="robot-happy-outline"
+              loading={aiEstimateLoading}
+              disabled={aiEstimateLoading}
+              onPress={() => runFoodEstimate(manualName)}
+              style={{ marginVertical: 2 }}
+            >
+              {!isPremium && '🔒 '}{(t as any).calorie?.aiFillButton || 'Yapay zeka ile doldur'}
+            </Button>
             <TextInput
               label={t.barcode.caloriesPer100g}
               value={manualCalories}
@@ -970,6 +1082,43 @@ export function CalorieScreen() {
           <Dialog.Actions>
             <Button onPress={() => setManualEntryVisible(false)}>{t.common.cancel}</Button>
             <Button mode="contained" onPress={handleManualBarcodeSubmit}>{t.barcode.submit}</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* AI Estimate Query Dialog — premium users type a food + portion and the
+          model fills the editable manual-entry form (totals → per-100g). */}
+      <Portal>
+        <Dialog visible={aiEstimateVisible} onDismiss={() => { if (!aiEstimateLoading) setAiEstimateVisible(false); }}>
+          <Dialog.Title>{(t as any).calorie?.aiEstimateTitle || 'Yapay zeka ile tahmin'}</Dialog.Title>
+          <Dialog.Content style={{ gap: 8 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+              {(t as any).calorie?.aiEstimateHint || 'Yemeği ve porsiyonu yazın, yapay zeka besin değerlerini doldursun.'}
+            </Text>
+            <TextInput
+              label={(t as any).calorie?.aiEstimateLabel || 'Yemek ve porsiyon'}
+              placeholder={(t as any).calorie?.aiEstimatePlaceholder || 'ör. 1 kase mercimek çorbası'}
+              value={aiEstimateQuery}
+              onChangeText={setAiEstimateQuery}
+              mode="outlined"
+              dense
+              maxLength={120}
+              autoFocus
+              onSubmitEditing={() => runFoodEstimate(aiEstimateQuery)}
+              returnKeyType="search"
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button disabled={aiEstimateLoading} onPress={() => setAiEstimateVisible(false)}>{t.common.cancel}</Button>
+            <Button
+              mode="contained"
+              icon="robot-happy-outline"
+              loading={aiEstimateLoading}
+              disabled={aiEstimateLoading}
+              onPress={() => runFoodEstimate(aiEstimateQuery)}
+            >
+              {(t as any).calorie?.aiEstimateSubmit || 'Tahmin et'}
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

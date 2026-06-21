@@ -65,6 +65,10 @@
         "run": { "serviceId": "foodrecognition", "region": "europe-west1" }
       },
       {
+        "source": "/api/food-estimate",
+        "run": { "serviceId": "foodestimate", "region": "europe-west1" }
+      },
+      {
         "source": "/api/plan",
         "run": { "serviceId": "plan", "region": "europe-west1" }
       },

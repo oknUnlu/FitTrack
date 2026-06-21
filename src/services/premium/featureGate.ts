@@ -4,6 +4,7 @@ import { canUseFeature, getRemainingUsage, getDailyLimit, type LimitedFeature } 
 export type PremiumFeature =
   | 'ai_coach'
   | 'food_recognition'
+  | 'food_estimate'
   | 'progress_analysis'
   | 'data_export'
   | 'advanced_programs'

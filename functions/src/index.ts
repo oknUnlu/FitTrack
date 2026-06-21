@@ -1,5 +1,6 @@
 export { chat } from './chat';
 export { foodRecognition } from './foodRecognition';
+export { foodEstimate } from './foodEstimate';
 export { plan } from './plan';
 export { verifyPurchase } from './verifyPurchase';
 export { promo } from './promo';
