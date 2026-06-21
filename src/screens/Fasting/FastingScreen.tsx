@@ -89,15 +89,15 @@ export function FastingScreen() {
       if (loc.status !== 'granted' || !loc.coords) {
         setLocationError(
           loc.status === 'denied'
-            ? (t as any).fasting?.locationDenied || 'Konum izni verilmedi.'
-            : (t as any).fasting?.locationUnavailable || 'Konum alınamadı.'
+            ? (t as any).fasting?.locationDenied || 'Location permission denied.'
+            : (t as any).fasting?.locationUnavailable || 'Could not get location.'
         );
         return;
       }
       const pt = await fetchPrayerTimes(loc.coords);
       if (!pt) {
         setLocationError(
-          (t as any).fasting?.locationUnavailable || 'Konum alınamadı.'
+          (t as any).fasting?.locationUnavailable || 'Could not get location.'
         );
         return;
       }
@@ -115,7 +115,7 @@ export function FastingScreen() {
     } catch (e) {
       if (__DEV__) console.warn('handleUpdateFromLocation failed:', e);
       setLocationError(
-        (t as any).fasting?.locationUnavailable || 'Konum alınamadı.'
+        (t as any).fasting?.locationUnavailable || 'Could not get location.'
       );
     } finally {
       setLocationLoading(false);
@@ -143,8 +143,8 @@ export function FastingScreen() {
     // Enforce safety gate before logging any session.
     if (!eligibility.allowed) {
       Alert.alert(
-        (t as any).fasting?.blockedTitle || 'Güvenlik Uyarısı',
-        eligibility.message || 'Bu özellik sizin için uygun değildir.',
+        (t as any).fasting?.blockedTitle || 'Safety Warning',
+        eligibility.message || 'This feature is not suitable for you.',
       );
       return;
     }
@@ -181,11 +181,11 @@ export function FastingScreen() {
       {!eligibility.allowed && (
         <MedicalDisclaimer
           variant="warning"
-          title={(t as any).fasting?.blockedTitle || 'Güvenlik Uyarısı'}
+          title={(t as any).fasting?.blockedTitle || 'Safety Warning'}
           message={
             eligibility.message ||
             ((t as any).fasting?.blockedBody ||
-              'Aralıklı oruç belirli koşullarda (18 yaş altı, BMI < 18.5, hamilelik, kronik hastalık) sakıncalıdır. Lütfen bir sağlık profesyoneline danışın.')
+              'Based on the information you provided, fasting is not recommended for you.')
           }
         />
       )}
@@ -194,7 +194,7 @@ export function FastingScreen() {
         variant="inline"
         message={
           (t as any).fasting?.disclaimer ||
-          'Aralıklı oruç tıbbi tavsiye değildir. Gebelik, emzirme, diyabet veya kronik hastalık durumunda hekiminize danışın.'
+          'Fasting is not suitable for everyone. Pregnant users, people with diabetes, a history of eating disorders, low BMI, or chronic conditions must consult a doctor before fasting.'
         }
       />
 
@@ -364,8 +364,8 @@ export function FastingScreen() {
                 accessibilityLabel="Update fasting times from location"
               >
                 {locationLoading
-                  ? (t as any).fasting?.locationUpdating || 'Konum alınıyor…'
-                  : (t as any).fasting?.useDeviceLocation || 'Konumuma göre güncelle'}
+                  ? (t as any).fasting?.locationUpdating || 'Getting location…'
+                  : (t as any).fasting?.useDeviceLocation || 'Update from my location'}
               </Button>
             </Card.Content>
           </Card>

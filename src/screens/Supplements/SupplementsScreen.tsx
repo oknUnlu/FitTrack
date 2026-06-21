@@ -141,10 +141,10 @@ export function SupplementsScreen() {
       {!supplementAllowed.allowed && (
         <MedicalDisclaimer
           variant="warning"
-          title={(t as any).supplements?.blockedTitle || 'Yaş Kısıtlaması'}
+          title={(t as any).supplements?.blockedTitle || 'Age Restriction'}
           message={
             supplementAllowed.message ||
-            'Takviye önerileri 18 yaş altı kullanıcılar için gösterilmez.'
+            'Supplement recommendations are not shown to users under 18.'
           }
         />
       )}
@@ -152,7 +152,7 @@ export function SupplementsScreen() {
         variant="inline"
         message={
           (t as any).supplements?.disclaimer ||
-          'Takviye almadan önce mutlaka bir hekime veya eczacıya danışın. İlaçlarla etkileşim gösterebilir. Önerilen günlük üst sınırları aşmayın.'
+          'Supplements are not a substitute for prescription medicine. If you have a chronic condition, are pregnant, or take regular medication, consult your doctor before starting any supplement.'
         }
       />
 
@@ -203,9 +203,9 @@ export function SupplementsScreen() {
         onPress={() => {
           if (!supplementAllowed.allowed) {
             Alert.alert(
-              (t as any).supplements?.blockedTitle || 'Yaş Kısıtlaması',
+              (t as any).supplements?.blockedTitle || 'Age Restriction',
               supplementAllowed.message ||
-                'Takviye ekleme özelliği 18 yaş altı kullanıcılar için kapalıdır.',
+                'Adding supplements is disabled for users under 18.',
             );
             return;
           }

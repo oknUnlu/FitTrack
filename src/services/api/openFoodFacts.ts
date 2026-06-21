@@ -67,7 +67,7 @@ export async function getProductByBarcode(barcode: string): Promise<FoodSearchRe
 
     return {
       id: `off_${barcode}`,
-      name: p.product_name || 'Bilinmeyen Ürün',
+      name: p.product_name || 'Unknown Product',
       nameTr: p.product_name_tr || null,
       calories: n['energy-kcal_100g'] ?? 0,
       protein: n.proteins_100g ?? 0,

@@ -611,8 +611,8 @@ export function CalorieScreen() {
     const per100 = (n: number): number => (ratio > 0 ? n / ratio : n);
 
     const aiLabel = food.servingDescription
-      ? `${(t as any).calorie?.aiEstimateBadge || 'AI tahmini'} · ${food.servingDescription}`
-      : (t as any).calorie?.aiEstimateBadge || 'AI tahmini';
+      ? `${(t as any).calorie?.aiEstimateBadge || 'AI estimate'} · ${food.servingDescription}`
+      : (t as any).calorie?.aiEstimateBadge || 'AI estimate';
 
     const foodItem: FoodItem = {
       id: `ai_${Date.now()}_${food.name}`,
@@ -813,7 +813,7 @@ export function CalorieScreen() {
                   aiResults.length > 1 ? (
                     <View style={styles.aiTotalTile}>
                       <Text style={styles.aiTotalLabel}>
-                        {(t as any).calorie?.aiTotalLabel || 'Tabağın toplamı'}
+                        {(t as any).calorie?.aiTotalLabel || 'Plate total'}
                       </Text>
                       <Text style={styles.aiTotalKcal}>
                         {Math.round(aiResults.reduce((s, r) => s + (r.calories || 0), 0))} {t.common.kcal}
@@ -942,7 +942,7 @@ export function CalorieScreen() {
                   <View style={[styles.actionBtnIcon, { backgroundColor: colors.purple }]}>
                     <MaterialCommunityIcons name="robot-happy-outline" size={22} color="#fff" />
                   </View>
-                  <Text style={styles.actionBtnLabel}>{(t as any).calorie?.aiEstimate || 'AI ile tahmin'}</Text>
+                  <Text style={styles.actionBtnLabel}>{(t as any).calorie?.aiEstimate || 'AI estimate'}</Text>
                   {!isPremium && (
                     <MaterialCommunityIcons name="lock" size={12} color={colors.textTertiary} style={{ marginTop: 2 }} />
                   )}
@@ -995,7 +995,7 @@ export function CalorieScreen() {
                     >
                       <MaterialCommunityIcons name="robot-happy-outline" size={18} color="#fff" />
                       <Text style={styles.manualEntryCtaText}>
-                        {(t as any).calorie?.aiEstimateCta || 'AI ile tahmin et'}
+                        {(t as any).calorie?.aiEstimateCta || 'Estimate with AI'}
                       </Text>
                       {!isPremium && (
                         <MaterialCommunityIcons name="lock" size={12} color="#fff" style={{ marginLeft: 4 }} />
@@ -1040,7 +1040,7 @@ export function CalorieScreen() {
               onPress={() => runFoodEstimate(manualName)}
               style={{ marginVertical: 2 }}
             >
-              {!isPremium && '🔒 '}{(t as any).calorie?.aiFillButton || 'Yapay zeka ile doldur'}
+              {!isPremium && '🔒 '}{(t as any).calorie?.aiFillButton || 'Fill with AI'}
             </Button>
             <TextInput
               label={t.barcode.caloriesPer100g}
@@ -1090,14 +1090,14 @@ export function CalorieScreen() {
           model fills the editable manual-entry form (totals → per-100g). */}
       <Portal>
         <Dialog visible={aiEstimateVisible} onDismiss={() => { if (!aiEstimateLoading) setAiEstimateVisible(false); }}>
-          <Dialog.Title>{(t as any).calorie?.aiEstimateTitle || 'Yapay zeka ile tahmin'}</Dialog.Title>
+          <Dialog.Title>{(t as any).calorie?.aiEstimateTitle || 'Estimate with AI'}</Dialog.Title>
           <Dialog.Content style={{ gap: 8 }}>
             <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-              {(t as any).calorie?.aiEstimateHint || 'Yemeği ve porsiyonu yazın, yapay zeka besin değerlerini doldursun.'}
+              {(t as any).calorie?.aiEstimateHint || 'Type the food and portion, and AI will fill in the nutrition values.'}
             </Text>
             <TextInput
-              label={(t as any).calorie?.aiEstimateLabel || 'Yemek ve porsiyon'}
-              placeholder={(t as any).calorie?.aiEstimatePlaceholder || 'ör. 1 kase mercimek çorbası'}
+              label={(t as any).calorie?.aiEstimateLabel || 'Food and portion'}
+              placeholder={(t as any).calorie?.aiEstimatePlaceholder || 'e.g. 1 bowl of lentil soup'}
               value={aiEstimateQuery}
               onChangeText={setAiEstimateQuery}
               mode="outlined"
@@ -1117,7 +1117,7 @@ export function CalorieScreen() {
               disabled={aiEstimateLoading}
               onPress={() => runFoodEstimate(aiEstimateQuery)}
             >
-              {(t as any).calorie?.aiEstimateSubmit || 'Tahmin et'}
+              {(t as any).calorie?.aiEstimateSubmit || 'Estimate'}
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -1143,7 +1143,7 @@ export function CalorieScreen() {
             setQuantityAmount('');
           }}
         >
-          <Dialog.Title>{(t as any).calorie?.quantityPickerTitle || t.calorie.quantityTitle || 'Ne kadar yedin?'}</Dialog.Title>
+          <Dialog.Title>{(t as any).calorie?.quantityPickerTitle || t.calorie.quantityTitle || 'How much did you eat?'}</Dialog.Title>
           <Dialog.Content style={{ gap: spacing.sm }}>
             {selectedFood && (() => {
               const ul = (t as any).calorie?.unitLabels ?? {};
@@ -1198,7 +1198,7 @@ export function CalorieScreen() {
 
                   {/* Amount — a count of the chosen unit, or exact grams in
                       manual mode. One field instead of a chip + stepper combo. */}
-                  <Text style={styles.qFieldLabel}>{t.calorie.quantityAmount || 'Miktar'}</Text>
+                  <Text style={styles.qFieldLabel}>{t.calorie.quantityAmount || 'Amount'}</Text>
                   {manualMode ? (
                     <TextInput
                       value={quantityAmount}
@@ -1227,7 +1227,7 @@ export function CalorieScreen() {
                   {/* Unit selector — an inline dropdown (kept inline rather than
                       a Portal Menu so it layers reliably inside the Dialog). */}
                   <Text style={[styles.qFieldLabel, { marginTop: spacing.sm }]}>
-                    {(t as any).calorie?.unitFieldLabel || 'Birim'}
+                    {(t as any).calorie?.unitFieldLabel || 'Unit'}
                   </Text>
                   <TouchableOpacity
                     style={styles.qDropdownAnchor}

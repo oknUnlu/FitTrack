@@ -140,7 +140,7 @@ export function fastingEligibility(params: {
       allowed: false,
       reason: 'MINOR',
       message:
-        'Aralıklı oruç 18 yaş altı kullanıcılar için önerilmez. Büyüme ve gelişim dönemindeki bireyler için tıbbi gözetim gereklidir.',
+        'Intermittent fasting is not recommended for users under 18. Medical supervision is required for individuals who are still growing and developing.',
     };
   }
   const bmi = calculateBMI(weightKg, heightCm);
@@ -149,7 +149,7 @@ export function fastingEligibility(params: {
       allowed: false,
       reason: 'UNDERWEIGHT',
       message:
-        'Vücut kitle indeksiniz (BMI) 18.5\'in altında. Aralıklı oruç sizin için uygun olmayabilir. Lütfen bir sağlık profesyoneline danışın.',
+        'Your body mass index (BMI) is below 18.5. Intermittent fasting may not be suitable for you. Please consult a healthcare professional.',
     };
   }
   if (typeof durationHours === 'number' && durationHours > 24) {
@@ -157,7 +157,7 @@ export function fastingEligibility(params: {
       allowed: false,
       reason: 'EXTREME_DURATION',
       message:
-        '24 saati aşan oruçlar tıbbi gözetim olmadan önerilmez.',
+        'Fasts longer than 24 hours are not recommended without medical supervision.',
     };
   }
   return { allowed: true };
@@ -170,7 +170,7 @@ export function supplementEligibility(age?: number): SafetyEligibility {
       allowed: false,
       reason: 'MINOR',
       message:
-        'Takviye önerileri 18 yaş altı kullanıcılar için gösterilmez. Takviye kullanmadan önce lütfen bir hekime danışın.',
+        'Supplement recommendations are not shown to users under 18. Please consult a doctor before using any supplement.',
     };
   }
   return { allowed: true };

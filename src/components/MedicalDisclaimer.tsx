@@ -43,12 +43,12 @@ export function MedicalDisclaimer({
   const disclaimerText =
     message ||
     (t as any)?.legal?.medicalDisclaimer?.body ||
-    'Bu uygulama tıbbi tavsiye, teşhis veya tedavi amacıyla kullanılamaz. İçerik yalnızca genel bilgilendirme amaçlıdır. Herhangi bir sağlık kararı almadan önce mutlaka bir hekime veya diyetisyene danışın. Acil durumlarda 112\'yi arayın.';
+    'This app is not intended as medical advice, diagnosis, or treatment. For any decisions regarding your health, consult a qualified healthcare professional. In case of emergency, call your local emergency number (112 in the EU/Turkey, 911 in the US).';
 
   const disclaimerTitle =
     title ||
     (t as any)?.legal?.medicalDisclaimer?.title ||
-    'Tıbbi Uyarı';
+    'Medical Disclaimer';
 
   const isWarning = variant === 'warning';
   const isCard = variant === 'card';
@@ -90,7 +90,7 @@ export function MedicalDisclaimer({
         >
           <MaterialCommunityIcons name="phone" size={14} color="#fff" />
           <Text style={styles.emergencyText}>
-            {(t as any)?.legal?.medicalDisclaimer?.emergency || 'Acil durum: 112'}
+            {(t as any)?.legal?.medicalDisclaimer?.emergency || 'Emergency: 112'}
           </Text>
         </TouchableOpacity>
       )}

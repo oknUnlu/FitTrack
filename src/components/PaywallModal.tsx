@@ -140,9 +140,9 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     // initiated (TKHK 6502 m.48 pre-contractual info obligation).
     if (!consumerRightAck) {
       Alert.alert(
-        (t as any).premium?.consumerRightTitle || 'Onay Gerekli',
+        (t as any).premium?.consumerRightTitle || 'Acknowledgement Required',
         (t as any).premium?.consumerRightAckRequired ||
-          'Devam etmeden önce ön bilgilendirme ve cayma hakkı bildirimini onaylayın.',
+          'Please acknowledge the pre-contractual information and withdrawal notice before continuing.',
       );
       return;
     }
@@ -296,19 +296,19 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
             {/* ───── Pre-contractual info (TKHK 6502 m.48 / MSY) ───── */}
             <View style={styles.legalBlock}>
               <Text style={[styles.legalTitle, { color: theme.colors.onSurface }]}>
-                {(t as any).premium?.preContractualTitle || 'Ön Bilgilendirme'}
+                {(t as any).premium?.preContractualTitle || 'Pre-contractual Information'}
               </Text>
               <Text style={[styles.legalBody, { color: colors.textSecondary }]}>
                 {(t as any).premium?.preContractualBody ||
-                  'Abonelik ücretleri ekranda gösterilen fiyatlar üzerinden Google Play (Android) veya App Store (iOS) tarafından tahsil edilir. Fiyatlara geçerli KDV dahildir. Abonelik, iptal edilmediği sürece aynı süre ile otomatik olarak yenilenir. Seçtiğiniz plana göre ödeme, mevcut dönemin sonunda mağaza hesabınızdan otomatik olarak alınır.'}
+                  'Subscription prices shown include applicable VAT/sales tax. Charges are processed by Google Play (Android) or the App Store (iOS). Subscriptions renew automatically at the end of each period unless cancelled. Manage or cancel anytime via Google Play > Subscriptions or App Store > Subscriptions.'}
               </Text>
 
               <Text style={[styles.legalTitle, { color: theme.colors.onSurface, marginTop: spacing.sm }]}>
-                {(t as any).premium?.withdrawalTitle || 'Cayma Hakkı'}
+                {(t as any).premium?.withdrawalTitle || 'Right of Withdrawal'}
               </Text>
               <Text style={[styles.legalBody, { color: colors.textSecondary }]}>
                 {(t as any).premium?.withdrawalBody ||
-                  '6502 sayılı Tüketicinin Korunması Hakkında Kanun kapsamında 14 gün içinde gerekçe göstermeksizin cayma hakkınız bulunmaktadır. Premium özellikler satın alma ile birlikte anında açıldığından (dijital içerik ifası), cayma hakkınız ifa ile birlikte sona erer. Aşağıdaki kutuyu işaretleyerek bu durumu kabul etmiş olursunuz.'}
+                  'You have a statutory right of withdrawal within 14 days of purchase (EU Consumer Rights Directive / TR Consumer Act No. 6502). Because Premium is delivered as digital content immediately on purchase, your withdrawal right expires upon delivery of the service. By checking the box below, you acknowledge this.'}
               </Text>
 
               <TouchableOpacity
@@ -324,7 +324,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                 />
                 <Text style={[styles.ackText, { color: theme.colors.onSurface }]}>
                   {(t as any).premium?.consumerRightAck ||
-                    'Ön bilgilendirmeyi okudum; dijital içeriğin anında ifası ile cayma hakkımın sona ereceğini kabul ediyorum.'}
+                    'I have read the pre-contractual information and acknowledge that my right of withdrawal ends once the digital content is delivered.'}
                 </Text>
               </TouchableOpacity>
 
@@ -335,7 +335,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                   onPress={() => openUrl(TERMS_URL)}
                   labelStyle={styles.linkLabel}
                 >
-                  {(t as any).premium?.viewTerms || 'Üyelik Sözleşmesi'}
+                  {(t as any).premium?.viewTerms || 'Terms of Service'}
                 </Button>
                 <Button
                   mode="text"
@@ -343,7 +343,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                   onPress={() => openUrl(PRIVACY_URL)}
                   labelStyle={styles.linkLabel}
                 >
-                  {(t as any).premium?.viewPrivacy || 'Gizlilik Politikası'}
+                  {(t as any).premium?.viewPrivacy || 'Privacy Policy'}
                 </Button>
                 <Button
                   mode="text"
@@ -351,7 +351,7 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
                   onPress={openManageSubscription}
                   labelStyle={styles.linkLabel}
                 >
-                  {(t as any).premium?.manageSubscription || 'Aboneliği Yönet / İptal Et'}
+                  {(t as any).premium?.manageSubscription || 'Manage / Cancel Subscription'}
                 </Button>
               </View>
             </View>

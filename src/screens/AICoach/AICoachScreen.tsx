@@ -243,7 +243,7 @@ export function AICoachScreen() {
           variant="inline"
           message={
             (t as any).aiCoach?.disclaimer ||
-            'AI Koç tıbbi veya yasal tavsiye vermez. Yanıtlar genel bilgilendirme amaçlıdır ve bir hekim, diyetisyen veya antrenörün yerine geçmez.'
+            'AI Coach does not provide medical, legal, or financial advice. Suggestions are for general information only; consult a doctor or registered dietitian before changing your diet or exercise.'
           }
         />
       </View>

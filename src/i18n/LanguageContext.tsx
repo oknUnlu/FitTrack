@@ -18,7 +18,7 @@ import ro from './locales/ro';
  * Used to layer a partially-translated locale on top of the English base
  * locale: if a string hasn't been translated yet, the user sees the English
  * fallback rather than a hard-coded Turkish placeholder string baked into
- * call sites with `(t as any).foo || 'Türkçe varsayılan'`.
+ * call sites with `(t as any).foo || 'English default'`.
  *
  * Only plain objects are merged recursively; arrays and primitive overrides
  * replace the base value as-is. The function is pure — it never mutates the

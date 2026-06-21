@@ -274,7 +274,7 @@ export function HealthHubScreen() {
                 }}
               >
                 <Text style={styles.healthFooterLink}>
-                  {(healthTexts as any).manageInOsSettings || 'OS ayarlarında yönet'}
+                  {(healthTexts as any).manageInOsSettings || 'Manage in OS settings'}
                 </Text>
               </TouchableOpacity>
             </View>

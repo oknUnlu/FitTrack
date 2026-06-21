@@ -328,7 +328,7 @@ export function ProfileScreen() {
               bağlam) — ayrı bir "Gizlilik" kartı kurmadan tek satırla
               compliance sağlanır. */}
           <List.Item
-            title={(t as any).profile?.adPreferencesTitle || 'Reklam tercihleri'}
+            title={(t as any).profile?.adPreferencesTitle || 'Ad preferences'}
             left={(props) => <List.Icon {...props} icon="bullhorn-outline" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={async () => {
@@ -337,7 +337,7 @@ export function ProfileScreen() {
                 Alert.alert(
                   '',
                   (t as any).profile?.adPreferencesUnavailable ||
-                    'Bu özellik şu an cihazında kullanılamıyor.'
+                    'This feature is currently unavailable on your device.'
                 );
               }
             }}
@@ -349,41 +349,41 @@ export function ProfileScreen() {
       <Card style={styles.card} mode="elevated">
         <List.Section>
           <List.Item
-            title={(t as any).profile?.exportData || 'Verilerimi Dışa Aktar'}
-            description={(t as any).profile?.exportDataDesc || 'Tüm verilerinizi JSON dosyası olarak indirin'}
+            title={(t as any).profile?.exportData || 'Export My Data'}
+            description={(t as any).profile?.exportDataDesc || 'Download all your data as a JSON file'}
             left={(props) => <List.Icon {...props} icon="download" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={async () => {
               try {
                 const result = await exportUserData();
                 if (!result) {
-                  Alert.alert(t.common.error, (t as any).profile?.exportFailed || 'Dışa aktarma başarısız.');
+                  Alert.alert(t.common.error, (t as any).profile?.exportFailed || 'Export failed.');
                 }
               } catch {
-                Alert.alert(t.common.error, (t as any).profile?.exportFailed || 'Dışa aktarma başarısız.');
+                Alert.alert(t.common.error, (t as any).profile?.exportFailed || 'Export failed.');
               }
             }}
           />
           <List.Item
-            title={(t as any).profile?.deleteAccount || 'Hesabımı Sil'}
-            description={(t as any).profile?.deleteAccountDesc || 'Tüm verileriniz kalıcı olarak silinir (geri alınamaz)'}
+            title={(t as any).profile?.deleteAccount || 'Delete My Account'}
+            description={(t as any).profile?.deleteAccountDesc || 'All your data is permanently erased (cannot be undone)'}
             left={(props) => <List.Icon {...props} icon="delete-forever" color="#D32F2F" />}
             onPress={() =>
               Alert.alert(
-                (t as any).profile?.deleteAccount || 'Hesabımı Sil',
+                (t as any).profile?.deleteAccount || 'Delete My Account',
                 (t as any).profile?.deleteAccountConfirm ||
-                  'Bu işlem geri alınamaz. Tüm antrenman, öğün, vücut ölçümü ve AI sohbet kayıtlarınız kalıcı olarak silinecek. Devam etmek istiyor musunuz?',
+                  'This action cannot be undone. All your workout, meal, body measurement and AI chat records will be permanently deleted. Do you want to continue?',
                 [
                   { text: t.common.cancel, style: 'cancel' },
                   {
-                    text: (t as any).profile?.deleteConfirmCta || 'Evet, Kalıcı Olarak Sil',
+                    text: (t as any).profile?.deleteConfirmCta || 'Yes, Delete Permanently',
                     style: 'destructive',
                     onPress: async () => {
                       try {
                         await deleteAccount();
                         await resetOnboarding();
                       } catch (e) {
-                        Alert.alert(t.common.error, (t as any).profile?.deleteFailed || 'Silme başarısız.');
+                        Alert.alert(t.common.error, (t as any).profile?.deleteFailed || 'Deletion failed.');
                       }
                     },
                   },

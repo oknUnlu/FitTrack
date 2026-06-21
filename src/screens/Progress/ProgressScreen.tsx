@@ -225,7 +225,7 @@ export function ProgressScreen() {
           <View style={styles.reportFooter}>
             <MaterialCommunityIcons name="calendar-check" size={16} color={colors.primary} />
             <Text style={styles.reportFooterText}>
-              {macroAvg.activeDays} {t.progress.activeDays || 'aktif gün'}
+              {macroAvg.activeDays} {t.progress.activeDays || 'active days'}
             </Text>
           </View>
         </Card.Content>

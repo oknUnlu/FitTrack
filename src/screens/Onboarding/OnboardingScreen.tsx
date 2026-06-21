@@ -118,14 +118,14 @@ export function OnboardingScreen() {
       }
       const parsedAge = parseInt(age, 10);
       if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
-        Alert.alert('', (t as any).onboarding.ageInvalid || 'Lütfen geçerli bir yaş girin.');
+        Alert.alert('', (t as any).onboarding.ageInvalid || 'Please enter a valid age.');
         return;
       }
       if (parsedAge < 18) {
         Alert.alert(
-          (t as any).legal?.ageRestrictionTitle || 'Yaş Sınırı',
+          (t as any).legal?.ageRestrictionTitle || 'Age Restriction',
           (t as any).legal?.ageRestrictionBody ||
-            'Bu uygulama 18 yaşın altındaki kullanıcıların kullanımına uygun değildir. Lütfen bir ebeveyne veya yasal vasiye danışın.',
+            'This app is not suitable for users under the age of 18. Please consult a parent or legal guardian.',
         );
         return;
       }
@@ -150,7 +150,7 @@ export function OnboardingScreen() {
         Alert.alert(
           '',
           (t as any).onboarding.bodyInvalid ||
-            'Lütfen geçerli boy (80-250 cm) ve kilo (25-400 kg) değerleri girin.',
+            'Please enter valid height (80-250 cm) and weight (25-400 kg) values.',
         );
         return;
       }
@@ -220,7 +220,7 @@ export function OnboardingScreen() {
     try {
       await Linking.openURL(url);
     } catch {
-      Alert.alert(t.common.error, (t as any).legal?.linkOpenError || 'Bağlantı açılamadı.');
+      Alert.alert(t.common.error, (t as any).legal?.linkOpenError || 'Could not open link.');
     }
   };
 
@@ -321,17 +321,17 @@ export function OnboardingScreen() {
   };
 
   const renderWelcome = () => {
-    // Legal-disclosure strings — fall back to Turkish defaults if the
+    // Legal-disclosure strings — fall back to English defaults if the
     // active locale doesn't ship onboarding.legal.* keys. The text MUST
     // be visible above the action button so tapping it is informed
     // consent (GDPR Art. 7 / KVKK Madde 5).
     const L = (t as any)?.onboarding?.legal || {};
     const disclosureText =
       L.disclosure ||
-      'Devam ederek 13 yaşın üzerinde olduğunu beyan eder; Gizlilik Politikası, Kullanım Şartları ve KVKK Aydınlatma Metni\'ni okuduğunu ve kabul ettiğini onaylarsın. AI Koç ve besin tanıma özelliklerini kullandığında mesaj ve fotoğraflarının Google Gemini hizmetine (ABD) iletileceğini bilir, buna açık rıza verirsin. Bu uygulama tıbbi tavsiye, teşhis veya tedavi yerine geçmez — sağlık kararların için hekim/diyetisyenine danış.';
-    const lblPrivacy = L.privacyPolicy || 'Gizlilik Politikası';
-    const lblTerms = L.termsOfService || 'Kullanım Şartları';
-    const lblKvkk = L.kvkk || 'KVKK Aydınlatma Metni';
+      'By continuing, you declare that you are over 13 and confirm that you have read and accept the Privacy Policy, Terms of Service and KVKK / GDPR Notice. You understand and explicitly consent that, when you use the AI Coach and food recognition features, your messages and photos are sent to the Google Gemini service (USA). This app is not a substitute for medical advice, diagnosis or treatment — consult a physician/dietitian for your health decisions.';
+    const lblPrivacy = L.privacyPolicy || 'Privacy Policy';
+    const lblTerms = L.termsOfService || 'Terms of Service';
+    const lblKvkk = L.kvkk || 'KVKK / GDPR Notice';
 
     return (
       <View style={styles.welcomeContainer}>

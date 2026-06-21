@@ -118,7 +118,7 @@ export function useDashboard() {
       });
       setError(null);
     } catch (e: any) {
-      setError(e.message || 'Veri yüklenirken hata oluştu');
+      setError(e.message || 'An error occurred while loading data');
     } finally {
       setLoading(false);
     }
