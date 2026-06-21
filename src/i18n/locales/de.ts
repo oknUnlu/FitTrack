@@ -612,6 +612,7 @@ const de: Translations = {
     processing: 'Verarbeitung...',
     aiCoachUnlimited: '10 AI-Coach-Nachrichten täglich',
     foodRecognitionUnlimited: '7 Lebensmittelerkennungen täglich',
+    aiEstimateUnlimited: '7 KI-Nährwertschätzungen täglich',
     progressFull: 'Vollständige Fortschrittsanalyse',
     dataExport: 'Datenexport',
     advancedPrograms: 'Alle Trainingsprogramme',

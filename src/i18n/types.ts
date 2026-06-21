@@ -774,6 +774,7 @@ export interface Translations {
     processing: string;
     aiCoachUnlimited: string;
     foodRecognitionUnlimited: string;
+    aiEstimateUnlimited: string;
     progressFull: string;
     dataExport: string;
     advancedPrograms: string;

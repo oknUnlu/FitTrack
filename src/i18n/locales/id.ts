@@ -612,6 +612,7 @@ const id: Translations = {
     processing: 'Memproses...',
     aiCoachUnlimited: '10 pesan AI Coach harian',
     foodRecognitionUnlimited: '7 pemindaian pengenalan makanan harian',
+    aiEstimateUnlimited: '7 estimasi nutrisi AI harian',
     progressFull: 'Analisis kemajuan lengkap',
     dataExport: 'Ekspor data',
     advancedPrograms: 'Semua program latihan',

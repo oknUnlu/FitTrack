@@ -612,6 +612,7 @@ const ar: Translations = {
     processing: 'جارٍ المعالجة...',
     aiCoachUnlimited: '10 رسائل AI Coach يومياً',
     foodRecognitionUnlimited: '7 عمليات مسح للتعرف على الطعام يومياً',
+    aiEstimateUnlimited: '7 تقديرات غذائية بالذكاء الاصطناعي يومياً',
     progressFull: 'تحليل التقدم الكامل',
     dataExport: 'تصدير البيانات',
     advancedPrograms: 'جميع برامج التمرين',

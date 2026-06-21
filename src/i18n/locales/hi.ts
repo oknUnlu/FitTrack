@@ -612,6 +612,7 @@ const hi: Translations = {
     processing: 'प्रसंस्करण...',
     aiCoachUnlimited: 'प्रतिदिन 10 AI कोच संदेश',
     foodRecognitionUnlimited: 'प्रतिदिन 7 भोजन पहचान स्कैन',
+    aiEstimateUnlimited: 'प्रतिदिन 7 AI पोषण अनुमान',
     progressFull: 'पूर्ण प्रगति विश्लेषण',
     dataExport: 'डेटा निर्यात',
     advancedPrograms: 'सभी वर्कआउट कार्यक्रम',

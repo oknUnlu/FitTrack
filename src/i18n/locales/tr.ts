@@ -712,6 +712,7 @@ const tr: Translations = {
     processing: 'İşleniyor...',
     aiCoachUnlimited: 'Günde 10 AI Koç mesajı',
     foodRecognitionUnlimited: 'Günde 7 besin tanıma taraması',
+    aiEstimateUnlimited: 'Günde 7 yapay zeka besin tahmini',
     progressFull: 'Tüm ilerleme analizleri',
     dataExport: 'Veri dışa aktarma',
     advancedPrograms: 'Tüm antrenman programları',

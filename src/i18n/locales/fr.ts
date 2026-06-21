@@ -612,6 +612,7 @@ const fr: Translations = {
     processing: 'Traitement...',
     aiCoachUnlimited: '10 messages AI Coach par jour',
     foodRecognitionUnlimited: '7 reconnaissances alimentaires par jour',
+    aiEstimateUnlimited: '7 estimations nutritionnelles par IA par jour',
     progressFull: 'Analyse de progrès complète',
     dataExport: 'Export de données',
     advancedPrograms: 'Tous les programmes d\'entraînement',

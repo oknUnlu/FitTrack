@@ -711,6 +711,7 @@ const ro: Translations = {
     processing: 'Se procesează...',
     aiCoachUnlimited: '10 mesaje zilnice către antrenorul AI',
     foodRecognitionUnlimited: '7 scanări zilnice de recunoaștere a alimentelor',
+    aiEstimateUnlimited: '7 estimări nutriționale cu IA zilnic',
     progressFull: 'Analize complete de progres',
     dataExport: 'Export de date',
     advancedPrograms: 'Toate programele de antrenament',
