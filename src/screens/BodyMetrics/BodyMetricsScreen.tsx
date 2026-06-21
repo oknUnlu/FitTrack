@@ -7,6 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useUserStore } from '../../store/userStore';
 import { getAllMetrics, insertMetric, BodyMetric } from '../../services/database/progressDao';
+import { updateUserWeight } from '../../services/database/userDao';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
 import { generateId, todayString } from '../../utils/helpers';
@@ -100,6 +101,9 @@ export function BodyMetricsScreen() {
     };
     Keyboard.dismiss();
     await insertMetric(metric);
+    // Keep the user's current weight (shown on the Profile screen) in sync with
+    // the latest body-metrics entry.
+    await updateUserWeight(userId, w);
     const updated = await getAllMetrics(userId);
     setMetrics(updated);
     setDialogVisible(false);

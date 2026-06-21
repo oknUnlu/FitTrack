@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert, TouchableOpacity } from 'react-native';
 import { Text, Card, List, Switch, Button, Divider, useTheme, Dialog, Portal, TextInput, RadioButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '../../store/themeStore';
 import { useUserStore } from '../../store/userStore';
 import { getUserById, User } from '../../services/database/userDao';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage, LANGUAGES } from '../../i18n';
 import type { Language } from '../../i18n';
@@ -73,7 +73,9 @@ export function ProfileScreen() {
     }
   }, [userId]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  // Reload on focus (not just mount) so the weight stays current after the
+  // user edits it on the Body Metrics screen and navigates back.
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   const toggleMealReminder = async (val: boolean) => {
     if (val) {

@@ -44,6 +44,16 @@ export async function getUserById(userId: string): Promise<User | null> {
   return row ? rowToUser(row) : null;
 }
 
+// Update only the user's current weight in the users table. Used when the
+// weight is edited from the Body Metrics screen so the Profile screen reflects
+// the latest value. This deliberately does NOT mirror back into body_metrics
+// (unlike updateUser), because the caller already wrote the body_metrics row —
+// going through updateUser would create a duplicate row for the same day.
+export async function updateUserWeight(userId: string, weight: number): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync('UPDATE users SET weight = ? WHERE id = ?', [weight, userId]);
+}
+
 export async function insertUser(user: User): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(

@@ -17,6 +17,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUserStore } from '../../store/userStore';
 import { useConsentStore } from '../../store/consentStore';
 import { insertUser } from '../../services/database/userDao';
+import { insertMetric } from '../../services/database/progressDao';
+import { generateId, todayString } from '../../utils/helpers';
 import {
   calculateBMR,
   calculateTDEE,
@@ -242,6 +244,22 @@ export function OnboardingScreen() {
           fatTargetG: calculated.fat,
           waterTargetMl: calculated.waterMl,
           createdAt: Date.now(),
+        });
+        // Record the initial weight as the first body metric so it shows up
+        // in the Progress screen's weight trend (which reads from body_metrics,
+        // not the users table).
+        await insertMetric({
+          id: generateId(),
+          userId,
+          date: todayString(),
+          weight: parseFloat(weight),
+          bodyFat: null,
+          waistCm: null,
+          hipCm: null,
+          chestCm: null,
+          bicepCm: null,
+          thighCm: null,
+          progressPhotoPath: null,
         });
       }
       setOnboarded(true);
