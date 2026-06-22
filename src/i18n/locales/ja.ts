@@ -205,6 +205,7 @@ const ja: Translations = {
     off: 'オフ',
     waterReminder: '水分リマインダー',
     workoutReminder: 'ワークアウトリマインダー',
+    supplementReminder: 'サプリメントのリマインダー',
     aiCoachSection: 'AIコーチ',
     geminiApiKey: 'Gemini APIキー',
     configured: '設定済み ✓',

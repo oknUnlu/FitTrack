@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import type { Supplement } from '../supplements/supplementService';
 
 const WATER_REMINDER_KEY = 'pref_water_reminder';
 const MEAL_REMINDER_KEY = 'pref_meal_reminder';
 const WORKOUT_REMINDER_KEY = 'pref_workout_reminder';
+const SUPPLEMENT_REMINDER_KEY = 'pref_supplement_reminder';
 
 // We track the OS-generated notification identifiers we schedule, per
 // category, so disabling a category can cancel exactly the notifications
@@ -13,8 +15,15 @@ const WORKOUT_REMINDER_KEY = 'pref_workout_reminder';
 const WATER_IDS_KEY = 'pref_water_reminder_ids';
 const MEAL_IDS_KEY = 'pref_meal_reminder_ids';
 const WORKOUT_IDS_KEY = 'pref_workout_reminder_ids';
+const SUPPLEMENT_IDS_KEY = 'pref_supplement_reminder_ids';
 
-type Category = 'meal_reminder' | 'water_reminder' | 'workout_reminder';
+// Single Android notification channel for all reminders. Android coalesces and
+// defers notifications by channel importance; binding reminders to a HIGH
+// importance channel keeps them from being batched/delayed as aggressively
+// (the default behaviour when no channel is declared). Required on Android 8+.
+const REMINDER_CHANNEL_ID = 'reminders';
+
+type Category = 'meal_reminder' | 'water_reminder' | 'workout_reminder' | 'supplement_reminder';
 
 // Human-facing title fragments we use. Cross-checked against scheduled
 // notifications as a belt-and-suspenders fallback when a legacy entry has
@@ -23,6 +32,7 @@ const TITLE_FRAGMENTS: Record<Category, string[]> = {
   meal_reminder: ['Breakfast Time', 'Lunch Time', 'Dinner Time'],
   water_reminder: ['Drink Water'],
   workout_reminder: ['Workout Time'],
+  supplement_reminder: ['Supplement Time'],
 };
 
 async function loadIds(key: string): Promise<string[]> {
@@ -115,6 +125,18 @@ async function getNotificationsModule() {
           shouldShowList: true,
         }),
       });
+
+      // Declare the reminders channel up front (Android only). Must exist
+      // before any notification is scheduled against it, otherwise Android
+      // silently falls back to the default channel.
+      if (Platform.OS === 'android') {
+        await _notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
+          name: 'Reminders',
+          importance: _notifications.AndroidImportance.HIGH,
+          sound: 'default',
+        });
+      }
+
       _setupDone = true;
     } catch {
       // ignore
@@ -171,6 +193,7 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour: meal.hour,
           minute: meal.minute,
+          channelId: REMINDER_CHANNEL_ID,
         },
       });
       if (id) newIds.push(id);
@@ -205,6 +228,7 @@ export async function scheduleWaterReminders(enabled: boolean): Promise<void> {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour,
           minute: 0,
+          channelId: REMINDER_CHANNEL_ID,
         },
       });
       if (id) newIds.push(id);
@@ -236,6 +260,7 @@ export async function scheduleWorkoutReminder(enabled: boolean): Promise<void> {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: 17,
         minute: 30,
+        channelId: REMINDER_CHANNEL_ID,
       },
     });
     if (id) await saveIds(WORKOUT_IDS_KEY, [id]);
@@ -244,9 +269,81 @@ export async function scheduleWorkoutReminder(enabled: boolean): Promise<void> {
   }
 }
 
+// Only supplements with a fixed daily time can be reminded reliably. Pre/post
+// workout timings are relative to a workout (no fixed clock time) and
+// non-daily frequencies can't be resolved to specific days, so both are
+// intentionally skipped — see the design discussion.
+const SUPPLEMENT_TIME_HOURS: Partial<Record<Supplement['timeOfDay'], number>> = {
+  morning: 8,
+  afternoon: 14,
+  evening: 20,
+};
+
+function isRemindableSupplement(s: Supplement): boolean {
+  return s.frequency === 'daily' && SUPPLEMENT_TIME_HOURS[s.timeOfDay] !== undefined;
+}
+
+/**
+ * Master toggle for supplement reminders. When enabled, schedules one daily
+ * notification per remindable supplement (daily frequency + a fixed
+ * morning/afternoon/evening time). Always cancels the existing batch first so
+ * this is safe to call repeatedly to re-sync after the supplement list changes.
+ */
+export async function scheduleSupplementReminders(
+  enabled: boolean,
+  supplements: Supplement[],
+): Promise<void> {
+  await AsyncStorage.setItem(SUPPLEMENT_REMINDER_KEY, String(enabled));
+
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return;
+
+  try {
+    await cancelCategory(Notifications, 'supplement_reminder', SUPPLEMENT_IDS_KEY);
+
+    if (!enabled) return;
+
+    const newIds: string[] = [];
+    for (const s of supplements) {
+      if (!isRemindableSupplement(s)) continue;
+      const hour = SUPPLEMENT_TIME_HOURS[s.timeOfDay]!;
+      const dosage = s.dosage?.trim();
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '💊 Supplement Time',
+          body: dosage ? `Time to take ${s.name} (${dosage})` : `Time to take ${s.name}`,
+          data: { type: 'supplement_reminder', supplementId: s.id },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour,
+          minute: 0,
+          channelId: REMINDER_CHANNEL_ID,
+        },
+      });
+      if (id) newIds.push(id);
+    }
+    await saveIds(SUPPLEMENT_IDS_KEY, newIds);
+  } catch {
+    // Notification scheduling not available
+  }
+}
+
+/**
+ * Re-syncs supplement reminders to the current list, but only if the user has
+ * the category enabled. Called after a supplement is added or removed so the
+ * scheduled batch always reflects what's actually in the list. No-op (beyond a
+ * cheap pref read) when reminders are off.
+ */
+export async function refreshSupplementReminders(supplements: Supplement[]): Promise<void> {
+  const enabled = (await AsyncStorage.getItem(SUPPLEMENT_REMINDER_KEY)) === 'true';
+  if (!enabled) return;
+  await scheduleSupplementReminders(true, supplements);
+}
+
 /**
  * Nuclear option — cancels every scheduled notification the app knows
- * about (meal, water, workout). Useful as a "master off" or when
+ * about (meal, water, workout, supplement). Useful as a "master off" or when
  * disabling notifications at the OS level from the profile screen.
  */
 export async function cancelAllReminders(): Promise<void> {
@@ -256,6 +353,7 @@ export async function cancelAllReminders(): Promise<void> {
     await cancelCategory(Notifications, 'meal_reminder', MEAL_IDS_KEY);
     await cancelCategory(Notifications, 'water_reminder', WATER_IDS_KEY);
     await cancelCategory(Notifications, 'workout_reminder', WORKOUT_IDS_KEY);
+    await cancelCategory(Notifications, 'supplement_reminder', SUPPLEMENT_IDS_KEY);
     // As a final safety net, wipe any scheduled notifications that
     // slipped past all three categorised cancels (e.g. motivation).
     try {
@@ -266,6 +364,7 @@ export async function cancelAllReminders(): Promise<void> {
       [MEAL_REMINDER_KEY, 'false'],
       [WATER_REMINDER_KEY, 'false'],
       [WORKOUT_REMINDER_KEY, 'false'],
+      [SUPPLEMENT_REMINDER_KEY, 'false'],
     ]);
   } catch {
     // non-fatal
@@ -294,15 +393,18 @@ export async function getNotificationPreferences(): Promise<{
   meal: boolean;
   water: boolean;
   workout: boolean;
+  supplement: boolean;
 }> {
-  const [meal, water, workout] = await Promise.all([
+  const [meal, water, workout, supplement] = await Promise.all([
     AsyncStorage.getItem(MEAL_REMINDER_KEY),
     AsyncStorage.getItem(WATER_REMINDER_KEY),
     AsyncStorage.getItem(WORKOUT_REMINDER_KEY),
+    AsyncStorage.getItem(SUPPLEMENT_REMINDER_KEY),
   ]);
   return {
     meal: meal === 'true',
     water: water === 'true',
     workout: workout === 'true',
+    supplement: supplement === 'true',
   };
 }

@@ -17,8 +17,10 @@ import {
   scheduleMealReminders,
   scheduleWaterReminders,
   scheduleWorkoutReminder,
+  scheduleSupplementReminders,
   getNotificationPreferences,
 } from '../../services/notifications/notificationService';
+import { getSupplements } from '../../services/supplements/supplementService';
 import { validatePromoCode } from '../../services/api/promoService';
 import { exportUserData, deleteAccount } from '../../services/privacy/dataPrivacy';
 import { resetAdConsent } from '../../services/ads/adService';
@@ -36,6 +38,7 @@ export function ProfileScreen() {
   const [mealReminder, setMealReminder] = useState(false);
   const [workoutReminder, setWorkoutReminder] = useState(false);
   const [waterReminder, setWaterReminder] = useState(false);
+  const [supplementReminder, setSupplementReminder] = useState(false);
   const [langDialogVisible, setLangDialogVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [promoDialogVisible, setPromoDialogVisible] = useState(false);
@@ -64,6 +67,7 @@ export function ProfileScreen() {
       setMealReminder(prefs.meal);
       setWaterReminder(prefs.water);
       setWorkoutReminder(prefs.workout);
+      setSupplementReminder(prefs.supplement);
       if (Platform.OS !== 'web') {
         const u = await getUserById(userId);
         setUser(u);
@@ -102,6 +106,16 @@ export function ProfileScreen() {
     }
     await scheduleWaterReminders(val);
     setWaterReminder(val);
+  };
+
+  const toggleSupplementReminder = async (val: boolean) => {
+    if (val) {
+      const granted = await requestNotificationPermission();
+      if (!granted) return;
+    }
+    const supplements = await getSupplements();
+    await scheduleSupplementReminders(val, supplements);
+    setSupplementReminder(val);
   };
 
   const handlePromoSubmit = async () => {
@@ -296,6 +310,12 @@ export function ProfileScreen() {
             description={workoutReminder ? t.profile.on : t.profile.off}
             left={(props) => <List.Icon {...props} icon="bell-ring" />}
             right={() => <Switch value={workoutReminder} onValueChange={toggleWorkoutReminder} />}
+          />
+          <List.Item
+            title={t.profile.supplementReminder}
+            description={supplementReminder ? t.profile.on : t.profile.off}
+            left={(props) => <List.Icon {...props} icon="pill" />}
+            right={() => <Switch value={supplementReminder} onValueChange={toggleSupplementReminder} />}
           />
         </List.Section>
       </Card>

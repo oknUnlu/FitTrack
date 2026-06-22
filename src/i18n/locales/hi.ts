@@ -205,6 +205,7 @@ const hi: Translations = {
     off: 'बंद',
     waterReminder: 'पानी रिमाइंडर',
     workoutReminder: 'वर्कआउट अनुस्मारक',
+    supplementReminder: 'सप्लीमेंट अनुस्मारक',
     aiCoachSection: 'AI कोच',
     geminiApiKey: 'Gemini API कुंजी',
     configured: 'कॉन्फ़िगर किया गया ✓',

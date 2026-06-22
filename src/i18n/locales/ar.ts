@@ -205,6 +205,7 @@ const ar: Translations = {
     off: 'معطل',
     waterReminder: 'تذكير الماء',
     workoutReminder: 'تذكير التمرين',
+    supplementReminder: 'تذكير المكملات',
     aiCoachSection: 'المدرب الذكي',
     geminiApiKey: 'مفتاح API Gemini',
     configured: 'تم التكوين ✓',

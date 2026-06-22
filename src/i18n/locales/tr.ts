@@ -269,6 +269,7 @@ const tr: Translations = {
     off: 'Kapalı',
     waterReminder: 'Su Hatırlatıcısı',
     workoutReminder: 'Antrenman Hatırlatıcısı',
+    supplementReminder: 'Takviye Hatırlatıcısı',
     aiCoachSection: 'AI Koç',
     geminiApiKey: 'Gemini API Anahtarı',
     configured: 'Ayarlandı ✓',

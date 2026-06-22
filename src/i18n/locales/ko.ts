@@ -205,6 +205,7 @@ const ko: Translations = {
     off: '꺼짐',
     waterReminder: '수분 리마인더',
     workoutReminder: '운동 알림',
+    supplementReminder: '보충제 알림',
     aiCoachSection: 'AI 코치',
     geminiApiKey: 'Gemini API 키',
     configured: '설정됨 ✓',

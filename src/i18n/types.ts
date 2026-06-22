@@ -309,6 +309,7 @@ export interface Translations {
     off: string;
     waterReminder: string;
     workoutReminder: string;
+    supplementReminder: string;
     aiCoachSection: string;
     geminiApiKey: string;
     configured: string;

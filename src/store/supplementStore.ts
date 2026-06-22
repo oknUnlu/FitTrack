@@ -47,6 +47,7 @@ export const useSupplementStore = create<SupplementState>((set) => ({
   },
 
   addNewSupplement: async (supplement) => {
+    // addSupplement persists and re-syncs reminders in the service layer.
     await addSupplement(supplement);
     set((state) => ({
       supplements: [...state.supplements, supplement],
@@ -54,6 +55,7 @@ export const useSupplementStore = create<SupplementState>((set) => ({
   },
 
   deleteSupplement: async (id) => {
+    // removeSupplement persists and re-syncs reminders in the service layer.
     await removeSupplement(id);
     set((state) => ({
       supplements: state.supplements.filter((s) => s.id !== id),

@@ -205,6 +205,7 @@ const es: Translations = {
     off: 'Desactivado',
     waterReminder: 'Recordatorio de Agua',
     workoutReminder: 'Recordatorio de Entreno',
+    supplementReminder: 'Recordatorio de Suplementos',
     aiCoachSection: 'Entrenador IA',
     geminiApiKey: 'Clave API Gemini',
     configured: 'Configurada ✓',

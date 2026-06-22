@@ -205,6 +205,7 @@ const id: Translations = {
     off: 'Nonaktif',
     waterReminder: 'Pengingat Air',
     workoutReminder: 'Pengingat Latihan',
+    supplementReminder: 'Pengingat Suplemen',
     aiCoachSection: 'Pelatih AI',
     geminiApiKey: 'Kunci API Gemini',
     configured: 'Terkonfigurasi ✓',

@@ -205,6 +205,7 @@ const de: Translations = {
     off: 'Aus',
     waterReminder: 'Wasser-Erinnerung',
     workoutReminder: 'Training-Erinnerung',
+    supplementReminder: 'Supplement-Erinnerung',
     aiCoachSection: 'KI-Coach',
     geminiApiKey: 'Gemini API-Schlüssel',
     configured: 'Konfiguriert ✓',

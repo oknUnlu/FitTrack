@@ -269,6 +269,7 @@ const en: Translations = {
     off: 'Off',
     waterReminder: 'Water Reminder',
     workoutReminder: 'Workout Reminder',
+    supplementReminder: 'Supplement Reminder',
     aiCoachSection: 'AI Coach',
     geminiApiKey: 'Gemini API Key',
     configured: 'Configured ✓',

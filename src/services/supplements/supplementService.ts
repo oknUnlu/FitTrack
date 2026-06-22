@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { refreshSupplementReminders } from '../notifications/notificationService';
 
 const SUPPLEMENTS_KEY = 'fittrack_supplements';
 const SUPPLEMENT_LOGS_KEY = 'fittrack_supplement_logs';
@@ -33,11 +34,16 @@ export async function addSupplement(supplement: Supplement): Promise<void> {
   const supplements = await getSupplements();
   supplements.push(supplement);
   await saveSupplements(supplements);
+  // Re-sync reminders so the new supplement gets one (no-op unless the user
+  // has supplement reminders enabled).
+  await refreshSupplementReminders(supplements);
 }
 
 export async function removeSupplement(id: string): Promise<void> {
-  const supplements = await getSupplements();
-  await saveSupplements(supplements.filter((s) => s.id !== id));
+  const supplements = (await getSupplements()).filter((s) => s.id !== id);
+  await saveSupplements(supplements);
+  // Cancel the removed supplement's reminder by rescheduling the batch.
+  await refreshSupplementReminders(supplements);
 }
 
 export async function getSupplementLogs(date: string): Promise<SupplementLog[]> {

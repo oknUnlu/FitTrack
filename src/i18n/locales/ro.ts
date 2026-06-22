@@ -269,6 +269,7 @@ const ro: Translations = {
     off: 'Oprit',
     waterReminder: 'Reminder apă',
     workoutReminder: 'Reminder antrenament',
+    supplementReminder: 'Reminder suplimente',
     aiCoachSection: 'Antrenor AI',
     geminiApiKey: 'Cheie API Gemini',
     configured: 'Configurat ✓',
