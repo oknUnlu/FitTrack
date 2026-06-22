@@ -35,7 +35,7 @@ export function AchievementsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      refreshAchievements(userId).then(setAchievements);
+      refreshAchievements(userId).then((r) => setAchievements(r.achievements));
     }, [userId])
   );
 

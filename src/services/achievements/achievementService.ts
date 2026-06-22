@@ -124,7 +124,7 @@ export async function checkAchievements(data: {
   proteinGoalDays: number;
   totalCaloriesBurned: number;
   allGoalsMet: boolean;
-}): Promise<Achievement[]> {
+}): Promise<{ achievements: Achievement[]; newlyUnlocked: Achievement[] }> {
   const achievements = await getAchievements();
 
   const updates: Record<string, number> = {
@@ -179,12 +179,15 @@ export async function checkAchievements(data: {
     checkAndRequestReview(id);
   }
 
-  return achievements;
+  const newlyUnlockedAchievements = achievements.filter((a) => newlyUnlocked.includes(a.id));
+  return { achievements, newlyUnlocked: newlyUnlockedAchievements };
 }
 
 // Auto-refresh: pulls all needed data from DB and calls checkAchievements
-export async function refreshAchievements(userId: string): Promise<Achievement[]> {
-  if (Platform.OS === 'web') return getAchievements();
+export async function refreshAchievements(
+  userId: string
+): Promise<{ achievements: Achievement[]; newlyUnlocked: Achievement[] }> {
+  if (Platform.OS === 'web') return { achievements: await getAchievements(), newlyUnlocked: [] };
   try {
     const farPast = '2020-01-01';
     const today = todayString();
@@ -250,7 +253,7 @@ export async function refreshAchievements(userId: string): Promise<Achievement[]
     });
   } catch (e) {
     if (__DEV__) console.warn('refreshAchievements failed:', e);
-    return getAchievements();
+    return { achievements: await getAchievements(), newlyUnlocked: [] };
   }
 }
 

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { Text, Card, Button, useTheme, IconButton } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ProgressRing } from '../../components/ProgressRing';
@@ -15,6 +15,8 @@ import { useLanguage } from '../../i18n';
 import { getAchievements, getUnlockedCount, getTotalCount, Achievement } from '../../services/achievements/achievementService';
 import { getRemainingMacroSuggestion, MealSuggestion } from '../../services/mealPlanner/mealPlanService';
 import { usePremiumStore } from '../../store/premiumStore';
+import { useAchievementStore } from '../../store/achievementStore';
+import { useUserStore } from '../../store/userStore';
 import { AdBanner } from '../../components/AdBanner';
 
 export function DashboardScreen() {
@@ -26,6 +28,21 @@ export function DashboardScreen() {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const isPremium = usePremiumStore((s) => s.isPremium);
+
+  // Detect newly-unlocked achievements whenever the dashboard regains focus
+  // (e.g. returning from a workout/meal) and surface them as a celebratory
+  // toast. Detection is idempotent — unlocks are persisted, so each one is
+  // only ever queued once.
+  const userId = useUserStore((s) => s.userId);
+  const refreshAchievements = useAchievementStore((s) => s.refresh);
+  const newlyUnlocked = useAchievementStore((s) => s.newlyUnlocked);
+  const clearNewlyUnlocked = useAchievementStore((s) => s.clearNewlyUnlocked);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (userId) refreshAchievements(userId);
+    }, [userId, refreshAchievements])
+  );
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} />;
@@ -137,7 +154,81 @@ export function DashboardScreen() {
         <AdBanner screen="dashboard" />
       </ScrollView>
 
+      {/* Celebratory toast shown when one or more achievements unlock */}
+      <AchievementUnlockToast
+        achievements={newlyUnlocked}
+        onDismiss={clearNewlyUnlocked}
+        t={t}
+      />
     </View>
+  );
+}
+
+// ═════════════════════════════════════════
+// ACHIEVEMENT UNLOCK TOAST
+// ═════════════════════════════════════════
+// Slides a celebratory banner down from the top when achievements unlock.
+// If several unlock at once, the first is named and the rest are summarised
+// as "+N". Auto-dismisses after a few seconds (or on tap), clearing the queue.
+function AchievementUnlockToast({
+  achievements,
+  onDismiss,
+  t,
+}: {
+  achievements: Achievement[];
+  onDismiss: () => void;
+  t: any;
+}) {
+  const insets = useSafeAreaInsets();
+  const opacity = React.useRef(new Animated.Value(0)).current;
+  const translateY = React.useRef(new Animated.Value(-24)).current;
+  const current = achievements[0];
+
+  React.useEffect(() => {
+    if (!current) return;
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, useNativeDriver: true, friction: 7 }),
+    ]).start();
+
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 0, duration: 250, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: -24, duration: 250, useNativeDriver: true }),
+      ]).start(() => onDismiss());
+    }, 3800);
+
+    return () => clearTimeout(timer);
+  }, [current, onDismiss, opacity, translateY]);
+
+  if (!current) return null;
+
+  const titleText = (t.achievements as any)[current.titleKey] || current.titleKey;
+  const extra = achievements.length - 1;
+
+  return (
+    <Animated.View
+      pointerEvents="box-none"
+      style={[styles.unlockToastWrap, { top: insets.top + spacing.sm, opacity, transform: [{ translateY }] }]}
+    >
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={onDismiss}
+        accessibilityRole="button"
+        accessibilityLabel={`${t.achievements.unlocked} ${titleText}`}
+        style={[styles.unlockToast, { borderLeftColor: current.color }]}
+      >
+        <View style={[styles.unlockToastIcon, { backgroundColor: `${current.color}20` }]}>
+          <MaterialCommunityIcons name={current.icon as any} size={26} color={current.color} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.unlockToastLabel}>🎉 {t.achievements.unlocked}</Text>
+          <Text style={styles.unlockToastTitle} numberOfLines={1}>
+            {titleText}{extra > 0 ? `  +${extra}` : ''}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -623,6 +714,44 @@ function ErrorState({ message }: { message: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { padding: spacing.md, paddingBottom: 100 },
+  unlockToastWrap: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+  },
+  unlockToast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderLeftWidth: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 12,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+  },
+  unlockToastIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unlockToastLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  unlockToastTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    marginTop: 1,
+  },
   header: { fontWeight: 'bold', marginBottom: spacing.md },
   // Slightly tighter gap under the header so the WeekActivityStrip
   // feels like a continuation of it instead of a separate block.
