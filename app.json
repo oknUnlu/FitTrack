@@ -30,7 +30,7 @@
         "backgroundColor": "#4CAF50"
       },
       "package": "com.okanu.fittrack",
-      "versionCode": 4,
+      "versionCode": 18,
       "permissions": [
         "CAMERA",
         "VIBRATE",

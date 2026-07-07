@@ -23,6 +23,10 @@ yarn-error.*
 
 # Signing keys and certificates
 *.jks
+*.keystore
+!android/app/debug.keystore
+keystore.properties
+credentials.json
 *.p8
 *.p12
 *.key
