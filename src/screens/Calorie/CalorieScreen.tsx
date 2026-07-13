@@ -241,11 +241,13 @@ export function CalorieScreen() {
     let defaultIdx = pickDefaultPreset(presets, food.servingSize);
     // The unit dropdown lists real household units (adet, kase, …); exact
     // grams are a dedicated "Gram" option that switches to manual entry. So
-    // if the closest preset is a gram shortcut, open on the first real unit
-    // instead, and only fall back to manual mode when no unit preset exists.
+    // if the closest preset is a gram shortcut, open on the category's
+    // preferred unit (medium adet/porsiyon/kase) when one exists, else the
+    // first real unit; only fall back to manual mode when none exists.
     const noUnitPresets = presets.every((p) => p.unitType === 'gram');
     if (defaultIdx >= 0 && presets[defaultIdx].unitType === 'gram' && !noUnitPresets) {
-      defaultIdx = presets.findIndex((p) => p.unitType !== 'gram');
+      const preferredIdx = presets.findIndex((p) => p.preferred && p.unitType !== 'gram');
+      defaultIdx = preferredIdx >= 0 ? preferredIdx : presets.findIndex((p) => p.unitType !== 'gram');
     }
     setQuantityPresets(presets);
     setSelectedPortionIdx(defaultIdx);
