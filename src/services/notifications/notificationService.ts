@@ -176,14 +176,18 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
     if (!enabled) return;
 
     const mealTimes = [
-      { hour: 8, minute: 0, title: '🍳 Breakfast Time', body: 'Start your day with a healthy breakfast!' },
-      { hour: 12, minute: 30, title: '🥗 Lunch Time', body: "Don't forget to log your lunch!" },
-      { hour: 19, minute: 0, title: '🍽️ Dinner Time', body: "Don't forget to log your dinner!" },
+      { id: 'meal_reminder_breakfast', hour: 8, minute: 0, title: '🍳 Breakfast Time', body: 'Start your day with a healthy breakfast!' },
+      { id: 'meal_reminder_lunch', hour: 12, minute: 30, title: '🥗 Lunch Time', body: "Don't forget to log your lunch!" },
+      { id: 'meal_reminder_dinner', hour: 19, minute: 0, title: '🍽️ Dinner Time', body: "Don't forget to log your dinner!" },
     ];
 
     const newIds: string[] = [];
     for (const meal of mealTimes) {
       const id = await Notifications.scheduleNotificationAsync({
+        // Stable identifier — rescheduling REPLACES the existing entry
+        // instead of piling up a duplicate, even if a previous cancel pass
+        // was interrupted (app killed mid-run, OS error, …).
+        identifier: meal.id,
         content: {
           title: meal.title,
           body: meal.body,
@@ -219,6 +223,8 @@ export async function scheduleWaterReminders(enabled: boolean): Promise<void> {
     const newIds: string[] = [];
     for (const hour of waterHours) {
       const id = await Notifications.scheduleNotificationAsync({
+        // Stable identifier — see scheduleMealReminders for rationale.
+        identifier: `water_reminder_${hour}`,
         content: {
           title: '💧 Drink Water!',
           body: "Don't forget to drink a glass of water. Your body needs hydration!",
@@ -251,6 +257,8 @@ export async function scheduleWorkoutReminder(enabled: boolean): Promise<void> {
     if (!enabled) return;
 
     const id = await Notifications.scheduleNotificationAsync({
+      // Stable identifier — see scheduleMealReminders for rationale.
+      identifier: 'workout_reminder_daily',
       content: {
         title: '💪 Workout Time!',
         body: "You planned a workout today. Let's get moving!",
@@ -309,6 +317,8 @@ export async function scheduleSupplementReminders(
       const hour = SUPPLEMENT_TIME_HOURS[s.timeOfDay]!;
       const dosage = s.dosage?.trim();
       const id = await Notifications.scheduleNotificationAsync({
+        // Stable identifier — see scheduleMealReminders for rationale.
+        identifier: `supplement_reminder_${s.id}`,
         content: {
           title: '💊 Supplement Time',
           body: dosage ? `Time to take ${s.name} (${dosage})` : `Time to take ${s.name}`,

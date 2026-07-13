@@ -22,7 +22,9 @@ import {
   scheduleMealReminders,
   scheduleWaterReminders,
   scheduleWorkoutReminder,
+  scheduleSupplementReminders,
 } from './src/services/notifications/notificationService';
+import { getSupplements } from './src/services/supplements/supplementService';
 
 // Splash screen'i uygulama hazır olana kadar görünür tut
 SplashScreen.preventAutoHideAsync();
@@ -93,6 +95,9 @@ export default function App() {
         await scheduleMealReminders(prefs.meal);
         await scheduleWaterReminders(prefs.water);
         await scheduleWorkoutReminder(prefs.workout);
+        // Supplements were the one category left out of the launch
+        // reconcile, so stale entries could linger after failed cancels.
+        await scheduleSupplementReminders(prefs.supplement, await getSupplements());
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: Notification reconcile failed:', e);
       }
