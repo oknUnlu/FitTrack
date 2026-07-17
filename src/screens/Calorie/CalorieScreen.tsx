@@ -1021,14 +1021,21 @@ export function CalorieScreen() {
         </KeyboardAvoidingView>
       )}
 
-      {/* Manual Barcode Entry Dialog */}
+      {/* Manual Barcode Entry Dialog.
+          NOTE: every editable field in these dialogs is deliberately
+          UNCONTROLLED (defaultValue + onChangeText, no value prop). With the
+          New Architecture, controlled TextInputs re-sync native text on every
+          keystroke re-render, which resets the cursor to the start and makes
+          mid-string edits (deleting the 1 in "100") nearly impossible.
+          Dialog content unmounts on close, so defaultValue re-seeds on every
+          open; programmatic fills (AI estimate) happen before opening. */}
       <Portal>
         <Dialog visible={manualEntryVisible} onDismiss={() => setManualEntryVisible(false)}>
           <Dialog.Title>{t.barcode.manualEntryTitle}</Dialog.Title>
           <Dialog.Content style={{ gap: 8 }}>
             <TextInput
               label={t.barcode.productName}
-              value={manualName}
+              defaultValue={manualName}
               onChangeText={setManualName}
               mode="outlined"
               dense
@@ -1036,7 +1043,7 @@ export function CalorieScreen() {
             />
             <TextInput
               label={t.barcode.caloriesPer100g}
-              value={manualCalories}
+              defaultValue={manualCalories}
               onChangeText={setManualCalories}
               keyboardType="numeric"
               mode="outlined"
@@ -1045,7 +1052,7 @@ export function CalorieScreen() {
             />
             <TextInput
               label={t.barcode.proteinPer100g}
-              value={manualProtein}
+              defaultValue={manualProtein}
               onChangeText={setManualProtein}
               keyboardType="numeric"
               mode="outlined"
@@ -1054,7 +1061,7 @@ export function CalorieScreen() {
             />
             <TextInput
               label={t.barcode.carbsPer100g}
-              value={manualCarbs}
+              defaultValue={manualCarbs}
               onChangeText={setManualCarbs}
               keyboardType="numeric"
               mode="outlined"
@@ -1063,7 +1070,7 @@ export function CalorieScreen() {
             />
             <TextInput
               label={t.barcode.fatPer100g}
-              value={manualFat}
+              defaultValue={manualFat}
               onChangeText={setManualFat}
               keyboardType="numeric"
               mode="outlined"
@@ -1090,7 +1097,7 @@ export function CalorieScreen() {
             <TextInput
               label={(t as any).calorie?.aiEstimateLabel || 'Food and portion'}
               placeholder={(t as any).calorie?.aiEstimatePlaceholder || 'e.g. 1 bowl of lentil soup'}
-              value={aiEstimateQuery}
+              defaultValue={aiEstimateQuery}
               onChangeText={setAiEstimateQuery}
               mode="outlined"
               dense
@@ -1192,8 +1199,13 @@ export function CalorieScreen() {
                       manual mode. One field instead of a chip + stepper combo. */}
                   <Text style={styles.qFieldLabel}>{t.calorie.quantityAmount || 'Amount'}</Text>
                   {manualMode ? (
+                    // Uncontrolled + distinct keys: see the note above the
+                    // manual-entry dialog. The keys force a remount when the
+                    // dialog switches between count and grams mode so the
+                    // seeded defaultValue applies.
                     <TextInput
-                      value={quantityAmount}
+                      key="qty-grams"
+                      defaultValue={quantityAmount}
                       onChangeText={setQuantityAmount}
                       keyboardType="numeric"
                       mode="outlined"
@@ -1205,7 +1217,8 @@ export function CalorieScreen() {
                     />
                   ) : (
                     <TextInput
-                      value={quantityCount}
+                      key="qty-count"
+                      defaultValue={quantityCount}
                       onChangeText={(v) => setQuantityCount(v.replace(/[^0-9]/g, '').slice(0, 2))}
                       onBlur={() => setQuantityCount(String(clampCount(quantityCount)))}
                       keyboardType="number-pad"
