@@ -17,80 +17,160 @@
   ],
   "hosting": {
     "public": "public",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "cleanUrls": true,
     "headers": [
       {
         "source": "**",
         "headers": [
-          { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "X-Frame-Options", "value": "DENY" },
-          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-          { "key": "Permissions-Policy", "value": "geolocation=(), microphone=(), camera=(), payment=()" },
-          { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-          { "key": "Cross-Origin-Resource-Policy", "value": "same-site" }
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=63072000; includeSubDomains; preload"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "geolocation=(), microphone=(), camera=(), payment=()"
+          },
+          {
+            "key": "Cross-Origin-Opener-Policy",
+            "value": "same-origin"
+          },
+          {
+            "key": "Cross-Origin-Resource-Policy",
+            "value": "same-site"
+          }
         ]
       },
       {
         "source": "/api/**",
         "headers": [
-          { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, private" },
-          { "key": "Pragma", "value": "no-cache" },
-          { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+          {
+            "key": "Cache-Control",
+            "value": "no-store, no-cache, must-revalidate, private"
+          },
+          {
+            "key": "Pragma",
+            "value": "no-cache"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow"
+          }
         ]
       },
       {
         "source": "**/*.@(html|json)",
         "headers": [
-          { "key": "Cache-Control", "value": "no-store" },
-          { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" }
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          }
         ]
       },
       {
         "source": "/",
         "headers": [
-          { "key": "Cache-Control", "value": "no-store" },
-          { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" }
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          }
         ]
       }
     ],
     "rewrites": [
       {
         "source": "/api/chat",
-        "run": { "serviceId": "chat", "region": "europe-west1" }
+        "run": {
+          "serviceId": "chat",
+          "region": "europe-west1"
+        }
       },
       {
         "source": "/api/food-recognition",
-        "run": { "serviceId": "foodrecognition", "region": "europe-west1" }
+        "run": {
+          "serviceId": "foodrecognition",
+          "region": "europe-west1"
+        }
       },
       {
         "source": "/api/food-estimate",
-        "run": { "serviceId": "foodestimate", "region": "europe-west1" }
+        "run": {
+          "serviceId": "foodestimate",
+          "region": "europe-west1"
+        }
       },
       {
         "source": "/api/plan",
-        "run": { "serviceId": "plan", "region": "europe-west1" }
+        "run": {
+          "serviceId": "plan",
+          "region": "europe-west1"
+        }
       },
       {
         "source": "/api/verify-purchase",
-        "run": { "serviceId": "verifypurchase", "region": "europe-west1" }
+        "run": {
+          "serviceId": "verifypurchase",
+          "region": "europe-west1"
+        }
       },
       {
         "source": "/api/promo",
-        "run": { "serviceId": "promo", "region": "europe-west1" }
+        "run": {
+          "serviceId": "promo",
+          "region": "europe-west1"
+        }
       },
       {
         "source": "/api/health",
-        "run": { "serviceId": "health", "region": "europe-west1" }
+        "run": {
+          "serviceId": "health",
+          "region": "europe-west1"
+        }
       },
       {
         "source": "/api/usage",
-        "run": { "serviceId": "usage", "region": "europe-west1" }
+        "run": {
+          "serviceId": "usage",
+          "region": "europe-west1"
+        }
       },
       {
         "source": "/api/delete-account",
-        "run": { "serviceId": "deleteaccount", "region": "europe-west1" }
+        "run": {
+          "serviceId": "deleteaccount",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/api/register-push",
+        "run": {
+          "serviceId": "registerpush",
+          "region": "europe-west1"
+        }
       }
     ]
   }

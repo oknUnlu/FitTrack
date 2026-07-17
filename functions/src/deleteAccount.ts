@@ -40,6 +40,9 @@ export const deleteAccount = onRequest(
       // 2) promo_premium/{deviceId}
       await db.collection('promo_premium').doc(deviceId).delete().catch(() => {});
 
+      // 2b) push_tokens/{deviceId} — stop server-side reminder pushes.
+      await db.collection('push_tokens').doc(deviceId).delete().catch(() => {});
+
       // 3) rate_limits/{deviceId}:* — doc ID'ler `${deviceId}:${feature}:${date}`
       //    formatında olduğu için range query ile toplu silme yapıyoruz.
       //    Firestore doc-id sıralaması leksikografik: `x:` prefixli ID'leri

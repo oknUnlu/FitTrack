@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "842377493007",
+    "project_id": "fittrack-a958c",
+    "storage_bucket": "fittrack-a958c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:842377493007:android:db7ad689283e6bfda8017a",
+        "android_client_info": {
+          "package_name": "com.okanu.fittrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDE6a611eXLv4m6ZyQvIAkcuGz5QC2e2C0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

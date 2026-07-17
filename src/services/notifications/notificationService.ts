@@ -2,11 +2,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import type { Supplement } from '../supplements/supplementService';
+import { apiPost } from '../api/apiClient';
+import { API_ENDPOINTS } from '../../config/api';
 
 const WATER_REMINDER_KEY = 'pref_water_reminder';
 const MEAL_REMINDER_KEY = 'pref_meal_reminder';
 const WORKOUT_REMINDER_KEY = 'pref_workout_reminder';
 const SUPPLEMENT_REMINDER_KEY = 'pref_supplement_reminder';
+
+// Delivery mode — 'push' when the device is registered for server-side FCM
+// reminders, 'local' when we fall back to on-device scheduled alarms.
+// Server push exists because aggressive OEM power managers (notably MIUI)
+// defer or drop AlarmManager broadcasts, then flush the backlog at once:
+// users got seven identical water reminders together, or none all day.
+// FCM is delivered by Play services, which is exempt from those managers.
+const PUSH_MODE_KEY = 'pref_reminder_push_mode';
+
+// Read (not written) here — owned by supplementService / LanguageContext.
+// Read directly instead of importing to avoid a require cycle
+// (supplementService already imports this module).
+const SUPPLEMENTS_STORAGE_KEY = 'fittrack_supplements';
+const LANGUAGE_STORAGE_KEY = 'fittrack_language';
 
 // We track the OS-generated notification identifiers we schedule, per
 // category, so disabling a category can cancel exactly the notifications
@@ -146,6 +162,114 @@ async function getNotificationsModule() {
   return _notifications;
 }
 
+async function isPushMode(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(PUSH_MODE_KEY)) === 'push';
+  } catch {
+    return false;
+  }
+}
+
+/** Collects the payload the register-push endpoint expects. */
+async function collectPushPayload(): Promise<Record<string, any>> {
+  const [meal, water, workout, supplement, language, suppsRaw] = await Promise.all([
+    AsyncStorage.getItem(MEAL_REMINDER_KEY),
+    AsyncStorage.getItem(WATER_REMINDER_KEY),
+    AsyncStorage.getItem(WORKOUT_REMINDER_KEY),
+    AsyncStorage.getItem(SUPPLEMENT_REMINDER_KEY),
+    AsyncStorage.getItem(LANGUAGE_STORAGE_KEY),
+    AsyncStorage.getItem(SUPPLEMENTS_STORAGE_KEY),
+  ]);
+
+  let supplements: Array<{ name: string; timeOfDay: string; dosage?: string }> = [];
+  try {
+    const parsed = JSON.parse(suppsRaw || '[]');
+    if (Array.isArray(parsed)) {
+      supplements = parsed
+        .filter((s: any) => s && s.frequency === 'daily' && typeof s.timeOfDay === 'string')
+        .map((s: any) => ({ name: String(s.name || ''), timeOfDay: s.timeOfDay, dosage: s.dosage || '' }));
+    }
+  } catch {}
+
+  let timezone = 'Europe/Istanbul';
+  try {
+    timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || timezone;
+  } catch {}
+
+  return {
+    timezone,
+    language: language || 'tr',
+    prefs: {
+      meal: meal === 'true',
+      water: water === 'true',
+      workout: workout === 'true',
+      supplement: supplement === 'true',
+    },
+    supplements,
+  };
+}
+
+/**
+ * Registers this device for server-side FCM reminders with the current
+ * preference set, and — on success — cancels every locally scheduled alarm
+ * so the two paths can never double-deliver. Returns false (and flags
+ * local mode) when the token or the network isn't available, in which case
+ * callers fall back to on-device scheduling.
+ */
+export async function syncPushReminders(): Promise<boolean> {
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return false;
+
+  try {
+    const tokenResponse = await Notifications.getDevicePushTokenAsync();
+    const fcmToken =
+      typeof tokenResponse === 'string' ? tokenResponse : (tokenResponse as any)?.data;
+    if (!fcmToken || typeof fcmToken !== 'string') throw new Error('no token');
+
+    const payload = await collectPushPayload();
+    await apiPost(API_ENDPOINTS.registerPush, { fcmToken, ...payload });
+
+    await AsyncStorage.setItem(PUSH_MODE_KEY, 'push');
+    // Server owns delivery now — remove every locally scheduled alarm.
+    await cancelCategory(Notifications, 'meal_reminder', MEAL_IDS_KEY);
+    await cancelCategory(Notifications, 'water_reminder', WATER_IDS_KEY);
+    await cancelCategory(Notifications, 'workout_reminder', WORKOUT_IDS_KEY);
+    await cancelCategory(Notifications, 'supplement_reminder', SUPPLEMENT_IDS_KEY);
+    return true;
+  } catch (e) {
+    if (__DEV__) console.warn('syncPushReminders failed, falling back to local:', e);
+    try {
+      await AsyncStorage.setItem(PUSH_MODE_KEY, 'local');
+    } catch {}
+    return false;
+  }
+}
+
+/**
+ * Launch-time reconcile: prefer server push; fall back to local alarms when
+ * registration fails (no Play services, offline first run, …). Local mode
+ * self-heals — the next successful sync flips the device back to push.
+ */
+export async function reconcileReminders(supplements: Supplement[]): Promise<void> {
+  if (await syncPushReminders()) return;
+  const prefs = await getNotificationPreferences();
+  await scheduleMealReminders(prefs.meal);
+  await scheduleWaterReminders(prefs.water);
+  await scheduleWorkoutReminder(prefs.workout);
+  await scheduleSupplementReminders(prefs.supplement, supplements);
+}
+
+/**
+ * Shared head of every schedule* toggle: persists the pref, then — when the
+ * device is in push mode — syncs the new pref set to the server instead of
+ * touching local alarms. Returns true when push handled it.
+ */
+async function pushHandledToggle(prefKey: string, enabled: boolean): Promise<boolean> {
+  await AsyncStorage.setItem(prefKey, String(enabled));
+  if (!(await isPushMode())) return false;
+  return syncPushReminders();
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
   const Notifications = await getNotificationsModule();
   if (!Notifications) return false;
@@ -164,7 +288,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function scheduleMealReminders(enabled: boolean): Promise<void> {
-  await AsyncStorage.setItem(MEAL_REMINDER_KEY, String(enabled));
+  if (await pushHandledToggle(MEAL_REMINDER_KEY, enabled)) return;
 
   const Notifications = await getNotificationsModule();
   if (!Notifications) return;
@@ -209,7 +333,7 @@ export async function scheduleMealReminders(enabled: boolean): Promise<void> {
 }
 
 export async function scheduleWaterReminders(enabled: boolean): Promise<void> {
-  await AsyncStorage.setItem(WATER_REMINDER_KEY, String(enabled));
+  if (await pushHandledToggle(WATER_REMINDER_KEY, enabled)) return;
 
   const Notifications = await getNotificationsModule();
   if (!Notifications) return;
@@ -246,7 +370,7 @@ export async function scheduleWaterReminders(enabled: boolean): Promise<void> {
 }
 
 export async function scheduleWorkoutReminder(enabled: boolean): Promise<void> {
-  await AsyncStorage.setItem(WORKOUT_REMINDER_KEY, String(enabled));
+  if (await pushHandledToggle(WORKOUT_REMINDER_KEY, enabled)) return;
 
   const Notifications = await getNotificationsModule();
   if (!Notifications) return;
@@ -301,7 +425,7 @@ export async function scheduleSupplementReminders(
   enabled: boolean,
   supplements: Supplement[],
 ): Promise<void> {
-  await AsyncStorage.setItem(SUPPLEMENT_REMINDER_KEY, String(enabled));
+  if (await pushHandledToggle(SUPPLEMENT_REMINDER_KEY, enabled)) return;
 
   const Notifications = await getNotificationsModule();
   if (!Notifications) return;
@@ -376,6 +500,9 @@ export async function cancelAllReminders(): Promise<void> {
       [WORKOUT_REMINDER_KEY, 'false'],
       [SUPPLEMENT_REMINDER_KEY, 'false'],
     ]);
+    // If this device is registered for server push, sync the all-off pref
+    // set so the server stops sending too.
+    if (await isPushMode()) await syncPushReminders();
   } catch {
     // non-fatal
   }

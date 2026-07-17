@@ -17,13 +17,7 @@ import { initDatabase, seedDatabase } from './src/services/database/database';
 import { getDeviceToken } from './src/services/api/apiClient';
 import { initializeBilling, checkSubscriptionStatus, setupPurchaseListener, endBillingConnection } from './src/services/premium/googleBilling';
 import { initializeAds, loadInterstitial, setupAdConsent } from './src/services/ads/adService';
-import {
-  getNotificationPreferences,
-  scheduleMealReminders,
-  scheduleWaterReminders,
-  scheduleWorkoutReminder,
-  scheduleSupplementReminders,
-} from './src/services/notifications/notificationService';
+import { reconcileReminders } from './src/services/notifications/notificationService';
 import { getSupplements } from './src/services/supplements/supplementService';
 
 // Splash screen'i uygulama hazır olana kadar görünür tut
@@ -91,13 +85,10 @@ export default function App() {
       // category but the OS still has stale scheduled entries (e.g. from
       // a pre-fix build), those will be cleared on next launch.
       try {
-        const prefs = await getNotificationPreferences();
-        await scheduleMealReminders(prefs.meal);
-        await scheduleWaterReminders(prefs.water);
-        await scheduleWorkoutReminder(prefs.workout);
-        // Supplements were the one category left out of the launch
-        // reconcile, so stale entries could linger after failed cancels.
-        await scheduleSupplementReminders(prefs.supplement, await getSupplements());
+        // Prefer server-side FCM delivery (reliable on aggressive OEMs like
+        // MIUI); falls back to locally scheduled alarms when push
+        // registration isn't possible.
+        await reconcileReminders(await getSupplements());
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: Notification reconcile failed:', e);
       }

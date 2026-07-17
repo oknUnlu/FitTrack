@@ -7,3 +7,5 @@ export { promo } from './promo';
 export { health } from './health';
 export { usage } from './usage';
 export { deleteAccount } from './deleteAccount';
+export { registerPush } from './registerPush';
+export { sendReminders } from './reminders';

@@ -11,6 +11,8 @@
  *   3. Only remindable supplements (daily + fixed time-of-day) get entries.
  */
 
+(globalThis as any).__DEV__ = false; // RN global, absent in the node test env
+
 const store = new Map<string, string>();
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -22,6 +24,13 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 jest.mock('react-native', () => ({ Platform: { OS: 'android' } }));
 jest.mock('expo-constants', () => ({ appOwnership: 'standalone' }));
+
+// Push registration plumbing — the service prefers server-side FCM delivery
+// and only falls back to local alarms when registration fails.
+const apiPost: jest.Mock = jest.fn(async (..._args: any[]) => ({ success: true }));
+jest.mock('../src/services/api/apiClient', () => ({ apiPost: (...a: any[]) => apiPost(...a) }));
+jest.mock('../src/config/api', () => ({ API_ENDPOINTS: { registerPush: 'https://test/api/register-push' } }));
+const getDevicePushTokenAsync: jest.Mock = jest.fn(async (..._args: any[]) => ({ type: 'android', data: 'fcm-token-1234567890-abcdefghijklmnopqrstuvwxyz' }));
 
 const scheduled = new Map<string, any>();
 const scheduleNotificationAsync = jest.fn(async (req: any) => {
@@ -36,6 +45,7 @@ const getAllScheduledNotificationsAsync = jest.fn(async () =>
 );
 
 jest.mock('expo-notifications', () => ({
+  getDevicePushTokenAsync: (...a: any[]) => getDevicePushTokenAsync(...a),
   setNotificationHandler: jest.fn(),
   setNotificationChannelAsync: jest.fn(),
   AndroidImportance: { HIGH: 4 },
@@ -49,6 +59,8 @@ import {
   scheduleWaterReminders,
   scheduleMealReminders,
   scheduleSupplementReminders,
+  syncPushReminders,
+  reconcileReminders,
 } from '../src/services/notifications/notificationService';
 import type { Supplement } from '../src/services/supplements/supplementService';
 
@@ -123,5 +135,55 @@ describe('supplement reminders', () => {
     expect(scheduled.size).toBe(2);
     await scheduleSupplementReminders(true, [supp({ id: 'a' })]);
     expect([...scheduled.keys()]).toEqual(['supplement_reminder_a']);
+  });
+});
+
+describe('push mode (server-side FCM delivery)', () => {
+  test('successful registration cancels local alarms and flips to push mode', async () => {
+    store.set('pref_water_reminder', 'true');
+    await scheduleWaterReminders(true); // local mode first → 7 alarms
+    expect(scheduled.size).toBe(7);
+
+    const ok = await syncPushReminders();
+    expect(ok).toBe(true);
+    expect(store.get('pref_reminder_push_mode')).toBe('push');
+    // Local alarms are gone — server owns delivery; no double notifications.
+    expect(scheduled.size).toBe(0);
+    expect(apiPost).toHaveBeenCalledWith(
+      'https://test/api/register-push',
+      expect.objectContaining({
+        fcmToken: expect.any(String),
+        prefs: expect.objectContaining({ water: true }),
+      })
+    );
+  });
+
+  test('toggles in push mode sync prefs to the server instead of scheduling alarms', async () => {
+    store.set('pref_reminder_push_mode', 'push');
+    await scheduleWaterReminders(true);
+    expect(scheduled.size).toBe(0); // no local alarms
+    const lastBody = apiPost.mock.calls[apiPost.mock.calls.length - 1][1] as any;
+    expect(lastBody.prefs.water).toBe(true);
+
+    await scheduleWaterReminders(false);
+    const offBody = apiPost.mock.calls[apiPost.mock.calls.length - 1][1] as any;
+    expect(offBody.prefs.water).toBe(false);
+  });
+
+  test('failed registration falls back to local scheduling via reconcileReminders', async () => {
+    apiPost.mockRejectedValueOnce(new Error('offline'));
+    store.set('pref_water_reminder', 'true');
+    await reconcileReminders([]);
+    expect(store.get('pref_reminder_push_mode')).toBe('local');
+    expect(scheduled.size).toBe(7); // local water alarms as fallback
+  });
+
+  test('push mode self-heals: toggle retries push and falls back locally on failure', async () => {
+    store.set('pref_reminder_push_mode', 'push');
+    apiPost.mockRejectedValueOnce(new Error('offline'));
+    await scheduleWaterReminders(true);
+    // Sync failed → mode flips to local and the toggle schedules alarms.
+    expect(store.get('pref_reminder_push_mode')).toBe('local');
+    expect(scheduled.size).toBe(7);
   });
 });
