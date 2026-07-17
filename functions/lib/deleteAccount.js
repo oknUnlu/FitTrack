@@ -39,6 +39,8 @@ exports.deleteAccount = (0, https_1.onRequest)({ cors: true, timeoutSeconds: 60,
         await admin_1.db.collection('premium_status').doc(deviceId).delete().catch(() => { });
         // 2) promo_premium/{deviceId}
         await admin_1.db.collection('promo_premium').doc(deviceId).delete().catch(() => { });
+        // 2b) push_tokens/{deviceId} — stop server-side reminder pushes.
+        await admin_1.db.collection('push_tokens').doc(deviceId).delete().catch(() => { });
         // 3) rate_limits/{deviceId}:* — doc ID'ler `${deviceId}:${feature}:${date}`
         //    formatında olduğu için range query ile toplu silme yapıyoruz.
         //    Firestore doc-id sıralaması leksikografik: `x:` prefixli ID'leri
