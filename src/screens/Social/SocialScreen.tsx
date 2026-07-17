@@ -273,7 +273,7 @@ export function SocialScreen() {
                 </Text>
                 <TextInput
                   label={`${t.social.currentValue} (${selectedChallenge.unit})`}
-                  value={updateValue}
+                  defaultValue={updateValue}
                   onChangeText={setUpdateValue}
                   keyboardType="numeric"
                   mode="outlined"

@@ -388,7 +388,7 @@ export function HealthHubScreen() {
           <Dialog.Content>
             <TextInput
               label={`${healthTexts.valueLabel} (${DATA_TYPES.find((dt) => dt.key === selectedType)?.unit})`}
-              value={inputValue}
+              defaultValue={inputValue}
               onChangeText={setInputValue}
               keyboardType="numeric"
               mode="outlined"

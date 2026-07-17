@@ -27,6 +27,7 @@ export function AICoachScreen() {
   const userId = useUserStore((s) => s.userId);
   const theme = useTheme();
   const { t } = useLanguage();
+  const chatInputRef = useRef<any>(null);
   const flatListRef = useRef<FlatList>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [input, setInput] = useState('');
@@ -117,6 +118,10 @@ export function AICoachScreen() {
     };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    // Uncontrolled input (defaultValue — controlled TextInputs reset the
+    // cursor on the New Architecture); clearing state alone doesn't empty
+    // the native field, so clear it through the ref.
+    chatInputRef.current?.clear();
     setLoading(true);
 
     try {
@@ -310,7 +315,8 @@ export function AICoachScreen() {
       {/* Input */}
       <View style={[styles.inputRow, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
         <TextInput
-          value={input}
+          ref={chatInputRef}
+          defaultValue={input}
           onChangeText={setInput}
           placeholder={t.aiCoach.placeholder}
           mode="outlined"

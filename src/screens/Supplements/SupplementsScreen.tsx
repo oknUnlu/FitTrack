@@ -349,7 +349,7 @@ export function SupplementsScreen() {
             <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 8 }}>
               <TextInput
                 label={t.supplements.supplementName}
-                value={name}
+                defaultValue={name}
                 onChangeText={setName}
                 mode="outlined"
                 style={styles.input}
@@ -360,7 +360,7 @@ export function SupplementsScreen() {
               />
               <TextInput
                 label={t.supplements.dosage}
-                value={dosage}
+                defaultValue={dosage}
                 onChangeText={setDosage}
                 mode="outlined"
                 style={styles.input}

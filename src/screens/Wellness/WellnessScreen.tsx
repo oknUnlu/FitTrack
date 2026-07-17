@@ -389,7 +389,7 @@ export function WellnessScreen() {
               {/* Sleep */}
               <Text style={styles.formLabel}>{t.wellness.sleepDuration}</Text>
               <TextInput
-                value={formSleepHours}
+                defaultValue={formSleepHours}
                 onChangeText={setFormSleepHours}
                 keyboardType="numeric"
                 mode="outlined"
@@ -426,7 +426,7 @@ export function WellnessScreen() {
               {/* Notes */}
               <Text style={[styles.formLabel, { marginTop: 12 }]}>{t.wellness.notes}</Text>
               <TextInput
-                value={formNotes}
+                defaultValue={formNotes}
                 onChangeText={setFormNotes}
                 mode="outlined"
                 dense

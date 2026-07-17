@@ -485,7 +485,7 @@ export function ProfileScreen() {
             <TextInput
               mode="outlined"
               placeholder={t.premium.promoPlaceholder}
-              value={promoCode}
+              defaultValue={promoCode}
               onChangeText={setPromoCode}
               autoCapitalize="characters"
               maxLength={30}

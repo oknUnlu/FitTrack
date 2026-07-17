@@ -64,9 +64,9 @@ function TDEECalculator() {
     <Card style={styles.card} mode="elevated">
       <Card.Content>
         <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.tdeeCalc}</Text>
-        <TextInput label={t.tools.weight} value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
-        <TextInput label={t.tools.height} value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
-        <TextInput label={t.tools.age} value={age} onChangeText={setAge} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={3} />
+        <TextInput label={t.tools.weight} defaultValue={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
+        <TextInput label={t.tools.height} defaultValue={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
+        <TextInput label={t.tools.age} defaultValue={age} onChangeText={setAge} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={3} />
 
         <SegmentedButtons value={gender} onValueChange={setGender}
           buttons={[{ value: 'male', label: t.tools.male }, { value: 'female', label: t.tools.female }]}
@@ -100,8 +100,8 @@ function OneRMCalculator() {
     <Card style={styles.card} mode="elevated">
       <Card.Content>
         <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.oneRmCalc}</Text>
-        <TextInput label={t.tools.weight} value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
-        <TextInput label={t.tools.repCount} value={reps} onChangeText={setReps} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={3} />
+        <TextInput label={t.tools.weight} defaultValue={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
+        <TextInput label={t.tools.repCount} defaultValue={reps} onChangeText={setReps} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={3} />
         <View style={styles.resultBox}>
           <Text style={styles.resultLabel}>Epley: {result.epley.toFixed(1)} {t.common.kg}</Text>
           <Text style={styles.resultLabel}>Brzycki: {result.brzycki.toFixed(1)} {t.common.kg}</Text>
@@ -126,8 +126,8 @@ function BMICalculator() {
     <Card style={styles.card} mode="elevated">
       <Card.Content>
         <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.bmiCalc}</Text>
-        <TextInput label={t.tools.weight} value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
-        <TextInput label={t.tools.height} value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
+        <TextInput label={t.tools.weight} defaultValue={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
+        <TextInput label={t.tools.height} defaultValue={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
         <View style={styles.resultBox}>
           <Text style={[styles.resultValue, { color: colors.primary }]}>{bmi > 0 ? bmi.toFixed(1) : '—'}</Text>
           <Text style={styles.resultLabel}>{category}</Text>
@@ -147,7 +147,7 @@ function WaterCalculator() {
     <Card style={styles.card} mode="elevated">
       <Card.Content>
         <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.waterNeeds}</Text>
-        <TextInput label={t.tools.weight} value={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
+        <TextInput label={t.tools.weight} defaultValue={weight} onChangeText={setWeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
         <SegmentedButtons value={activity} onValueChange={setActivity}
           buttons={[{ value: 'sedentary', label: t.tools.sedentary }, { value: 'active', label: t.tools.activeLevel }]}
           style={styles.input} />
@@ -171,7 +171,7 @@ function IdealWeightCalculator() {
     <Card style={styles.card} mode="elevated">
       <Card.Content>
         <Text variant="titleMedium" style={styles.cardTitle}>{t.tools.idealWeight}</Text>
-        <TextInput label={t.tools.height} value={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
+        <TextInput label={t.tools.height} defaultValue={height} onChangeText={setHeight} keyboardType="numeric" mode="outlined" style={styles.input} maxLength={5} />
         <SegmentedButtons value={gender} onValueChange={setGender}
           buttons={[{ value: 'male', label: t.tools.male }, { value: 'female', label: t.tools.female }]}
           style={styles.input} />

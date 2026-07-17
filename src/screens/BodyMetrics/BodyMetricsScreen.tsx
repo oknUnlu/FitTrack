@@ -262,13 +262,13 @@ export function BodyMetricsScreen() {
           <Dialog.Title>{t.bodyMetrics.addMeasurement}</Dialog.Title>
           <Dialog.ScrollArea>
             <ScrollView contentContainerStyle={{ padding: spacing.sm }}>
-              <TextInput label={`${t.common.kg} *`} value={weight} onChangeText={setWeight} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="75.0" />
-              <TextInput label="% Yağ" value={bodyFat} onChangeText={setBodyFat} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="18.0" />
-              <TextInput label={`${t.bodyMetrics.waist} (cm)`} value={waist} onChangeText={setWaist} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="80" />
-              <TextInput label={`${t.bodyMetrics.hip} (cm)`} value={hip} onChangeText={setHip} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="95" />
-              <TextInput label={`${t.bodyMetrics.chest} (cm)`} value={chest} onChangeText={setChest} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="100" />
-              <TextInput label={`${t.bodyMetrics.bicep} (cm)`} value={bicep} onChangeText={setBicep} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="35" />
-              <TextInput label={`${t.bodyMetrics.thigh} (cm)`} value={thigh} onChangeText={setThigh} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="55" />
+              <TextInput label={`${t.common.kg} *`} defaultValue={weight} onChangeText={setWeight} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="75.0" />
+              <TextInput label="% Yağ" defaultValue={bodyFat} onChangeText={setBodyFat} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="18.0" />
+              <TextInput label={`${t.bodyMetrics.waist} (cm)`} defaultValue={waist} onChangeText={setWaist} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="80" />
+              <TextInput label={`${t.bodyMetrics.hip} (cm)`} defaultValue={hip} onChangeText={setHip} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="95" />
+              <TextInput label={`${t.bodyMetrics.chest} (cm)`} defaultValue={chest} onChangeText={setChest} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="100" />
+              <TextInput label={`${t.bodyMetrics.bicep} (cm)`} defaultValue={bicep} onChangeText={setBicep} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="35" />
+              <TextInput label={`${t.bodyMetrics.thigh} (cm)`} defaultValue={thigh} onChangeText={setThigh} keyboardType="decimal-pad" mode="outlined" style={styles.input} dense placeholder="55" />
 
               <View style={styles.photoButtons}>
                 <TouchableOpacity style={styles.photoBtnAction} onPress={takePhoto} activeOpacity={0.7}>

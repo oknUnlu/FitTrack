@@ -383,7 +383,7 @@ export function OnboardingScreen() {
         <Text style={styles.inputLabel}>{t.onboarding.yourName}</Text>
         <TextInput
           mode="outlined"
-          value={name}
+          defaultValue={name}
           onChangeText={setName}
           placeholder={t.onboarding.namePlaceholder}
           style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
@@ -396,7 +396,7 @@ export function OnboardingScreen() {
         <Text style={styles.inputLabel}>{t.onboarding.yourAge}</Text>
         <TextInput
           mode="outlined"
-          value={age}
+          defaultValue={age}
           onChangeText={setAge}
           placeholder={t.onboarding.agePlaceholder}
           keyboardType="number-pad"
@@ -437,7 +437,7 @@ export function OnboardingScreen() {
         <View style={styles.unitInputRow}>
           <TextInput
             mode="outlined"
-            value={height}
+            defaultValue={height}
             onChangeText={setHeight}
             placeholder={t.onboarding.heightPlaceholder}
             keyboardType="decimal-pad"
@@ -456,7 +456,7 @@ export function OnboardingScreen() {
         <View style={styles.unitInputRow}>
           <TextInput
             mode="outlined"
-            value={weight}
+            defaultValue={weight}
             onChangeText={setWeight}
             placeholder={t.onboarding.weightPlaceholder}
             keyboardType="decimal-pad"

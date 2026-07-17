@@ -79,6 +79,8 @@ export function ActiveWorkoutScreen() {
   const [exerciseDetailMap, setExerciseDetailMap] = useState<Map<string, Exercise>>(new Map());
   const [expandedGuides, setExpandedGuides] = useState<Set<string>>(new Set());
 
+  const queryInputRef = useRef<any>(null);
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionId = useRef(generateId());
 
@@ -132,6 +134,10 @@ export function ActiveWorkoutScreen() {
   const handleSelectExercise = (ex: Exercise) => {
     setSelectedExercise({ id: ex.id, name: ex.nameTr || ex.name, metValue: ex.metValue });
     setExerciseQuery(ex.nameTr || ex.name);
+    // The query input is uncontrolled (defaultValue — controlled TextInputs
+    // reset the cursor on the New Architecture), so reflect the picked
+    // exercise into the native field through the ref.
+    queryInputRef.current?.setNativeProps({ text: ex.nameTr || ex.name });
     setSuggestions([]);
   };
 
@@ -456,7 +462,7 @@ export function ActiveWorkoutScreen() {
             <Text style={[styles.modalTitle, { color: sc.textPrimary }]}>{t.workout.addExercise}</Text>
           </View>
 
-          <TextInput label={t.workout.searchExercise} value={exerciseQuery} onChangeText={handleExerciseSearch}
+          <TextInput label={t.workout.searchExercise} ref={queryInputRef} defaultValue={exerciseQuery} onChangeText={handleExerciseSearch}
             mode="outlined" dense style={styles.searchInput} left={<TextInput.Icon icon="magnify" />} />
 
           {suggestions.length > 0 && (
@@ -486,9 +492,9 @@ export function ActiveWorkoutScreen() {
           )}
 
           <View style={styles.inputRow}>
-            <TextInput label={t.workout.weight} value={weight} onChangeText={setWeight} keyboardType="decimal-pad"
+            <TextInput label={t.workout.weight} defaultValue={weight} onChangeText={setWeight} keyboardType="decimal-pad"
               mode="outlined" dense style={styles.halfInput} placeholder="0" left={<TextInput.Icon icon="weight-kilogram" />} />
-            <TextInput label={t.workout.reps} value={reps} onChangeText={setReps} keyboardType="number-pad"
+            <TextInput label={t.workout.reps} defaultValue={reps} onChangeText={setReps} keyboardType="number-pad"
               mode="outlined" dense style={styles.halfInput} placeholder="12" left={<TextInput.Icon icon="repeat" />} />
           </View>
 
