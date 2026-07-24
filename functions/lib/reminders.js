@@ -67,10 +67,22 @@ const WORKOUT_TEXT = {
     tr: ['💪 Antrenman Zamanı!', 'Bugün için antrenman planlamıştın. Hadi başlayalım!'],
     en: ['💪 Workout Time!', "You planned a workout today. Let's get moving!"],
 };
-/** Local HH:MM for a timezone; falls back to UTC on bad tz. */
+/**
+ * Local HH:MM for a timezone, snapped to the nearest 30-minute grid mark;
+ * falls back to UTC on bad tz.
+ *
+ * Every reminder time in this file sits exactly on a 30-minute mark, and the
+ * scheduler runs on a matching 30-minute grid — but Cloud Scheduler
+ * jitter or a Cloud Run cold start can delay the actual tick by a minute or
+ * more (observed: a 09:00 tick firing at 09:01, which starved that whole
+ * slot). Without snapping, the exact-match lookups below (`WATER_TIMES`,
+ * `MEAL_TIMES`, etc.) silently miss and drop the reminder with no error
+ * logged. Rounding to the nearest grid mark absorbs that jitter.
+ */
 function localTime(now, timezone) {
+    let formatted;
     try {
-        return new Intl.DateTimeFormat('en-GB', {
+        formatted = new Intl.DateTimeFormat('en-GB', {
             timeZone: timezone,
             hour: '2-digit',
             minute: '2-digit',
@@ -78,8 +90,13 @@ function localTime(now, timezone) {
         }).format(now);
     }
     catch (_a) {
-        return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+        formatted = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
     }
+    const [hour, minute] = formatted.split(':').map(Number);
+    const snappedTotal = (Math.round((hour * 60 + minute) / 30) * 30) % 1440;
+    const snappedHour = Math.floor(snappedTotal / 60);
+    const snappedMinute = snappedTotal % 60;
+    return `${String(snappedHour).padStart(2, '0')}:${String(snappedMinute).padStart(2, '0')}`;
 }
 function dueMessages(doc, hhmm) {
     var _a, _b, _c, _d;
