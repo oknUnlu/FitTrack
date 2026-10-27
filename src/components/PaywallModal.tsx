@@ -149,11 +149,15 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
     }
 
     if (!billingReady) {
-      // Mock mode: activate directly for development
-      const days = plan === 'monthly' ? 30 : plan === 'quarterly' ? 90 : 365;
-      const expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
-      await setPremium(plan, expiresAt);
-      onClose();
+      if (__DEV__) {
+        // Mock mode: activate directly for development only
+        const days = plan === 'monthly' ? 30 : plan === 'quarterly' ? 90 : 365;
+        const expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
+        await setPremium(plan, expiresAt);
+        onClose();
+      } else {
+        Alert.alert(t.common.error, t.premium.purchaseFailed);
+      }
       return;
     }
 
@@ -165,16 +169,20 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
         onClose();
       }
     } catch (e: any) {
-      // Show the actual error message during testing so we can debug failures.
-      // Google Play returns codes like E_ITEM_UNAVAILABLE, E_USER_CANCELLED,
-      // E_BILLING_RESPONSE_JSON_PARSE_ERROR, E_DEVELOPER_ERROR, etc.
-      const debugMsg = e?.code
-        ? `${e.code}: ${e.message || 'No message'}`
-        : (e?.message || String(e));
-      Alert.alert(
-        t.common.error,
-        `${t.premium.purchaseFailed}\n\n[Debug]: ${debugMsg}`,
-      );
+      // Kullanıcı satın almayı iptal ettiyse hata gösterme
+      if (e?.code !== 'E_USER_CANCELLED') {
+        // Google Play returns codes like E_ITEM_UNAVAILABLE, E_USER_CANCELLED,
+        // E_BILLING_RESPONSE_JSON_PARSE_ERROR, E_DEVELOPER_ERROR, etc.
+        const debugMsg = e?.code
+          ? `${e.code}: ${e.message || 'No message'}`
+          : (e?.message || String(e));
+        Alert.alert(
+          t.common.error,
+          __DEV__
+            ? `${t.premium.purchaseFailed}\n\n[Debug]: ${debugMsg}`
+            : t.premium.purchaseFailed,
+        );
+      }
     }
     setIsPurchasing(false);
   };

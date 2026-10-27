@@ -76,7 +76,7 @@ export default function App() {
       try {
         await setupAdConsent();
         await initializeAds();
-        await loadInterstitial();
+        loadInterstitial().catch(() => {}); // splash'i bekletmesin
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: AdMob init failed:', e);
       }
