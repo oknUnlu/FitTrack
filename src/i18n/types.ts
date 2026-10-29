@@ -564,6 +564,9 @@ export interface Translations {
     ageRestrictionBody?: string;
     bodyInvalidTitle?: string;
     bodyInvalidBody?: string;
+    legal?: {
+      disclosure?: string;
+    };
   };
 
   // Wellness
@@ -910,6 +913,17 @@ export interface Translations {
     fri: string;
     sat: string;
     sun: string;
+  };
+
+  // Separate AI data-sharing consent (optional — EN/TR supplied, fallback otherwise)
+  aiConsent?: {
+    title?: string;
+    body?: string;
+    accept?: string;
+    decline?: string;
+    privacyLink?: string;
+    settingsLabel?: string;
+    settingsDesc?: string;
   };
 
   // Consent / medical disclaimer / KVKK-GDPR surfaces (optional)

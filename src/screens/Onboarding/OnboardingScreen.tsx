@@ -180,24 +180,11 @@ export function OnboardingScreen() {
     if (step > 0) animateTransition(step - 1);
   };
 
-  // Welcome → Personal info transition. Records the FIVE consents that
-  // genuinely require KVKK/GDPR explicit opt-in:
-  //
-  //   Required-for-app-use (4): privacyPolicy, termsOfService, kvkk,
-  //     medicalDisclaimerAcknowledged. App refuses to function without these.
-  //
-  //   AI data transfer (1): aiDataSharing. Special category data + Türkiye→USA
-  //     transfer means KVKK m.6 + m.9 require explicit consent. Bundling it
-  //     into the welcome click is defensible because the disclosure text
-  //     renders directly above the button (visible & specific) and the user
-  //     retains a one-tap revocation path in Profile → Privacy. Removing the
-  //     toggle later is "as easy to withdraw as to give" per GDPR Art. 7(3).
-  //
-  // Crash + analytics are NOT in this set — they ride on legitimate interest
-  // (Art. 6(1)(f) / KVKK m.5/2-f) and the right-to-object is satisfied via
-  // the email contact documented in the privacy policy. Health data is
-  // gated by OS-level prompts (HealthKit / Health Connect). Personalised ads
-  // go through Google's UMP SDK which keeps its own consent storage.
+  // Records only the four consents that are required to use the app:
+  // privacyPolicy, termsOfService, kvkk and medicalDisclaimerAcknowledged.
+  // AI data transfer (Google Gemini, USA) is NOT bundled into this click: it
+  // is a separate, default-off explicit consent collected the first time an
+  // AI feature is used and can be withdrawn from Profile at any time.
   const handleStartFromWelcome = async () => {
     try {
       await setConsents({
@@ -205,7 +192,6 @@ export function OnboardingScreen() {
         termsOfService: true,
         kvkk: true,
         medicalDisclaimerAcknowledged: true,
-        aiDataSharing: true,
       });
     } catch (e) {
       if (__DEV__) console.warn('Welcome consent persist failed:', e);
@@ -328,7 +314,7 @@ export function OnboardingScreen() {
     const L = (t as any)?.onboarding?.legal || {};
     const disclosureText =
       L.disclosure ||
-      'By continuing, you declare that you are over 13 and confirm that you have read and accept the Privacy Policy, Terms of Service and KVKK / GDPR Notice. You understand and explicitly consent that, when you use the AI Coach and food recognition features, your messages and photos are sent to the Google Gemini service (USA). This app is not a substitute for medical advice, diagnosis or treatment — consult a physician/dietitian for your health decisions.';
+      'By continuing, you declare that you are over 13, accept the Terms of Service, and confirm that you have read and understood the Privacy Policy and the KVKK / GDPR Notice. This app is not a substitute for medical advice, diagnosis or treatment — consult a physician/dietitian for your health decisions.';
     const lblPrivacy = L.privacyPolicy || 'Privacy Policy';
     const lblTerms = L.termsOfService || 'Terms of Service';
     const lblKvkk = L.kvkk || 'KVKK / GDPR Notice';

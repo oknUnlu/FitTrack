@@ -11,6 +11,7 @@ import { getMealLogsByDate } from '../../services/database/mealDao';
 import { getRecentSessions } from '../../services/database/workoutDao';
 import { deleteAllConversations } from '../../services/database/aiDao';
 import { buildContextString } from '../../services/ai/promptBuilder';
+import { ensureAiConsent } from '../../services/privacy/aiConsent';
 import { todayString } from '../../utils/helpers';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { useLanguage } from '../../i18n';
@@ -113,6 +114,8 @@ export function AICoachScreen() {
       return;
     }
 
+    if (!(await ensureAiConsent())) return;
+
     const userMsg: ConversationMessage = {
       id: Date.now().toString(), role: 'user', content: msg, source: 'gemini_cloud', timestamp: Date.now(),
     };
@@ -127,6 +130,7 @@ export function AICoachScreen() {
     try {
       const context = await buildUserContext();
       const response = await sendMessage(userId, msg, context);
+      if (response.errorKind === 'consent_required') return;
       await incrementUsage('ai_coach');
       const newRemaining = await getRemainingUsage('ai_coach');
       setRemainingToday(newRemaining);
@@ -160,6 +164,8 @@ export function AICoachScreen() {
       return;
     }
 
+    if (!(await ensureAiConsent())) return;
+
     setLoading(true);
 
     const planLabels: Record<PlanType, string> = {
@@ -177,6 +183,7 @@ export function AICoachScreen() {
     try {
       const context = await buildUserContext();
       const response = await requestPlan(userId, planType, context);
+      if (response.errorKind === 'consent_required') return;
       await incrementUsage('ai_coach');
       const newRemaining = await getRemainingUsage('ai_coach');
       setRemainingToday(newRemaining);

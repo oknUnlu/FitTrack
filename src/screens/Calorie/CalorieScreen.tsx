@@ -16,6 +16,7 @@ import { getDeviceToken } from '../../services/api/apiClient';
 import { BarcodeScanner } from '../../components/BarcodeScanner';
 import { recognizeFoodFromImage, RecognizedFood } from '../../services/ai/foodRecognition';
 import { estimateFoodFromText } from '../../services/ai/foodEstimate';
+import { ensureAiConsent } from '../../services/privacy/aiConsent';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { todayString, MEAL_TYPES, generateId } from '../../utils/helpers';
@@ -516,6 +517,7 @@ export function CalorieScreen() {
       Alert.alert(t.premium.limitReached, t.premium.dailyLimitFoodMsg);
       return;
     }
+    if (!(await ensureAiConsent())) return;
 
     Keyboard.dismiss();
     try {
@@ -544,6 +546,7 @@ export function CalorieScreen() {
       setAiEstimateQuery('');
       setManualEntryVisible(true);
     } catch (e: any) {
+      if (e?.message === 'AI_CONSENT_REQUIRED') return;
       Alert.alert(t.common.error, e?.message || ((t as any).calorie?.aiEstimateError || t.common.errorOccurred));
     } finally {
       setAiEstimateLoading(false);
@@ -571,6 +574,8 @@ export function CalorieScreen() {
       return;
     }
 
+    if (!(await ensureAiConsent())) return;
+
     try {
       const result = await ImagePicker.launchCameraAsync({
         quality: 0.7,
@@ -586,6 +591,7 @@ export function CalorieScreen() {
       setAiLoading(false);
     } catch (e: any) {
       setAiLoading(false);
+      if (e?.message === 'AI_CONSENT_REQUIRED') return;
       Alert.alert(t.common.error, e.message || t.calorie.aiRecognition);
     }
   }, [t, isPremium]);

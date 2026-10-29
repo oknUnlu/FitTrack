@@ -514,6 +514,9 @@ const tr: Translations = {
     ageRestrictionBody: 'FitTrack 18 yaş ve üzerindeki kullanıcılar içindir. Lütfen bir ebeveyn veya veliye danışın.',
     bodyInvalidTitle: 'Vücut Bilgileri Geçersiz',
     bodyInvalidBody: 'Lütfen gerçekçi bir kilo (25-400 kg) ve boy (80-250 cm) değeri girin.',
+    legal: {
+      disclosure: 'Devam ederek 13 yaşından büyük olduğunu beyan eder, Kullanım Şartları\'nı kabul eder; Gizlilik Politikası\'nı ve KVKK Aydınlatma Metni\'ni okuduğunu ve anladığını onaylarsın. Bu uygulama tıbbi tavsiye, teşhis veya tedavinin yerine geçmez; sağlık kararların için hekim/diyetisyene danış.',
+    },
   },
 
   wellness: {
@@ -846,6 +849,16 @@ const tr: Translations = {
     fri: 'Cu',
     sat: 'Ct',
     sun: 'Pz',
+  },
+
+  aiConsent: {
+    title: 'AI özellikleri için ayrı onay',
+    body: 'AI Koç, yemek tanıma ve program oluşturma özellikleri, yazdığın mesajları, gönderdiğin fotoğrafları ve bazı özelliklerde profil bilgilerini işlenmek üzere Google Gemini hizmetine (ABD) gönderir. Bu veriler sağlık bilgisi içerebilir. Ücretsiz API kapsamında Google bu verileri model eğitimi için kullanabilir. Onay vermezsen bu özellikler kullanılmaz ve hiçbir veri gönderilmez; uygulamanın diğer bölümleri çalışmaya devam eder. Onayını istediğin zaman Profil ekranından geri çekebilirsin.',
+    accept: 'Açık rıza veriyorum',
+    decline: 'Vazgeç',
+    privacyLink: 'KVKK Aydınlatma Metni',
+    settingsLabel: 'AI veri paylaşımı (Google Gemini, ABD)',
+    settingsDesc: 'AI özellikleri için verilerinin Gemini\'ye gönderilmesine izin ver',
   },
 
   legal: {

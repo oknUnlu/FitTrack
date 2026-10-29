@@ -1,5 +1,6 @@
 import { apiPost } from '../api/apiClient';
 import { API_ENDPOINTS } from '../../config/api';
+import { useConsentStore } from '../../store/consentStore';
 import type { RecognizedFood } from './foodRecognition';
 
 /**
@@ -14,6 +15,10 @@ import type { RecognizedFood } from './foodRecognition';
 export async function estimateFoodFromText(query: string): Promise<RecognizedFood | null> {
   const trimmed = query.trim();
   if (!trimmed) return null;
+
+  if (!useConsentStore.getState().hasGranted('aiDataSharing')) {
+    throw new Error('AI_CONSENT_REQUIRED');
+  }
 
   const data = await apiPost<{ success: boolean; food: RecognizedFood | null }>(
     API_ENDPOINTS.foodEstimate,

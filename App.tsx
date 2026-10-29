@@ -7,6 +7,7 @@ import { Platform, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppNavigation } from './src/navigation/AppNavigation';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { AiConsentModal } from './src/components/AiConsentModal';
 import { LanguageProvider } from './src/i18n';
 import { useThemeStore } from './src/store/themeStore';
 import { useUserStore } from './src/store/userStore';
@@ -112,6 +113,7 @@ export default function App() {
             <LanguageProvider>
               <StatusBar style={isDark ? 'light' : 'dark'} translucent={true} />
               <AppNavigation />
+              <AiConsentModal />
             </LanguageProvider>
           </PaperProvider>
         </SafeAreaProvider>

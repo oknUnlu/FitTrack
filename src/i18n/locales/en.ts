@@ -513,6 +513,9 @@ const en: Translations = {
     ageRestrictionBody: 'FitTrack is for users aged 18 and older. Please consult a parent or guardian.',
     bodyInvalidTitle: 'Invalid Body Information',
     bodyInvalidBody: 'Please enter a realistic weight (25-400 kg) and height (80-250 cm).',
+    legal: {
+      disclosure: 'By continuing, you declare that you are over 13, accept the Terms of Service, and confirm that you have read and understood the Privacy Policy and the KVKK / GDPR Notice. This app is not a substitute for medical advice, diagnosis or treatment — consult a physician/dietitian for your health decisions.',
+    },
   },
 
   wellness: {
@@ -844,6 +847,16 @@ const en: Translations = {
     fri: 'Fr',
     sat: 'Sa',
     sun: 'Su',
+  },
+
+  aiConsent: {
+    title: 'Separate consent for AI features',
+    body: 'The AI Coach, food recognition and plan generation features send your messages, photos and, in some features, profile details to Google Gemini (USA) for processing. This data may include health information. Under the free API, Google may use it to improve its models. If you decline, these features will not be used and no data is sent; the rest of the app keeps working. You can withdraw your consent anytime in Profile.',
+    accept: 'I give my explicit consent',
+    decline: 'Not now',
+    privacyLink: 'KVKK / GDPR Notice',
+    settingsLabel: 'AI data sharing (Google Gemini, USA)',
+    settingsDesc: 'Allow your data to be sent to Gemini for AI features',
   },
 
   legal: {

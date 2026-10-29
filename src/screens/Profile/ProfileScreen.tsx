@@ -24,6 +24,8 @@ import { getSupplements } from '../../services/supplements/supplementService';
 import { validatePromoCode } from '../../services/api/promoService';
 import { exportUserData, deleteAccount } from '../../services/privacy/dataPrivacy';
 import { resetAdConsent } from '../../services/ads/adService';
+import { useConsentStore } from '../../store/consentStore';
+import { ensureAiConsent } from '../../services/privacy/aiConsent';
 
 export function ProfileScreen() {
   const theme = useTheme();
@@ -48,6 +50,8 @@ export function ProfileScreen() {
   const premiumPlan = usePremiumStore((s) => s.plan);
   const premiumExpiresAt = usePremiumStore((s) => s.expiresAt);
   const setPremium = usePremiumStore((s) => s.setPremium);
+  const setConsent = useConsentStore((s) => s.setConsent);
+  const aiConsentGranted = useConsentStore((s) => s.hasGranted('aiDataSharing'));
 
   const GOAL_LABELS: Record<string, string> = {
     lose: t.profile.loseWeight, gain: t.profile.gainWeight, muscle: t.profile.buildMuscle, maintain: t.profile.maintainWeight,
@@ -116,6 +120,14 @@ export function ProfileScreen() {
     const supplements = await getSupplements();
     await scheduleSupplementReminders(val, supplements);
     setSupplementReminder(val);
+  };
+
+  const toggleAiDataSharing = async (val: boolean) => {
+    if (val) {
+      await ensureAiConsent();
+    } else {
+      await setConsent('aiDataSharing', false);
+    }
   };
 
   const handlePromoSubmit = async () => {
@@ -328,6 +340,14 @@ export function ProfileScreen() {
             left={(props) => <List.Icon {...props} icon="shield-lock" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => (navigation as any).navigate('Privacy')}
+          />
+          <List.Item
+            title={(t as any)?.aiConsent?.settingsLabel || 'AI data sharing (Google Gemini, USA)'}
+            description={(t as any)?.aiConsent?.settingsDesc || 'Allow your data to be sent to Gemini for AI features'}
+            left={(props) => <List.Icon {...props} icon="robot-outline" />}
+            right={() => (
+              <Switch value={aiConsentGranted} onValueChange={toggleAiDataSharing} />
+            )}
           />
           <List.Item
             title={t.kvkk.title}

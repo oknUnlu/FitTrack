@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { apiPost } from '../api/apiClient';
 import { API_ENDPOINTS } from '../../config/api';
+import { useConsentStore } from '../../store/consentStore';
 
 /**
  * AI Calorie Recognition response — every numeric is the TOTAL for the
@@ -44,6 +45,10 @@ async function resizeImageIfNeeded(imageUri: string): Promise<string> {
 }
 
 export async function recognizeFoodFromImage(imageUri: string): Promise<RecognizedFood[]> {
+  if (!useConsentStore.getState().hasGranted('aiDataSharing')) {
+    throw new Error('AI_CONSENT_REQUIRED');
+  }
+
   // Resize image to reduce payload size and Gemini token cost
   const optimizedUri = await resizeImageIfNeeded(imageUri);
 

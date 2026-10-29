@@ -37,7 +37,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CONSENT_KEY = 'fittrack_consent_v1';
 
-export const CONSENT_VERSION = 1;
+export const CONSENT_VERSION = 2;
+
+// AI data sharing is collected separately from the welcome click, so records
+// created by the old bundled flow (version 1) must not count as valid consent.
+export const AI_CONSENT_MIN_VERSION = 2;
 
 export type ConsentKey =
   | 'privacyPolicy'
@@ -149,6 +153,9 @@ export const useConsentStore = create<ConsentState>((set, get) => ({
 
   hasGranted: (key) => {
     const rec = get().consents[key];
+    if (key === 'aiDataSharing') {
+      return !!rec?.granted && (rec?.version ?? 0) >= AI_CONSENT_MIN_VERSION;
+    }
     return !!rec?.granted && rec.version === CONSENT_VERSION;
   },
 

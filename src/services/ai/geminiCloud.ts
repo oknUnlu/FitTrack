@@ -2,6 +2,7 @@ import { AIResponse, ConversationMessage } from './types';
 import { buildSystemPrompt } from './promptBuilder';
 import { apiPost } from '../api/apiClient';
 import { API_ENDPOINTS } from '../../config/api';
+import { useConsentStore } from '../../store/consentStore';
 
 /**
  * Send a message to Gemini via backend proxy with full conversation history.
@@ -11,6 +12,15 @@ export async function sendToGemini(
   context: string,
   history: ConversationMessage[] = []
 ): Promise<AIResponse> {
+  if (!useConsentStore.getState().hasGranted('aiDataSharing')) {
+    return {
+      success: false,
+      message: '',
+      source: 'fallback',
+      errorKind: 'consent_required',
+    };
+  }
+
   try {
     let systemInstruction = buildSystemPrompt();
     if (context.trim()) {
@@ -81,6 +91,15 @@ export async function generatePlan(
   planType: 'workout' | 'nutrition' | 'weekly',
   context: string
 ): Promise<AIResponse> {
+  if (!useConsentStore.getState().hasGranted('aiDataSharing')) {
+    return {
+      success: false,
+      message: '',
+      source: 'fallback',
+      errorKind: 'consent_required',
+    };
+  }
+
   const planPrompts: Record<string, string> = {
     workout: [
       'Kullanıcı profiline göre kişiselleştirilmiş bir haftalık antrenman planı oluştur.',

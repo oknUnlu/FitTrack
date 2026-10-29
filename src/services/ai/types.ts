@@ -1,6 +1,6 @@
 export type AISource = 'gemini_cloud' | 'gemini_nano' | 'fallback';
 
-export type AIErrorKind = 'rate_limit' | 'unavailable' | 'safety' | 'network';
+export type AIErrorKind = 'rate_limit' | 'unavailable' | 'safety' | 'network' | 'consent_required';
 
 export interface AIResponse {
   success: boolean;
