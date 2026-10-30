@@ -50,50 +50,68 @@ export default function App() {
         await SplashScreen.hideAsync();
         return;
       }
+      // Only table creation gates first paint — screens need the schema to
+      // exist. Seeding, billing, ads and push sync below are all deferred
+      // past hideAsync(): none of them block first paint, and awaiting them
+      // here is what used to stretch cold start to 20-25s (UMP consent and
+      // the push-registration Cloud Function call have no timeout and can
+      // each stall for seconds on a slow network or a cold function).
       try {
         await initDatabase();
-        await seedDatabase();
       } catch (e) {
         if (__DEV__) console.warn('FitTrack: Database init failed:', e);
       }
-      // Initialize device token for API authentication
-      try {
-        await getDeviceToken();
-      } catch (e) {
+
+      await SplashScreen.hideAsync();
+
+      seedDatabase().catch((e) => {
+        if (__DEV__) console.warn('FitTrack: Database seed failed:', e);
+      });
+
+      // Warm the device token cache; apiPost() would lazily create it anyway.
+      getDeviceToken().catch((e) => {
         if (__DEV__) console.warn('FitTrack: Could not init device token:', e);
-      }
-      // Initialize Google Play Billing and check subscription status
-      try {
-        await initializeBilling();
-        await checkSubscriptionStatus();
-        cleanupListener = setupPurchaseListener();
-      } catch (e) {
-        if (__DEV__) console.warn('FitTrack: Google Billing init failed:', e);
-      }
+      });
+
+      // Initialize Google Play Billing and check subscription status.
+      (async () => {
+        try {
+          await initializeBilling();
+          await checkSubscriptionStatus();
+          cleanupListener = setupPurchaseListener();
+        } catch (e) {
+          if (__DEV__) console.warn('FitTrack: Google Billing init failed:', e);
+        }
+      })();
+
       // Initialize AdMob — UMP consent flow runs FIRST so AdMob picks up the
       // correct TCF v2.2 consent string before requesting any ad. For users
       // outside regulated regions UMP is a fast no-op; for EU/UK/CH/TR users
       // (depending on Google's geo flags) it shows the standardized form.
-      try {
-        await setupAdConsent();
-        await initializeAds();
-        loadInterstitial().catch(() => {}); // splash'i bekletmesin
-      } catch (e) {
-        if (__DEV__) console.warn('FitTrack: AdMob init failed:', e);
-      }
+      (async () => {
+        try {
+          await setupAdConsent();
+          await initializeAds();
+          loadInterstitial().catch(() => {});
+        } catch (e) {
+          if (__DEV__) console.warn('FitTrack: AdMob init failed:', e);
+        }
+      })();
+
       // Reconcile notification preferences with OS-scheduled state.
       // This guarantees that if the user previously disabled a reminder
       // category but the OS still has stale scheduled entries (e.g. from
       // a pre-fix build), those will be cleared on next launch.
-      try {
-        // Prefer server-side FCM delivery (reliable on aggressive OEMs like
-        // MIUI); falls back to locally scheduled alarms when push
-        // registration isn't possible.
-        await reconcileReminders(await getSupplements());
-      } catch (e) {
-        if (__DEV__) console.warn('FitTrack: Notification reconcile failed:', e);
-      }
-      await SplashScreen.hideAsync();
+      (async () => {
+        try {
+          // Prefer server-side FCM delivery (reliable on aggressive OEMs like
+          // MIUI); falls back to locally scheduled alarms when push
+          // registration isn't possible.
+          await reconcileReminders(await getSupplements());
+        } catch (e) {
+          if (__DEV__) console.warn('FitTrack: Notification reconcile failed:', e);
+        }
+      })();
     };
     init();
 
