@@ -50,6 +50,14 @@ export type ConsentKey =
   | 'medicalDisclaimerAcknowledged'
   | 'aiDataSharing';
 
+// Per-key minimum accepted version. Bumping CONSENT_VERSION only matters for
+// a specific consent once its own wording/flow actually changes — it must
+// not silently invalidate every other consent already on file. Keys absent
+// here default to 1, so older records for unrelated consents stay valid.
+const REQUIRED_VERSION: Partial<Record<ConsentKey, number>> = {
+  aiDataSharing: AI_CONSENT_MIN_VERSION,
+};
+
 interface ConsentRecord {
   granted: boolean;
   updatedAt: number;
@@ -153,16 +161,13 @@ export const useConsentStore = create<ConsentState>((set, get) => ({
 
   hasGranted: (key) => {
     const rec = get().consents[key];
-    if (key === 'aiDataSharing') {
-      return !!rec?.granted && (rec?.version ?? 0) >= AI_CONSENT_MIN_VERSION;
-    }
-    return !!rec?.granted && rec.version === CONSENT_VERSION;
+    return !!rec?.granted && (rec?.version ?? 0) >= (REQUIRED_VERSION[key] ?? 1);
   },
 
   hasCompletedInitialConsent: () => {
     const c = get().consents;
     return REQUIRED_FOR_APP_USE.every(
-      (k) => c[k]?.granted === true && c[k]?.version === CONSENT_VERSION
+      (k) => c[k]?.granted === true && (c[k]?.version ?? 0) >= (REQUIRED_VERSION[k] ?? 1)
     );
   },
 

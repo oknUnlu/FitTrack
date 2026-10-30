@@ -4,6 +4,7 @@ import { sendToGemini, generatePlan } from './geminiCloud';
 import { getFallbackResponse } from './fallbackAI';
 import { insertConversation, getConversations } from '../database/aiDao';
 import { getTodayUsage, getDailyLimit } from './rateLimiter';
+import { useConsentStore } from '../../store/consentStore';
 
 export { getTodayUsage, getDailyLimit };
 
@@ -12,6 +13,13 @@ export async function sendMessage(
   prompt: string,
   context: string
 ): Promise<AIResponse> {
+  // Checked again here (callers are expected to gate via ensureAiConsent
+  // first) so a missing/future caller can never persist a conversation
+  // turn for a request that was never actually sent.
+  if (!useConsentStore.getState().hasGranted('aiDataSharing')) {
+    return { success: false, message: '', source: 'fallback', errorKind: 'consent_required' };
+  }
+
   // Load recent conversation history BEFORE saving the current message.
   // Saving first would put the prompt at the end of the history too, so Gemini
   // would see the user's message twice (once as the last turn, once as the live
