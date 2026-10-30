@@ -18,6 +18,7 @@ import { useUserStore } from '../../store/userStore';
 import { useConsentStore } from '../../store/consentStore';
 import { insertUser } from '../../services/database/userDao';
 import { insertMetric } from '../../services/database/progressDao';
+import { logEvent } from '../../services/analytics/eventLog';
 import { generateId, todayString } from '../../utils/helpers';
 import {
   calculateBMR,
@@ -249,6 +250,7 @@ export function OnboardingScreen() {
         });
       }
       setOnboarded(true);
+      logEvent('onboarding_completed');
     } catch (e) {
       if (__DEV__) console.warn('Onboarding save failed:', e);
       Alert.alert(t.common.error, t.common.errorOccurred);

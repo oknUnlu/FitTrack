@@ -33,4 +33,5 @@ export const API_ENDPOINTS = {
   verifyPurchase: `${API_BASE_URL}/api/verify-purchase`,
   deleteAccount: `${API_BASE_URL}/api/delete-account`,
   registerPush: `${API_BASE_URL}/api/register-push`,
+  event: `${API_BASE_URL}/api/event`,
 } as const;

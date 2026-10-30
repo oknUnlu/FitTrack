@@ -14,6 +14,7 @@ import {
 import { colors, spacing, borderRadius } from '../theme/theme';
 import { useLanguage } from '../i18n';
 import { getLocalizedPrices } from '../utils/locale';
+import { logEvent } from '../services/analytics/eventLog';
 
 // Pre-contractual information URLs (TKHK 6502 / Distance Contracts Regulation)
 const TERMS_URL = 'https://fittrack-a958c.web.app/terms';
@@ -61,6 +62,9 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
   useEffect(() => {
     if (visible && billingReady && subscriptions.length === 0) {
       loadSubscriptions();
+    }
+    if (visible) {
+      logEvent('paywall_seen', feature ? { feature } : undefined);
     }
   }, [visible]);
 
@@ -163,9 +167,11 @@ export function PaywallModal({ visible, onClose, feature }: PaywallModalProps) {
 
     const productId = PRODUCT_IDS[plan];
     setIsPurchasing(true);
+    logEvent('purchase_started', { plan });
     try {
       const token = await purchaseSubscription(productId);
       if (token) {
+        logEvent('purchase_completed', { plan });
         onClose();
       }
     } catch (e: any) {

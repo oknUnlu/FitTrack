@@ -17,6 +17,7 @@ import { BarcodeScanner } from '../../components/BarcodeScanner';
 import { recognizeFoodFromImage, RecognizedFood } from '../../services/ai/foodRecognition';
 import { estimateFoodFromText } from '../../services/ai/foodEstimate';
 import { ensureAiConsent } from '../../services/privacy/aiConsent';
+import { logFirstEvent } from '../../services/analytics/eventLog';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, borderRadius } from '../../theme/theme';
 import { todayString, MEAL_TYPES, generateId } from '../../utils/helpers';
@@ -323,6 +324,7 @@ export function CalorieScreen() {
         await insertMealLog(meal);
         loadMeals();
       }
+      logFirstEvent('first_calorie_entry');
       setQuantityDialogVisible(false);
       setSelectedFood(null);
       setQuantityPresets([]);
@@ -587,6 +589,7 @@ export function CalorieScreen() {
       setAiModalVisible(true);
       const foods = await recognizeFoodFromImage(result.assets[0].uri);
       await incrementUsage('food_recognition');
+      logFirstEvent('first_photo_analysis');
       setAiResults(foods);
       setAiLoading(false);
     } catch (e: any) {

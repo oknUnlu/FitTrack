@@ -72,6 +72,7 @@ service cloud.firestore {
     match /deletion_requests/{doc} { allow read, write: if false; }
     match /data_exports/{doc}      { allow read, write: if false; }
     match /consent_records/{doc}   { allow read, write: if false; }
+    match /events/{doc}            { allow read, write: if false; }
 
     // ─── Default: deny all ─────────────────────────────
     match /{document=**} {

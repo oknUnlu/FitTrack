@@ -171,6 +171,13 @@
           "serviceId": "registerpush",
           "region": "europe-west1"
         }
+      },
+      {
+        "source": "/api/event",
+        "run": {
+          "serviceId": "event",
+          "region": "europe-west1"
+        }
       }
     ]
   }

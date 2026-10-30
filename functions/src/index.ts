@@ -9,3 +9,4 @@ export { usage } from './usage';
 export { deleteAccount } from './deleteAccount';
 export { registerPush } from './registerPush';
 export { sendReminders } from './reminders';
+export { event } from './events';
